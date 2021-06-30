@@ -1,0 +1,50 @@
+<watches>
+    <!-- A folder watch-->
+	<watch>
+        <!-- 
+            Path of the folder to watch. File and folder exclusions are relative
+            to the value specified in this element.
+        -->
+        <path></path>
+        <exclusions>
+            <!-- 
+                Exclusions matching file name. The full name of a file,
+                regardless of which folder it is included in, is excluded.
+             -->
+            <files>
+                <name></name>
+            </files>
+            <!-- 
+                Exclusions matching folder names. The folder names are relative
+                to the path element. For example, if path is C:\Temp and a name
+                is TestFolder, then the folder C:\Temp\TestFolder is excluded.
+            -->
+            <folders>
+                <name></name>
+            </folders>
+            <!-- 
+                Exclusions matching folder/file attributes. The exclusions are
+                matched if a file contains any of the attributes specified.
+                Valid values:
+                    Archive
+                    Compressed
+                    Encrypted
+                    Hidden
+                    ReadOnly
+                    System
+            -->
+            <attributes>
+                <attribute></attribute>
+            </attributes>
+            <!-- 
+                Exclusions matching full paths. Similar to the folder names,
+                paths are relative to the path element and allow for exact file
+                path matching - for example, to exclude C:\Temp\TestFolder\thumbs.db,
+                specify TestFolder\thumbs.db.
+            -->
+            <paths>
+                <path></path>
+            </paths>
+        <exclusions>
+    </watch>
+</watches>

@@ -1,0 +1,33 @@
+<notifications>
+    <notification>
+        <url>http://192.168.112.120:8080/message</url>
+        <method>POST</method>
+        <!--
+            What events will trigger the notificaton.
+            Values:
+                All
+                Change
+                Create
+                Delete
+                Rename
+        -->
+        <triggers>
+            <trigger>All</trigger>
+        </triggers>
+        <data>
+            <header>{"X-Gotify-Key": "AMi-J-fEtI-1-8s"}<header>
+            <!--
+                Placeholders:
+                    [message] - messsage of the change
+                    [title] - title of the change
+            -->
+            <body>
+                    {
+                    "message": "[message]",
+                    "priority": 7,
+                    "title": "[title]"
+                    }            
+            </body>
+        </data>
+    </notification>
+</notifications>
