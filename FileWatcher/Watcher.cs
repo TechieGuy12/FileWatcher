@@ -13,7 +13,7 @@ namespace TE.FileWatcher
     /// <summary>
     /// The class that manages the file system watcher for a specific watch.
     /// </summary>
-    internal class Watcher : IDisposable
+    internal class Watcher : IDisposable, IAsyncDisposable
     {
         // To detect redundant calls
         private bool _disposed = false;
@@ -97,7 +97,44 @@ namespace TE.FileWatcher
                 _fsWatcher?.Dispose();               
             }
 
+            _fsWatcher = null;
             _disposed = true;
+        }
+
+        /// <summary>
+        /// Implementation of the DisposeAsync method.
+        /// </summary>
+        /// <returns>
+        /// The ValueTask.
+        /// </returns>
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore();
+
+            Dispose(disposing: false);
+#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
+            GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
+        }
+
+        /// <summary>
+        /// Implementation of the DisposeAsyncCore method.
+        /// </summary>
+        /// <returns>
+        /// The ValueTask.
+        /// </returns>
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (_fsWatcher is IAsyncDisposable disposable)
+            {
+                await disposable.DisposeAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                _fsWatcher?.Dispose();
+            }
+
+            _fsWatcher = null;
         }
 
         /// <summary>
