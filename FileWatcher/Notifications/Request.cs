@@ -12,11 +12,30 @@ namespace TE.FileWatcher.Notifications
         // The HTTP client
         private static HttpClient _httpClient;
 
+        /// <summary>
+        /// Sends a request to a remote system asychronously.
+        /// </summary>
+        /// <param name="method"></param>
+        /// The HTTP method to use for the request.
+        /// <param name="uri"></param>
+        /// The URL of the request.
+        /// <param name="headers"></param>
+        /// A <see cref="List{T}"/> of <see cref="Header"/> objects associated
+        /// with the request.
+        /// <param name="body">
+        /// The content body of the request.
+        /// </param>
+        /// <returns>
+        /// The response message of the request.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when an argument is null or empty.
+        /// </exception>
         internal static async Task<HttpResponseMessage> SendAsync(HttpMethod method, Uri uri, List<Header> headers, string body)
         {
             if (uri == null)
             {
-                return null;
+                throw new ArgumentNullException(nameof(uri));
             }
 
             if (_httpClient == null)
