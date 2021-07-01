@@ -21,6 +21,11 @@ namespace TE.FileWatcher.Logging
 
     public static class Logger
     {
+        /// <summary>
+        /// The default log file name.
+        /// </summary>
+        public const string DEFAULT_LOG_NAME = "fw.log";
+
         // The queue of log messages
         private static ConcurrentQueue<Message> queue;
 
@@ -48,7 +53,7 @@ namespace TE.FileWatcher.Logging
         static Logger()
         {
             LogPath = Path.GetTempPath();
-            LogName = "fw.log";
+            LogName = DEFAULT_LOG_NAME;
 
             try
             {

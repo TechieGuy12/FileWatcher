@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using TE.FileWatcher.Logging;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -14,11 +15,6 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public class Logging
     {
-        /// <summary>
-        /// The default log file name.
-        /// </summary>
-        public const string DEFAULT_LOG_NAME = "fw.log";
-
         /// <summary>
         /// Gets or sets the path of the log file.
         /// </summary>
@@ -39,7 +35,7 @@ namespace TE.FileWatcher.Configuration
         /// </exception>
         public Logging() 
         {
-            LogPath = Path.Combine(Path.GetTempPath(), DEFAULT_LOG_NAME);
+            LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULT_LOG_NAME);
         }
     }
 }
