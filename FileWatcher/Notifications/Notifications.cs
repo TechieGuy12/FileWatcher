@@ -9,13 +9,31 @@ using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Notifications
 {
+    /// <summary>
+    /// The notification triggers.
+    /// </summary>
     [Flags]
     public enum NotificationTriggers
     {
-        None = 0,        
+        /// <summary>
+        /// No triggers are specified.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Change notification.
+        /// </summary>
         Change = 1,
+        /// <summary>
+        /// Create notification.
+        /// </summary>
         Create = 2,
+        /// <summary>
+        /// Delete notification.
+        /// </summary>
         Delete = 4,
+        /// <summary>
+        /// Rename notification.
+        /// </summary>
         Rename = 8
     }
 
@@ -57,10 +75,22 @@ namespace TE.FileWatcher.Notifications
         {
             foreach (Notification notification in NotificationList)
             {
+                // If the notification doesn't have a message to send, then
+                // continue to the next notification
+                if (!notification.HasMessage)
+                {
+                    continue;
+                }
+
                 try
                 {
                     using (HttpResponseMessage response = await notification.SendAsync())
                     {
+                        if (response == null)
+                        {
+                            continue;
+                        }
+
                         Console.WriteLine($"Response: {response.StatusCode}.");
                         using (HttpContent httpContent = response.Content)
                         {
