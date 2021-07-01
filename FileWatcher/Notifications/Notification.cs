@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,8 +11,7 @@ namespace TE.FileWatcher.Notifications
 {
     public class Notification
     {
-        private HttpClient _httpClient;
-
+        // The message to send with the request.
         private StringBuilder _message;
 
         /// <summary>
@@ -95,6 +93,24 @@ namespace TE.FileWatcher.Notifications
         public Data Data { get; set; } = new Data();
 
         /// <summary>
+        /// Returns a value indicating if there is a message waiting to be sent
+        /// for the notification.
+        /// </summary>
+        [XmlIgnore]
+        public bool HasMessage
+        {
+            get
+            {
+                if (_message == null)
+                {
+                    return false;
+                }
+
+                return _message.Length > 0;
+            }
+        }
+
+        /// <summary>
         /// Initializes an instance of the <see cref="Notification"/>class.
         /// </summary>
         public Notification()
@@ -121,14 +137,15 @@ namespace TE.FileWatcher.Notifications
         /// </exception>
         internal async Task<HttpResponseMessage> SendAsync()
         {
-            if (Uri == null)
-            {
-                throw new NullReferenceException("The URL is null or empty.");
-            }
-
+            // If there isn't a message to be sent, then just return
             if (_message.Length <= 0)
             {
                 return null;
+            }
+
+            if (Uri == null)
+            {
+                throw new NullReferenceException("The URL is null or empty.");
             }
 
             string content = Data.Body.Replace("[message]", _message.ToString());
@@ -140,6 +157,15 @@ namespace TE.FileWatcher.Notifications
             }            
         }
 
+        /// <summary>
+        /// Cleans up any invalid characters in the message.
+        /// </summary>
+        /// <param name="message">
+        /// The message to clean.
+        /// </param>
+        /// <returns>
+        /// A string value with the invalid characters removed.
+        /// </returns>
         private string CleanMessage(string message)
         {
             //const string reduceMultiSpace = @"[ ]{2,}";
