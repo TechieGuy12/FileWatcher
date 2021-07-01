@@ -43,11 +43,11 @@ namespace TE.FileWatcher.Notifications
             _timer.Start();
         }
 
-        private void OnElapsed(object source, ElapsedEventArgs e)
+        private async void OnElapsed(object source, ElapsedEventArgs e)
         {
             foreach (Notification notification in NotificationList)
             {
-                notification.Send();
+                await notification.SendAsync();
             }
         }
 

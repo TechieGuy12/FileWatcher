@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -93,6 +94,9 @@ namespace TE.FileWatcher.Notifications
         [XmlElement("data")]
         public Data Data { get; set; } = new Data();
 
+        /// <summary>
+        /// Initializes an instance of the <see cref="Notification"/>class.
+        /// </summary>
         public Notification()
         {
             _message = new StringBuilder();
@@ -112,30 +116,39 @@ namespace TE.FileWatcher.Notifications
         /// <summary>
         /// Send the notification request.
         /// </summary>
-        internal async void Send()
+        /// <exception cref="NullReferenceException">
+        /// Thrown when the URL is null or empty.
+        /// </exception>
+        internal async Task<HttpStatusCode> SendAsync()
         {
             if (Uri == null)
             {
-                return;
+                throw new NullReferenceException("The URL is null or empty.");
             }
 
             if (_message.Length <= 0)
             {
-                return;
+                return HttpStatusCode.OK;
             }
 
+            HttpStatusCode statusCode = HttpStatusCode.OK;
             string content = Data.Body.Replace("[message]", _message.ToString());
+
             using (HttpResponseMessage response =
                 await Request.SendAsync(Method, Uri, Data.Headers.HeaderList, content))
             {
-                Console.WriteLine($"Response: {response.StatusCode}.");
+                statusCode = response.StatusCode;
+                Console.WriteLine($"Response: {statusCode}.");
                 using (HttpContent httpContent = response.Content)
                 {
                     string resultContent = await httpContent.ReadAsStringAsync();
                     Console.WriteLine($"Content: {resultContent}");
                 }
             }
+
             _message.Clear();
+
+            return statusCode;
         }
 
         private string CleanMessage(string message)
