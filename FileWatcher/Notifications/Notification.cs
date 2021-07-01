@@ -149,12 +149,12 @@ namespace TE.FileWatcher.Notifications
             }
 
             string content = Data.Body.Replace("[message]", _message.ToString());
-            using (HttpResponseMessage response =
-                await Request.SendAsync(Method, Uri, Data.Headers.HeaderList, content))
-            {
-                _message.Clear();
-                return response;
-            }            
+
+            HttpResponseMessage response =
+                await Request.SendAsync(Method, Uri, Data.Headers.HeaderList, content);
+
+            _message.Clear();
+            return response;           
         }
 
         /// <summary>
