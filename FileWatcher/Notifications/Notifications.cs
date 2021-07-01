@@ -25,6 +25,7 @@ namespace TE.FileWatcher.Notifications
     [XmlRoot("notifications")]
     public class Notifications
     {
+        // The timer
         private Timer _timer;
         
         /// <summary>
@@ -43,11 +44,35 @@ namespace TE.FileWatcher.Notifications
             _timer.Start();
         }
 
+        /// <summary>
+        /// Called when the timers elapsed time has been reached.
+        /// </summary>
+        /// <param name="source">
+        /// The timer object.
+        /// </param>
+        /// <param name="e">
+        /// The information associated witht he elapsed time.
+        /// </param>
         private async void OnElapsed(object source, ElapsedEventArgs e)
         {
             foreach (Notification notification in NotificationList)
             {
-                await notification.SendAsync();
+                try
+                {
+                    using (HttpResponseMessage response = await notification.SendAsync())
+                    {
+                        Console.WriteLine($"Response: {response.StatusCode}.");
+                        using (HttpContent httpContent = response.Content)
+                        {
+                            string resultContent = await httpContent.ReadAsStringAsync();
+                            Console.WriteLine($"Content: {resultContent}");
+                        }
+                    }
+                }
+                catch (NullReferenceException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
