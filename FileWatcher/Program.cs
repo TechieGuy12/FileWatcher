@@ -14,17 +14,44 @@ namespace TE.FileWatcher
         {
             Watches watches;
             Notifications.Notifications notifications;
+            XmlSerializer serializer;
 
-            XmlSerializer serializer = new XmlSerializer(typeof(Watches));
-            using (FileStream fs = new FileStream(@"C:\Temp\config.xml", FileMode.Open))
+            try
             {
-                watches = (Watches)serializer.Deserialize(fs);
+                serializer = new XmlSerializer(typeof(Watches));
+                using (FileStream fs = new FileStream(@"C:\Temp\config.xml", FileMode.Open))
+                {
+                    watches = (Watches)serializer.Deserialize(fs);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
+                return;
+            }
+           
+            try
+            {
+                serializer = new XmlSerializer(typeof(Notifications.Notifications));
+                using (FileStream notifyfs = new FileStream(@"C:\Temp\notification.xml", FileMode.Open))
+                {
+                    notifications = (Notifications.Notifications)serializer.Deserialize(notifyfs);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"The notification file could not be read. Reason: {ex.Message}");
+                return;
             }
 
-            serializer = new XmlSerializer(typeof(Notifications.Notifications));
-            using (FileStream notifyfs = new FileStream(@"C:\Temp\notification.xml", FileMode.Open))
+            try
             {
-                notifications = (Notifications.Notifications)serializer.Deserialize(notifyfs);
+                Logger.SetFullPath(watches.Logging.LogPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"The log file could not be set. Reason: {ex.Message}");
+                return;
             }
 
             Task[] tasks = new Task[watches.WatchList.Count];

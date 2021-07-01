@@ -1,4 +1,11 @@
 <watches>
+    <logging>
+        <!--
+            The full path to the log file. If not specified, the default of
+            %TEMP%\fw.log will be used.
+        -->
+        <path></path>
+    </logging>
     <!-- A folder watch-->
 	<watch>
         <!-- 
