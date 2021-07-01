@@ -119,7 +119,7 @@ namespace TE.FileWatcher.Notifications
         /// <exception cref="NullReferenceException">
         /// Thrown when the URL is null or empty.
         /// </exception>
-        internal async Task<HttpStatusCode> SendAsync()
+        internal async Task<HttpResponseMessage> SendAsync()
         {
             if (Uri == null)
             {
@@ -128,27 +128,16 @@ namespace TE.FileWatcher.Notifications
 
             if (_message.Length <= 0)
             {
-                return HttpStatusCode.OK;
+                return null;
             }
 
-            HttpStatusCode statusCode = HttpStatusCode.OK;
             string content = Data.Body.Replace("[message]", _message.ToString());
-
             using (HttpResponseMessage response =
                 await Request.SendAsync(Method, Uri, Data.Headers.HeaderList, content))
             {
-                statusCode = response.StatusCode;
-                Console.WriteLine($"Response: {statusCode}.");
-                using (HttpContent httpContent = response.Content)
-                {
-                    string resultContent = await httpContent.ReadAsStringAsync();
-                    Console.WriteLine($"Content: {resultContent}");
-                }
-            }
-
-            _message.Clear();
-
-            return statusCode;
+                _message.Clear();
+                return response;
+            }            
         }
 
         private string CleanMessage(string message)
