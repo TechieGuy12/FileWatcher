@@ -1,0 +1,36 @@
+<notifications>
+    <notification>
+        <url></url>
+        <!--
+            What events will trigger the notificaton.
+            Values:
+                Change
+                Create
+                Delete
+                Rename
+        -->        
+        <method></method>
+        <!--
+            What events will trigger the notificaton.
+            Values:
+                Change
+                Create
+                Delete
+                Rename
+        -->
+        <triggers>
+            <trigger></trigger>
+        </triggers>
+        <data>
+            <header>
+                    <name></name>
+                    <value></value>
+            <header>
+            <!--
+                Placeholders:
+                    [message] - messsage of the change
+            -->
+            <body></body>
+        </data>
+    </notification>
+</notifications>
