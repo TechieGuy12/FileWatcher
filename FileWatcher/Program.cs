@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using TE.FileWatcher.Configuration;
+using TE.FileWatcher.Logging;
 using TE.FileWatcher.Notifications;
 
 namespace TE.FileWatcher
@@ -38,7 +39,7 @@ namespace TE.FileWatcher
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
                 }
             }
 
@@ -53,7 +54,7 @@ namespace TE.FileWatcher
             {
                 foreach (Exception exception in ae.Flatten().InnerExceptions)
                 {
-                    Console.WriteLine(exception.Message);
+                    Logger.WriteLine(exception.Message, LogLevel.ERROR);
                 }
             }
         }

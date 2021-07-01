@@ -6,6 +6,7 @@ using System.Text;
 using System.Timers;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using TE.FileWatcher.Logging;
 
 namespace TE.FileWatcher.Notifications
 {
@@ -91,17 +92,17 @@ namespace TE.FileWatcher.Notifications
                             continue;
                         }
 
-                        Console.WriteLine($"Response: {response.StatusCode}.");
+                        Logger.WriteLine($"Response: {response.StatusCode}.");
                         using (HttpContent httpContent = response.Content)
                         {
                             string resultContent = await httpContent.ReadAsStringAsync();
-                            Console.WriteLine($"Content: {resultContent}");
+                            Logger.WriteLine($"Content: {resultContent}");
                         }
                     }
                 }
                 catch (NullReferenceException ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
                 }
             }
         }
