@@ -17,7 +17,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the logging information.
         /// </summary>
         [XmlElement("logging")]
-        public Logging Logging { get; set; }
+        public Logging Logging { get; set; } = new Logging();
 
         /// <summary>
         /// Gets or sets the watches list.
