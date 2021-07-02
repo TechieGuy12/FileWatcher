@@ -44,9 +44,21 @@ namespace TE.FileWatcher.Notifications
     [XmlRoot("notifications")]
     public class Notifications
     {
+        // The default wait time
+        private const int DEFAULT_WAIT_TIME = 60000;
+
+        // The minimum wait time
+        private const int MIN_WAIT_TIME = 30000;
+
         // The timer
         private Timer _timer;
-        
+
+        /// <summary>
+        /// Gets or sets the wait time between notification requests.
+        /// </summary>
+        [XmlElement("waittime")]
+        public int WaitTime { get; set; } = DEFAULT_WAIT_TIME;
+
         /// <summary>
         /// Gets or sets the notifications list.
         /// </summary>
@@ -58,7 +70,7 @@ namespace TE.FileWatcher.Notifications
         /// </summary>
         public Notifications()
         {            
-            _timer = new Timer(60000);
+            _timer = new Timer(WaitTime);
             _timer.Elapsed += OnElapsed;
             _timer.Start();
         }
@@ -74,6 +86,13 @@ namespace TE.FileWatcher.Notifications
         /// </param>
         private async void OnElapsed(object source, ElapsedEventArgs e)
         {
+            // Ensure the wait time is not less than the minimum wait time
+            if (WaitTime < MIN_WAIT_TIME)
+            {
+                Logger.WriteLine($"The wait time {WaitTime} is below the minimum of {MIN_WAIT_TIME}. Setting wait time to {MIN_WAIT_TIME}.");
+                WaitTime = MIN_WAIT_TIME;
+            }
+
             foreach (Notification notification in NotificationList)
             {
                 // If the notification doesn't have a message to send, then
@@ -85,6 +104,7 @@ namespace TE.FileWatcher.Notifications
 
                 try
                 {
+                    Logger.WriteLine($"Sending the request to {notification.Url}.");
                     using (HttpResponseMessage response = await notification.SendAsync())
                     {
                         if (response == null)
@@ -92,11 +112,10 @@ namespace TE.FileWatcher.Notifications
                             continue;
                         }
 
-                        Logger.WriteLine($"Response: {response.StatusCode}.");
                         using (HttpContent httpContent = response.Content)
                         {
                             string resultContent = await httpContent.ReadAsStringAsync();
-                            Logger.WriteLine($"Content: {resultContent}");
+                            Logger.WriteLine($"Response: {response.StatusCode}. Content: {resultContent}");
                         }
                     }
                 }
