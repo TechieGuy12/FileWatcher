@@ -322,6 +322,11 @@ namespace TE.FileWatcher
         /// </param>
         private void SendNotification(NotificationTriggers trigger, string message)
         {
+            if (Notifications == null)
+            {
+                return;
+            }
+
             foreach (Notification notification in Notifications.NotificationList)
             {
                 if (notification.Triggers.NotificationTriggers.HasFlag(trigger))

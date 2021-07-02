@@ -106,7 +106,5 @@ namespace TE.FileWatcher.Notifications
                 }
             }
         }
-
-
     }
 }
