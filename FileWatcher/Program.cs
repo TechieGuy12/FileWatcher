@@ -389,7 +389,6 @@ namespace TE.FileWatcher
                 }
                 else
                 {
-                    Console.WriteLine($"The notifications file '{fullPath}' was not found.");
                     return null;
                 }
             }
