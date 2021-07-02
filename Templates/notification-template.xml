@@ -1,4 +1,10 @@
 <notifications>
+    <!-- 
+        Time, in milliseconds, to wait between he notification send request.
+        If no value is specified, then 60000 (1 minute) will be used. Any
+        value lower than 30000 (30 seconds) will be set to 30000.
+    -->
+    <waittime></waittime>
     <notification>
         <url></url>
         <!--
