@@ -39,25 +39,23 @@ namespace TE.FileWatcher
         /// </returns>
         static int Main(string[] args)
         {
-            RootCommand rootCommand = new RootCommand(
-                description: "Monitors files and folders for changes.");
+            RootCommand rootCommand = new RootCommand
+            {
+                new Option<string>(
+                    aliases: new string[] { "--folder", "-f" },
+                    description: "The folder containing the configuration and notification XML files."),
 
-            Option<string> configFolder = new Option<string>(
-                aliases: new string[] { "--folder", "-f" },
-                description: "The folder containing the configuration and notification XML files.");
-            rootCommand.AddOption(configFolder);
+                new Option<string>(
+                    aliases: new string[] { "--configFile", "-cf" },
+                    description: "The name of the configuration XML file."),
 
-            Option<string> configName = new Option<string>(
-                aliases: new string[] { "--configFile", "-cf" },
-                description: "The name of the configuration XML file.");
-            rootCommand.AddOption(configName);
-
-            Option<string> notificationName = new Option<string>(
-                aliases: new string[] { "--notificationFile", "-nf" },
-                description: "The name of the notification XML file.");
-            rootCommand.AddOption(notificationName);
-
+                new Option<string>(
+                    aliases: new string[] { "--notificationFile", "-nf" },
+                    description: "The name of the notification XML file.")
+            };
+            rootCommand.Description = "Monitors files and folders for changes.";
             rootCommand.Handler = CommandHandler.Create<string, string, string>(RunWatcher);
+
             return rootCommand.Invoke(args);
         }
 
@@ -76,36 +74,30 @@ namespace TE.FileWatcher
         /// <returns>
         /// Returns 0 if no error occurred, otherwise non-zero.
         /// </returns>
-        private static int RunWatcher(string folder, string configFileName, string notificationsFileName)
+        private static int RunWatcher(string folder, string configFile, string notificationFile)
         {
-            Console.WriteLine($"File: {notificationsFileName}.");
+            Console.WriteLine($"Folder: {folder}.");
+            Console.WriteLine($"Config: {configFile}.");
+            Console.WriteLine($"Notifications: {notificationFile}.");
             // Get the config file path
-            string configFile = GetConfigFilePath(folder, configFileName);
-            if (string.IsNullOrWhiteSpace(configFile))
-            {
-                return ERROR;
-            }
-
-            // Get the notifications file path
-            string notificationsFile = GetNotificationsFilePath(folder, notificationsFileName);
-            if (string.IsNullOrWhiteSpace(notificationsFile))
+            string configFilePath = GetConfigFilePath(folder, configFile);
+            if (string.IsNullOrWhiteSpace(configFilePath))
             {
                 return ERROR;
             }
 
             // Load the watches information from the config XML file
-            Watches watches = ReadConfigFile(configFile);
+            Watches watches = ReadConfigFile(configFilePath);
             if (watches == null)
             {
                 return ERROR;
             }
 
+            // Get the notifications file path
+            string notificationsFilePath = GetNotificationsFilePath(folder, notificationFile);
+
             // Load the notifications from the XML file
-            Notifications.Notifications notifications = ReadNotificationFile(notificationsFile);
-            if (notifications == null)
-            {
-                return ERROR;
-            }
+            Notifications.Notifications notifications = ReadNotificationFile(notificationsFilePath);
 
             // Set the logger
             if (!SetLogger(watches))
@@ -175,7 +167,6 @@ namespace TE.FileWatcher
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                Console.WriteLine("The notifications file path was null or empty.");
                 return null;
             }
 
@@ -244,12 +235,6 @@ namespace TE.FileWatcher
             if (watches == null)
             {
                 Console.WriteLine("The watches object was not initialized.");
-                return false;
-            }
-
-            if (notifications == null)
-            {
-                Console.WriteLine("The notifications object was not initialized.");
                 return false;
             }
 
