@@ -9,6 +9,37 @@ namespace TE.FileWatcher.Notifications
 {
     internal static class Request
     {
+        /// <summary>
+        /// The MIME type used for the request.
+        /// </summary>
+        internal enum MimeType
+        {
+            /// <summary>
+            /// JSON
+            /// </summary>
+            Json,
+            /// <summary>
+            /// XML
+            /// </summary>
+            Xml
+        }
+
+        /// <summary>
+        /// The valid JSON name.
+        /// </summary>
+        internal const string JSON_NAME = "JSON";
+
+        /// <summary>
+        /// The valid XML name.
+        /// </summary>
+        internal const string XML_NAME = "XML";
+
+        // JSON mime type
+        private const string MIME_TYPE_JSON = "application/json";
+
+        // XML mime type
+        private const string MIME_TYPE_XML = "application/xml";
+
         // The HTTP client
         private static HttpClient _httpClient;
 
@@ -25,13 +56,21 @@ namespace TE.FileWatcher.Notifications
         /// <param name="body">
         /// The content body of the request.
         /// </param>
+        /// <param name="mimeType">
+        /// The MIME type associated with the request.
+        /// </param>
         /// <returns>
         /// The response message of the request.
         /// </returns>
         /// <exception cref="ArgumentNullException">
         /// Thrown when an argument is null or empty.
         /// </exception>
-        internal static async Task<HttpResponseMessage> SendAsync(HttpMethod method, Uri uri, List<Header> headers, string body)
+        internal static async Task<HttpResponseMessage> SendAsync(
+            HttpMethod method,
+            Uri uri,
+            List<Header> headers,
+            string body,
+            MimeType mimeType)
         {
             if (uri == null)
             {
@@ -48,7 +87,7 @@ namespace TE.FileWatcher.Notifications
             {
                 request.Headers.Add(header.Name, header.Value);
             }
-            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
 
             HttpResponseMessage response = null;
             try
@@ -67,6 +106,26 @@ namespace TE.FileWatcher.Notifications
             }
 
             return response;
+        }
+
+        /// <summary>
+        /// Gets the string value of the specified MIME type.
+        /// </summary>
+        /// <param name="mimeType">
+        /// The MIME type used for the request.
+        /// </param>
+        /// <returns>
+        /// The string value of the specified MIME type.
+        /// </returns>
+        private static string GetMimeTypeString(MimeType mimeType)
+        {
+            string type = MIME_TYPE_JSON;
+            if (mimeType == MimeType.Xml)
+            {
+                type = MIME_TYPE_XML;
+            }
+
+            return type;
         }
     }
 }

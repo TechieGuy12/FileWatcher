@@ -37,6 +37,13 @@
                     [message] - messsage of the change
             -->
             <body></body>
+            <!--
+                The type of request.
+                Values:
+                    JSON (default)
+                    XML
+            -->
+            <type></type>            
         </data>
     </notification>
 </notifications>

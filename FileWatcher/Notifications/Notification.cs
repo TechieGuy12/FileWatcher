@@ -151,7 +151,12 @@ namespace TE.FileWatcher.Notifications
             string content = Data.Body.Replace("[message]", _message.ToString());
 
             HttpResponseMessage response =
-                await Request.SendAsync(Method, Uri, Data.Headers.HeaderList, content);
+                await Request.SendAsync(
+                    Method,
+                    Uri,
+                    Data.Headers.HeaderList,
+                    content,
+                    Data.MimeType);
 
             _message.Clear();
             return response;           
