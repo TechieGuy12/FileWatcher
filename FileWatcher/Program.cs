@@ -76,9 +76,6 @@ namespace TE.FileWatcher
         /// </returns>
         private static int RunWatcher(string folder, string configFile, string notificationFile)
         {
-            Console.WriteLine($"Folder: {folder}.");
-            Console.WriteLine($"Config: {configFile}.");
-            Console.WriteLine($"Notifications: {notificationFile}.");
             // Get the config file path
             string configFilePath = GetConfigFilePath(folder, configFile);
             if (string.IsNullOrWhiteSpace(configFilePath))
@@ -339,6 +336,7 @@ namespace TE.FileWatcher
                 string fullPath = Path.Combine(folderPath, name);
                 if (File.Exists(fullPath))
                 {
+                    Console.WriteLine($"Configuration file: {fullPath}.");
                     return fullPath;
                 }
                 else
