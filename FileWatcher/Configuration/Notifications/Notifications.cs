@@ -14,6 +14,7 @@ namespace TE.FileWatcher.Configuration.Notifications
     /// The notification triggers.
     /// </summary>
     [Flags]
+    [Serializable]
     public enum NotificationTriggers
     {
         /// <summary>

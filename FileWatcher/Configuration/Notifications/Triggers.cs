@@ -7,29 +7,40 @@ using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration.Notifications
 {
+    /// <summary>
+    /// The triggers that will indicate a notification is to be sent.
+    /// </summary>
     public class Triggers
     {
-        [XmlElement("trigger")]
-        public List<string> TriggerList { get; set; } = new List<string>();
+        // The flags for the triggers
+        NotificationTriggers _triggers = NotificationTriggers.None;
 
+        /// <summary>
+        /// Gets or sets a list of notification triggers.
+        /// </summary>
+        [XmlElement("trigger")]
+        public List<NotificationTriggers> TriggerList { get; set; } = new List<NotificationTriggers>();
+
+        /// <summary>
+        /// Gets the triggers for the notification using the list from the
+        /// <see cref="TriggerList"/> property.
+        /// </summary>
         [XmlIgnore]
         public NotificationTriggers NotificationTriggers
         {
             get
             {
-                NotificationTriggers triggers = NotificationTriggers.None;
-                foreach(string trigger in TriggerList)
+                if (_triggers != NotificationTriggers.None)
                 {
-                    try
-                    {
-                        triggers |= (NotificationTriggers)Enum.Parse(typeof(NotificationTriggers), trigger);
-
-                    }
-                    // Ignore any exceptions if a trigger could be parsed
-                    catch { }
+                    return _triggers;
                 }
 
-                return triggers;
+                foreach(NotificationTriggers trigger in TriggerList)
+                {
+                    _triggers |= trigger;
+                }
+
+                return _triggers;
             }
         }
     }
