@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TE.FileWatcher.Configuration;
 using TE.FileWatcher.Configuration.Notifications;
+using TE.FileWatcher.Logging;
 
 namespace TE.FileWatcher
 {
@@ -209,6 +210,8 @@ namespace TE.FileWatcher
         /// </summary>
         private void CreateWatcher()
         {
+            Logger.WriteLine($"Creating watcher for {Watch.Path}.");
+
             _fsWatcher = new FileSystemWatcher(Watch.Path);
 
             _fsWatcher.NotifyFilter = NotifyFilters.Attributes
@@ -227,6 +230,8 @@ namespace TE.FileWatcher
             _fsWatcher.Filter = "*.*";
             _fsWatcher.IncludeSubdirectories = true;
             _fsWatcher.EnableRaisingEvents = true;
+
+            Logger.WriteLine($"Watcher created for {Watch.Path}.");
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)
