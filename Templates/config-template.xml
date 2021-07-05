@@ -52,6 +52,82 @@
             <paths>
                 <path></path>
             </paths>
-        <exclusions>
+        </exclusions>
+        <notifications>
+            <!-- 
+                Time, in milliseconds, to wait between he notification send request.
+                If no value is specified, then 60000 (1 minute) will be used. Any
+                value lower than 30000 (30 seconds) will be set to 30000.
+            -->
+            <waittime></waittime>
+            <notification>
+                <url></url>
+                <!--
+                    What method will be used to send the notification.
+                    Values:
+                        DELETE
+                        GET
+                        POST (default)
+                        PUT
+                -->        
+                <method></method>
+                <!--
+                    What events will trigger the notificaton.
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger></trigger>
+                </triggers>
+                <data>
+                    <headers>
+                        <header>
+                            <name></name>
+                            <value></value>
+                        </header>
+                    </headers>
+                    <!--
+                        Placeholders:
+                            [message] - messsage of the change
+                    -->
+                    <body></body>
+                    <!--
+                        The type of request.
+                        Values:
+                            JSON (default)
+                            XML
+                    -->
+                    <type></type>            
+                </data>
+            </notification>
+        </notifications>
+        <!--
+            Perform actions when a change is detected.
+        -->
+        <actions>
+            <action>
+                <!--
+                    The type of action to perform.
+                    Values:
+                        Copy
+                        Move
+                        Delete
+                -->
+                <type></type>
+                <!--
+                    The source path of the action. 
+                    Use the [file] placeholder to specify the changed file.  
+                -->
+                <source></source>
+                <!--
+                    The destination path of the action.
+                    This element does not apply to the Delete action.
+                -->
+                <destination></destination>
+            </action>
+        </actions>    
     </watch>
 </watches>
