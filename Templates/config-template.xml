@@ -119,14 +119,28 @@
                 <type></type>
                 <!--
                     The source path of the action. 
-                    Use the [file] placeholder to specify the changed file.  
+                    Placeholders:
+                        [fullpath] - the full path to the changed file
                 -->
                 <source></source>
                 <!--
                     The destination path of the action.
-                    This element does not apply to the Delete action.
+                    This value does not apply to the Delete action.
+                    Placeholders:
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
                 -->
                 <destination></destination>
+                <!--
+                    Verifies the file after a copy or move.
+                    Values:
+                        true
+                        false (default)
+                -->
+                <verify></verify>
             </action>
         </actions>    
     </watch>
