@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using TE.FileWatcher.Logging;
 
-namespace TE.FileWatcher.Notifications
+namespace TE.FileWatcher.Configuration.Notifications
 {
     /// <summary>
     /// The notification triggers.
@@ -119,9 +119,18 @@ namespace TE.FileWatcher.Notifications
                         }
                     }
                 }
+                catch (AggregateException aex)
+                {
+                    foreach (Exception ex in aex.Flatten().InnerExceptions)
+                    {
+                        Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                        Logger.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}");
+                    }
+                }
                 catch (NullReferenceException ex)
                 {
                     Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                    Logger.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}");
                 }
             }
         }

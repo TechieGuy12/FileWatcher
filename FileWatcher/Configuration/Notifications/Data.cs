@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Notifications
+namespace TE.FileWatcher.Configuration.Notifications
 {
     /// <summary>
     /// Contains the data used to send the request.

@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using TE.FileWatcher.Configuration;
-using TE.FileWatcher.Notifications;
+using TE.FileWatcher.Configuration.Notifications;
 
 namespace TE.FileWatcher
 {
@@ -33,27 +33,6 @@ namespace TE.FileWatcher
         public Watch Watch { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="Notifications.Notifications"/> object associated
-        /// with this watcher.
-        /// </summary>
-        public Notifications.Notifications Notifications { get; private set; }
-
-        /// <summary>
-        /// Initializes an instance of the <see cref="Watcher"/> when provided
-        /// with the <see cref="Watch"/> object.
-        /// </summary>
-        /// <param name="watch">
-        /// The file watch object.
-        /// </param>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown when the <paramref name="watch"/> parameter is null.
-        /// </exception>
-        /// <exception cref="FileWatcherException">
-        /// Thrown when the file system watcher could not be initialized.
-        /// </exception>
-        public Watcher(Watch watch) : this(watch, null) { }
-
-        /// <summary>
         /// Initializes an instance of the <see cref="Watcher"/> when provided
         /// with the <see cref="Watch"/> object.
         /// </summary>
@@ -69,10 +48,9 @@ namespace TE.FileWatcher
         /// <exception cref="FileWatcherException">
         /// Thrown when the file system watcher could not be initialized.
         /// </exception>
-        public Watcher(Watch watch, Notifications.Notifications notifications)
+        public Watcher(Watch watch)
         {
             Watch = watch ?? throw new ArgumentNullException(nameof(watch));
-            Notifications = notifications;
             Initialize();
         }
 
@@ -322,12 +300,12 @@ namespace TE.FileWatcher
         /// </param>
         private void SendNotification(NotificationTriggers trigger, string message)
         {
-            if (Notifications == null)
+            if (Watch.Notifications == null)
             {
                 return;
             }
 
-            foreach (Notification notification in Notifications.NotificationList)
+            foreach (Notification notification in Watch.Notifications.NotificationList)
             {
                 if (notification.Triggers.NotificationTriggers.HasFlag(trigger))
                 {

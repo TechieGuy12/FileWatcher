@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Notifications
+namespace TE.FileWatcher.Configuration.Notifications
 {
     public class Notification
     {
@@ -68,7 +68,7 @@ namespace TE.FileWatcher.Notifications
 
                 try
                 {
-                    method = (HttpMethod)Enum.Parse(typeof(HttpMethod), MethodString, true);
+                    method = (HttpMethod)Enum.Parse(typeof(HttpMethod), MethodString.ToUpper(), true);
                 }
                 catch (Exception ex)
                     when (ex is ArgumentNullException || ex is ArgumentException || ex is OverflowException)

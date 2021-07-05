@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using TE.FileWatcher.Configuration;
 using TE.FileWatcher.Logging;
-using TE.FileWatcher.Notifications;
+using TE.FileWatcher.Configuration.Notifications;
 
 namespace TE.FileWatcher
 {
@@ -48,13 +48,9 @@ namespace TE.FileWatcher
                 new Option<string>(
                     aliases: new string[] { "--configFile", "-cf" },
                     description: "The name of the configuration XML file."),
-
-                new Option<string>(
-                    aliases: new string[] { "--notificationFile", "-nf" },
-                    description: "The name of the notification XML file.")
             };
             rootCommand.Description = "Monitors files and folders for changes.";
-            rootCommand.Handler = CommandHandler.Create<string, string, string>(RunWatcher);
+            rootCommand.Handler = CommandHandler.Create<string, string>(RunWatcher);
 
             return rootCommand.Invoke(args);
         }
@@ -68,13 +64,10 @@ namespace TE.FileWatcher
         /// <param name="configFileName">
         /// The name of the configuration file.
         /// </param>
-        /// <param name="notificationsFileName">
-        /// The name of the notifications file.
-        /// </param>
         /// <returns>
         /// Returns 0 if no error occurred, otherwise non-zero.
         /// </returns>
-        private static int RunWatcher(string folder, string configFile, string notificationFile)
+        private static int RunWatcher(string folder, string configFile)
         {
             // Get the config file path
             string configFilePath = GetConfigFilePath(folder, configFile);
@@ -90,12 +83,6 @@ namespace TE.FileWatcher
                 return ERROR;
             }
 
-            // Get the notifications file path
-            string notificationsFilePath = GetNotificationsFilePath(folder, notificationFile);
-
-            // Load the notifications from the XML file
-            Notifications.Notifications notifications = ReadNotificationFile(notificationsFilePath);
-
             // Set the logger
             if (!SetLogger(watches))
             {
@@ -103,7 +90,7 @@ namespace TE.FileWatcher
             }
 
             // Run the watcher tasks
-            if (RunWatcherTasks(watches, notifications))
+            if (RunWatcherTasks(watches))
             {
                 return SUCCESS;
             }
@@ -152,41 +139,6 @@ namespace TE.FileWatcher
         }
 
         /// <summary>
-        /// Reads the notifications XML file.
-        /// </summary>
-        /// <param name="path">
-        /// The path to the notifications XML file.
-        /// </param>
-        /// <returns>
-        /// A Notifications object if the file was read successfully, otherwise null.
-        /// </returns>
-        private static Notifications.Notifications ReadNotificationFile(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return null;
-            }
-
-            if (!File.Exists(path))
-            {
-                Console.WriteLine($"The notifications file path '{path}' does not exist.");
-                return null;
-            }
-
-            try
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(Notifications.Notifications));
-                using FileStream notifyfs = new FileStream(path, FileMode.Open);
-                return (Notifications.Notifications)serializer.Deserialize(notifyfs);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"The notification file could not be read. Reason: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Sets the logger.
         /// </summary>
         /// <param name="watches">
@@ -221,13 +173,10 @@ namespace TE.FileWatcher
         /// <param name="watches">
         /// The watches.
         /// </param>
-        /// <param name="notifications">
-        /// The notifications.
-        /// </param>
         /// <returns>
         /// True if the tasks were started and run successfully, otherwise false.
         /// </returns>
-        private static bool RunWatcherTasks(Watches watches, Notifications.Notifications notifications)
+        private static bool RunWatcherTasks(Watches watches)
         {
             if (watches == null)
             {
@@ -242,7 +191,7 @@ namespace TE.FileWatcher
             {
                 try
                 {
-                    tasks[count] = Task.Run(() => { Watcher watcher = new Watcher(watch, notifications); });
+                    tasks[count] = Task.Run(() => { Watcher watcher = new Watcher(watch); });
                     count++;
                 }
                 catch (Exception ex)
@@ -348,51 +297,6 @@ namespace TE.FileWatcher
             catch (Exception ex)
             {
                 Console.WriteLine($"Could not get the path to the configuration file. Reason: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the full path to the notifications file.
-        /// </summary>
-        /// <param name="path">
-        /// The path to the notifications file.
-        /// </param>
-        /// <param name="name">
-        /// The name of the notifications file.
-        /// </param>
-        /// <returns>
-        /// The full path to the notifications file, otherwise null.
-        /// </returns>
-        private static string GetNotificationsFilePath(string path, string name)
-        {
-            string folderPath = GetFolderPath(path);
-            if (folderPath == null)
-            {
-                return null;
-            }
-
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                name = DEFAULT_NOTIFICATION_FILE;
-            }
-
-            try
-            {
-                string fullPath = Path.Combine(folderPath, name);
-                if (File.Exists(fullPath))
-                {
-                    Console.WriteLine($"Notifications file: {fullPath}.");
-                    return fullPath;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Could not get the path to the notifications file. Reason: {ex.Message}");
                 return null;
             }
         }

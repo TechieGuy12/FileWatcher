@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TE.FileWatcher.Notifications
+namespace TE.FileWatcher.Configuration.Notifications
 {
     internal static class Request
     {
