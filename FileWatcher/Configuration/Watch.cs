@@ -30,5 +30,11 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         [XmlElement("notifications")]
         public Notifications.Notifications Notifications { get; set; } = new Notifications.Notifications();
+
+        /// <summary>
+        /// Gets or sets the actions for the watch.
+        /// </summary>
+        [XmlElement("actions")]
+        public Actions.Actions Actions { get; set; } = new Actions.Actions();
     }
 }
