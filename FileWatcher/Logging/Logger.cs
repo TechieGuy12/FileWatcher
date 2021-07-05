@@ -44,6 +44,9 @@ namespace TE.FileWatcher.Logging
         /// </summary>
         public static string LogFullPath { get; private set; }
 
+        // The object used for the lock
+        private static object locker = new object();
+
         /// <summary>
         /// Initializes an instance of the <see cref="Logger"/> class.
         /// </summary>
@@ -216,10 +219,13 @@ namespace TE.FileWatcher.Logging
             while (queue.TryDequeue(out Message message))
             {
                 try
-                {                    
-                    using (StreamWriter writer = new StreamWriter(LogFullPath, true))
+                {
+                    lock (locker)
                     {
-                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
+                        using (StreamWriter writer = new StreamWriter(LogFullPath, true))
+                        {
+                            writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
+                        }
                     }
                 }
                 catch (Exception ex)
