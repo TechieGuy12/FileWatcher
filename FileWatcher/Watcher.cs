@@ -143,6 +143,7 @@ namespace TE.FileWatcher
             _fsWatcher.Created += OnCreated;
             _fsWatcher.Deleted += OnDeleted;
             _fsWatcher.Renamed += OnRenamed;
+            _fsWatcher.Error += OnError;
             _fsWatcher.Filter = "*.*";
             _fsWatcher.IncludeSubdirectories = true;
             _fsWatcher.EnableRaisingEvents = true;
@@ -244,6 +245,22 @@ namespace TE.FileWatcher
             }
 
             Watch.SendNotifications(NotificationTriggers.Change, $"Renamed: {e.OldFullPath} to {e.FullPath}.");
+        }
+
+        /// <summary>
+        /// Called when the file system watcher throws an exception.
+        /// </summary>
+        /// <param name="sender">
+        /// The object calling the method.
+        /// </param>
+        /// <param name="e">
+        /// The event parameters.
+        /// </param>
+        private void OnError(object sender, ErrorEventArgs e)
+        {
+            Logger.WriteLine(
+                $"An error occurred while watching the file system. Exception: {e.GetException().Message}", 
+                LogLevel.ERROR);
         }
     }
 }
