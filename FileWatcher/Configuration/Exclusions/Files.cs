@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TE.FileWatcher.Configuration
+namespace TE.FileWatcher.Configuration.Exclusions
 {
     /// <summary>
-    /// A folders node in the XML file.
+    /// The files node in the XML file.
     /// </summary>
-    public class Folders : FileBase { }
+    public class Files : FileBase { }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using TE.FileWatcher.Configuration.Notifications;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -23,7 +22,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the exclusions
         /// </summary>
         [XmlElement("exclusions")]
-        public Exclusions Exclusions { get; set; } = new Exclusions();
+        public Exclusions.Exclusions Exclusions { get; set; } = new Exclusions.Exclusions();
 
         /// <summary>
         /// Gets or sets the notifications for the watch.

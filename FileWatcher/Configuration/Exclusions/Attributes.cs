@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration
+namespace TE.FileWatcher.Configuration.Exclusions
 {
     /// <summary>
     /// The Attributes node in the XML file.

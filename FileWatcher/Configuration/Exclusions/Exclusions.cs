@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration
+namespace TE.FileWatcher.Configuration.Exclusions
 {
     /// <summary>
     /// An exclusions node in the XML file.

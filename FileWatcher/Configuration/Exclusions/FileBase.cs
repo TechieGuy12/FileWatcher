@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration
+namespace TE.FileWatcher.Configuration.Exclusions
 {
     /// <summary>
     /// The base class used by the files and folders nodes in the XML file.
