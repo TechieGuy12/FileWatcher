@@ -184,10 +184,17 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 return false;
             }
 
-            // The path may or may not contain a file, so compare both the full
-            // path and the path with the file/last folder removed to determine
-            // if it should be ignored
-            return _folders.Contains(path) || _folders.Contains(Path.GetDirectoryName(path));
+            bool exclude = false;
+            foreach (string folder in _folders)
+            {
+                if (path.Contains(folder) || Path.GetDirectoryName(path).Contains(folder))
+                {
+                    exclude = true;
+                    break;
+                }
+            }
+
+            return exclude;
         }
 
         /// <summary>
