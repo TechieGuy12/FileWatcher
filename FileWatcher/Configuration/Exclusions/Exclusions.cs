@@ -138,7 +138,7 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 return false;
             }
 
-            if (!File.Exists(path))
+            if (!File.Exists(path) && !Directory.Exists(path))
             {
                 return false;
             }
