@@ -37,27 +37,16 @@ namespace TE.FileWatcher.Configuration
         public Actions.Actions Actions { get; set; } = new Actions.Actions();
 
         /// <summary>
-        /// Processes the file or folder change.
+        /// Gets the string value for the message type.
         /// </summary>
         /// <param name="trigger">
-        /// The type of change.
+        /// The notification trigger.
         /// </param>
-        /// <param name="name">
-        /// The name of the file or folder.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the file or folder.
-        /// </param>
-        public void ProcessChange(
-            Notifications.NotificationTriggers trigger,
-            string name, 
-            string fullPath)
+        /// <returns>
+        /// The string value for the message type, otherwise <c>null</c>.
+        /// </returns>
+        private string GetMessageTypeString(Notifications.NotificationTriggers trigger)
         {
-            if (Exclusions.Exclude(Path, name, fullPath))
-            {
-                return;
-            }
-
             string messageType = null;
             switch (trigger)
             {
@@ -75,9 +64,50 @@ namespace TE.FileWatcher.Configuration
                     break;
             }
 
+            return messageType;
+        }
+
+        /// <summary>
+        /// Processes the file or folder change.
+        /// </summary>
+        /// <param name="trigger">
+        /// The type of change.
+        /// </param>
+        /// <param name="name">
+        /// The name of the file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the file or folder.
+        /// </param>
+        public void ProcessChange(
+            Notifications.NotificationTriggers trigger,
+            string name, 
+            string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return;
+            }
+
+            // If the file or folder is in the exclude list, then don't take
+            // any further actions
+            if (Exclusions.Exclude(Path, name, fullPath))
+            {
+                return;
+            }
+
+            // Send the notifications
+            string messageType = GetMessageTypeString(trigger);
             if (!string.IsNullOrWhiteSpace(messageType))
             {
                 Notifications.Send(trigger, $"{messageType}: {fullPath}");
+            }
+
+            // Only run the actions if a file wasn't deleted, as the file no
+            // longer exists so no action can be taken on the file
+            if (trigger != Configuration.Notifications.NotificationTriggers.Delete)
+            {
+                Actions.Run(Path, fullPath);
             }
         }
     }

@@ -276,6 +276,11 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         public bool Exclude(string watchPath, string name, string fullPath)
         {
+            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return false;
+            }
+
             if (!_initialized)
             {
                 Initialize(watchPath);

@@ -16,5 +16,27 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </summary>
         [XmlElement("action")]
         public List<Action> ActionList { get; set; } = new List<Action>();
+
+        /// <summary>
+        /// Runs all the actions for the watch.
+        /// </summary>
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path to the changed file or folder.
+        /// </param>
+        public void Run(string watchPath, string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return;
+            }
+
+            foreach (Action action in ActionList)
+            {
+                action.Run(watchPath, fullPath);
+            }
+        }
     }
 }
