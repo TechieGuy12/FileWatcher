@@ -35,5 +35,36 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         [XmlElement("actions")]
         public Actions.Actions Actions { get; set; } = new Actions.Actions();
+
+        /// <summary>
+        /// Returns a flag indicating if the file or folder is to be ignored.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path to the file or folder.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the file or folder is to be excluded, otherwise <c>false</c>.
+        /// </returns>
+        public bool Exclude(string name, string fullPath)
+        {
+            return Exclusions.Exclude(Path, name, fullPath);
+        }
+
+        /// <summary>
+        /// Sends the notifications if the trigger matches.
+        /// </summary>
+        /// <param name="trigger">
+        /// The change trigger.
+        /// </param>
+        /// <param name="message">
+        /// The message to send.
+        /// </param>
+        public void SendNotifications(Notifications.NotificationTriggers trigger, string message)
+        {
+            Notifications.Send(trigger, message);
+        }
     }
 }

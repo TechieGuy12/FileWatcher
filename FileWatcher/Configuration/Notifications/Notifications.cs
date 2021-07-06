@@ -135,5 +135,30 @@ namespace TE.FileWatcher.Configuration.Notifications
                 }
             }
         }
+
+        /// <summary>
+        /// Sends the notification request.
+        /// </summary>
+        /// <param name="trigger">
+        /// The trigger associated with the request.
+        /// </param>
+        /// <param name="message">
+        /// The message to include in the request.
+        /// </param>
+        public void Send(NotificationTriggers trigger, string message)
+        {
+            if (NotificationList == null || NotificationList.Count <= 0)
+            {
+                return;
+            }
+
+            foreach (Notification notification in NotificationList)
+            {
+                if (notification.Triggers.NotificationTriggers.HasFlag(trigger))
+                {
+                    notification.QueueRequest(message);
+                }
+            }
+        }
     }
 }
