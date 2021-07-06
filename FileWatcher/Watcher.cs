@@ -167,12 +167,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            if (Watch.Exclude(e.Name, e.FullPath))
-            {
-                return;
-            }
-
-            Watch.SendNotifications(NotificationTriggers.Change, $"Changed: {e.FullPath}.");
+            Watch.ProcessChange(NotificationTriggers.Change, e.Name, e.FullPath);
         }
 
         /// <summary>
@@ -191,12 +186,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            if (Watch.Exclude(e.Name, e.FullPath))
-            {
-                return;
-            }
-
-            Watch.SendNotifications(NotificationTriggers.Change, $"Created: {e.FullPath}.");
+            Watch.ProcessChange(NotificationTriggers.Create, e.Name, e.FullPath);
         }
 
         /// <summary>
@@ -215,12 +205,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            if (Watch.Exclude(e.Name, e.FullPath))
-            {
-                return;
-            }
-
-            Watch.SendNotifications(NotificationTriggers.Change, $"Deleted: {e.FullPath}.");
+            Watch.ProcessChange(NotificationTriggers.Delete, e.Name, e.FullPath);
         }
 
         /// <summary>
@@ -239,12 +224,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            if (Watch.Exclude(e.Name, e.FullPath))
-            {
-                return;
-            }
-
-            Watch.SendNotifications(NotificationTriggers.Change, $"Renamed: {e.OldFullPath} to {e.FullPath}.");
+            Watch.ProcessChange(NotificationTriggers.Rename, e.Name, e.FullPath);
         }
 
         /// <summary>

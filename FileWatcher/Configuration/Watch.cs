@@ -37,34 +37,48 @@ namespace TE.FileWatcher.Configuration
         public Actions.Actions Actions { get; set; } = new Actions.Actions();
 
         /// <summary>
-        /// Returns a flag indicating if the file or folder is to be ignored.
+        /// Processes the file or folder change.
         /// </summary>
+        /// <param name="trigger">
+        /// The type of change.
+        /// </param>
         /// <param name="name">
         /// The name of the file or folder.
         /// </param>
         /// <param name="fullPath">
-        /// The full path to the file or folder.
+        /// The full path of the file or folder.
         /// </param>
-        /// <returns>
-        /// <c>true</c> if the file or folder is to be excluded, otherwise <c>false</c>.
-        /// </returns>
-        public bool Exclude(string name, string fullPath)
+        public void ProcessChange(
+            Notifications.NotificationTriggers trigger,
+            string name, 
+            string fullPath)
         {
-            return Exclusions.Exclude(Path, name, fullPath);
-        }
+            if (Exclusions.Exclude(Path, name, fullPath))
+            {
+                return;
+            }
 
-        /// <summary>
-        /// Sends the notifications if the trigger matches.
-        /// </summary>
-        /// <param name="trigger">
-        /// The change trigger.
-        /// </param>
-        /// <param name="message">
-        /// The message to send.
-        /// </param>
-        public void SendNotifications(Notifications.NotificationTriggers trigger, string message)
-        {
-            Notifications.Send(trigger, message);
+            string messageType = null;
+            switch (trigger)
+            {
+                case Configuration.Notifications.NotificationTriggers.Create:
+                    messageType = "Created";
+                    break;
+                case Configuration.Notifications.NotificationTriggers.Change:
+                    messageType = "Changed";
+                    break;
+                case Configuration.Notifications.NotificationTriggers.Delete:
+                    messageType = "Deleted";
+                    break;
+                case Configuration.Notifications.NotificationTriggers.Rename:
+                    messageType = "Renamed";
+                    break;
+            }
+
+            if (!string.IsNullOrWhiteSpace(messageType))
+            {
+                Notifications.Send(trigger, $"{messageType}: {fullPath}");
+            }
         }
     }
 }
