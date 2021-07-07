@@ -110,6 +110,17 @@
         <actions>
             <action>
                 <!--
+                    What events will trigger the notificaton.
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger></trigger>
+                </triggers>            
+                <!--
                     The type of action to perform.
                     Values:
                         Copy
@@ -120,7 +131,7 @@
                 <!--
                     The source path of the action. 
                     Placeholders:
-                        [fullpath] - the full path to the changed file
+                        [fullpath] - the full path to the changed file (default)
                 -->
                 <source></source>
                 <!--
