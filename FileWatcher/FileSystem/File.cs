@@ -75,22 +75,24 @@ namespace TE.FileWatcher.FileSystem
             return (sourceHash.Equals(destinationHash));
         }
 
-        private static bool IsFileReady(string source)
+        /// <summary>
+        /// Waits for a file to be accessible.
+        /// </summary>
+        /// <param name="path">
+        /// Path to the file.
+        /// </param>
+        private static void WaitForFile(string path)
         {
-            int attempts = 0;
-            bool fileReady = false;
-            while ((attempts <= RETRIES) && !fileReady)
+            while (true)
             try
             {
-                using FileStream fileStream = IO.File.OpenRead(source);
-                fileReady = true;
+                using FileStream fileStream = IO.File.OpenRead(path);
+                    break;
             }
             catch
             {
                 Thread.Sleep(1000);
             }
-
-            return fileReady;
         }
 
         /// <summary>
@@ -131,19 +133,29 @@ namespace TE.FileWatcher.FileSystem
 
             if (!IO.File.Exists(source))
             {
-                throw new FileNotFoundException($"The file '{source}' was not found.");
+                return;
+                //throw new FileNotFoundException($"The file '{source}' was not found.");
             }
 
+            if (Directory.IsValid(source))
+            {
+                return;
+            }
+          
             try
             {
+                WaitForFile(source);
+                Directory.Create(destination);
+
                 int attempts = 0;
                 bool fileCopied = false;
                 while ((attempts <= RETRIES) && !fileCopied)
-                {
-                    Console.WriteLine($"{source} to {destination}");
+                {                    
                     IO.File.Copy(source, destination, true);
+                    WaitForFile(destination);
+
                     fileCopied = (verify == true) ? Verify(source, destination) : true;
-                    fileCopied = true;
+                    fileCopied = true;                    
 
                     if (!fileCopied)
                     {
@@ -155,6 +167,33 @@ namespace TE.FileWatcher.FileSystem
             {
                 throw new FileWatcherException("The file could not be copied.", ex);
             }            
+        }
+
+        /// <summary>
+        /// Returns a flag indicating the file is valid.
+        /// </summary>
+        /// <param name="path">
+        /// The path to the file.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the file is valid, otherwise <c>false</c>.
+        /// </returns>
+        public static bool IsValid(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            if (IO.File.Exists(path))
+            {
+                WaitForFile(path);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
