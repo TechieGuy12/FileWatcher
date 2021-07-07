@@ -167,7 +167,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(NotificationTriggers.Change, e.Name, e.FullPath);           
+            Watch.ProcessChange(TriggerType.Change, e.Name, e.FullPath);           
         }
 
         /// <summary>
@@ -186,7 +186,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(NotificationTriggers.Create, e.Name, e.FullPath);
+            Watch.ProcessChange(TriggerType.Create, e.Name, e.FullPath);
         }
 
         /// <summary>
@@ -205,7 +205,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(NotificationTriggers.Delete, e.Name, e.FullPath);
+            Watch.ProcessChange(TriggerType.Delete, e.Name, e.FullPath);
         }
 
         /// <summary>
@@ -224,7 +224,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(NotificationTriggers.Rename, e.Name, e.FullPath);
+            Watch.ProcessChange(TriggerType.Rename, e.Name, e.FullPath);
         }
 
         /// <summary>

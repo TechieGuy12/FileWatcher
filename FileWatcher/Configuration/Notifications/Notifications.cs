@@ -11,35 +11,6 @@ using TE.FileWatcher.Logging;
 namespace TE.FileWatcher.Configuration.Notifications
 {
     /// <summary>
-    /// The notification triggers.
-    /// </summary>
-    [Flags]
-    [Serializable]
-    public enum NotificationTriggers
-    {
-        /// <summary>
-        /// No triggers are specified.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Change notification.
-        /// </summary>
-        Change = 1,
-        /// <summary>
-        /// Create notification.
-        /// </summary>
-        Create = 2,
-        /// <summary>
-        /// Delete notification.
-        /// </summary>
-        Delete = 4,
-        /// <summary>
-        /// Rename notification.
-        /// </summary>
-        Rename = 8
-    }
-
-    /// <summary>
     /// The notifications root node in the XML file.
     /// </summary>
     [XmlRoot("notifications")]
@@ -145,7 +116,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <param name="message">
         /// The message to include in the request.
         /// </param>
-        public void Send(NotificationTriggers trigger, string message)
+        public void Send(TriggerType trigger, string message)
         {
             if (NotificationList == null || NotificationList.Count <= 0)
             {
@@ -154,7 +125,7 @@ namespace TE.FileWatcher.Configuration.Notifications
 
             foreach (Notification notification in NotificationList)
             {
-                if (notification.Triggers.NotificationTriggers.HasFlag(trigger))
+                if (notification.Triggers.Current.HasFlag(trigger))
                 {
                     notification.QueueRequest(message);
                 }

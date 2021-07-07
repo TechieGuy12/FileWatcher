@@ -26,16 +26,24 @@ namespace TE.FileWatcher.Configuration.Actions
         /// <param name="fullPath">
         /// The full path to the changed file or folder.
         /// </param>
-        public void Run(string watchPath, string fullPath)
+        public void Run(TriggerType trigger, string watchPath, string fullPath)
         {
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            if (ActionList == null || ActionList.Count <= 0)
             {
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return;
+            }
+            
             foreach (Action action in ActionList)
             {
-                action.Run(watchPath, fullPath);
+                if (action.Triggers.Current.HasFlag(trigger))
+                {
+                    action.Run(watchPath, fullPath);
+                }
             }
         }
     }

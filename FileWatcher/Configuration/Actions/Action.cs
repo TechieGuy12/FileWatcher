@@ -64,7 +64,13 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the source of the action.
         /// </summary>
         [XmlElement("source")]
-        public string Source { get; set; }
+        public string Source { get; set; } = PLACEHOLDER_FULLPATH;
+
+        /// <summary>
+        /// Gets or sets the triggers of the action.
+        /// </summary>
+        [XmlElement("triggers")]
+        public Triggers Triggers { get; set; } = new Triggers();
 
         /// <summary>
         /// Gets or sets the destination of the action.
@@ -166,41 +172,19 @@ namespace TE.FileWatcher.Configuration.Actions
             return IO.Path.GetExtension(fullPath);
         }
 
-        private void GetPlaceHolders(string watchPath, string fullPath)
-        {
-            if (_destinationPlaceholders == null)
-            {
-                _destinationPlaceholders = new Dictionary<string, string>();
-            }
-            else if(_destinationPlaceholders.Count > 0)
-            {
-                return;
-            }
-
-            if (_sourcePlaceholders == null)
-            {
-                _sourcePlaceholders = new Dictionary<string, string>();
-            }
-            else if (_sourcePlaceholders.Count > 0)
-            {
-                return;
-            }
-
-            string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
-            string relativePath = GetRelativePath(watchPath, fullPath);
-            string fileName = GetFilename(fullPath, true);
-            string fileNameWithoutExtension = GetFilename(fullPath, false);
-            string extension = GetFileExtension(fullPath);
-
-            _destinationPlaceholders.Add(PLACEHOLDER_FULLPATH, relativeFullPath);
-            _destinationPlaceholders.Add(PLACEHOLDER_PATH, relativePath);
-            _destinationPlaceholders.Add(PLACEHOLDER_FILENAME, fileName);
-            _destinationPlaceholders.Add(PLACEHOLDER_FILE, fileNameWithoutExtension);
-            _destinationPlaceholders.Add(PLACEHOLDER_EXTENSION, extension);
-
-            _sourcePlaceholders.Add(PLACEHOLDER_FULLPATH, fullPath);
-        }
-
+        /// <summary>
+        /// Gets the destination value by replacing any placeholders with the
+        /// actual string values.
+        /// </summary>
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the changed file.
+        /// </param>
+        /// <returns>
+        /// The destination string value.
+        /// </returns>
         private string GetDestination(string watchPath, string fullPath)
         {
             string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
@@ -219,14 +203,31 @@ namespace TE.FileWatcher.Configuration.Actions
             return destination;
         }
 
+        /// <summary>
+        /// Gets the source value by replacing any placeholders with the actual
+        /// string values.
+        /// </summary>
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the changed file.
+        /// </param>
+        /// <returns>
+        /// The source string value.
+        /// </returns>
         private string GetSource(string watchPath, string fullPath)
         {
+            if (string.IsNullOrWhiteSpace(Source))
+            {
+                Source = PLACEHOLDER_FULLPATH;
+            }
+
             string source = Source;
             source = source.Replace(PLACEHOLDER_FULLPATH, fullPath);
 
             return source;
         }
-
 
         /// <summary>
         /// Runs the action.
@@ -252,16 +253,25 @@ namespace TE.FileWatcher.Configuration.Actions
                 switch (Type)
                 {
                     case ActionType.Copy:
-                        File.Copy(source, destination, Verify);
-                        Logger.WriteLine($"Copied {source} to {destination}.");
+                        if (File.IsValid(source))
+                        {
+                            File.Copy(source, destination, Verify);
+                            Logger.WriteLine($"Copied {source} to {destination}.");
+                        }
                         break;
                     case ActionType.Move:
-                        File.Move(source, destination, Verify);
-                        Logger.WriteLine($"Moved {source} to {destination}.");
+                        if (File.IsValid(source))
+                        {
+                            File.Move(source, destination, Verify);
+                            Logger.WriteLine($"Moved {source} to {destination}.");
+                        }
                         break;
                     case ActionType.Delete:
-                        File.Delete(source);
-                        Logger.WriteLine($"Deleted {source}.");
+                        if (File.IsValid(source))
+                        {
+                            File.Delete(source);
+                            Logger.WriteLine($"Deleted {source}.");
+                        }
                         break;
                 }
             }

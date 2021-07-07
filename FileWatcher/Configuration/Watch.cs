@@ -45,21 +45,21 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The string value for the message type, otherwise <c>null</c>.
         /// </returns>
-        private string GetMessageTypeString(Notifications.NotificationTriggers trigger)
+        private string GetMessageTypeString(TriggerType trigger)
         {
             string messageType = null;
             switch (trigger)
             {
-                case Configuration.Notifications.NotificationTriggers.Create:
+                case TriggerType.Create:
                     messageType = "Created";
                     break;
-                case Configuration.Notifications.NotificationTriggers.Change:
+                case TriggerType.Change:
                     messageType = "Changed";
                     break;
-                case Configuration.Notifications.NotificationTriggers.Delete:
+                case TriggerType.Delete:
                     messageType = "Deleted";
                     break;
-                case Configuration.Notifications.NotificationTriggers.Rename:
+                case TriggerType.Rename:
                     messageType = "Renamed";
                     break;
             }
@@ -80,7 +80,7 @@ namespace TE.FileWatcher.Configuration
         /// The full path of the file or folder.
         /// </param>
         public void ProcessChange(
-            Notifications.NotificationTriggers trigger,
+            TriggerType trigger,
             string name, 
             string fullPath)
         {
@@ -105,9 +105,9 @@ namespace TE.FileWatcher.Configuration
 
             // Only run the actions if a file wasn't deleted, as the file no
             // longer exists so no action can be taken on the file
-            if (trigger != Configuration.Notifications.NotificationTriggers.Delete)
+            if (trigger != TriggerType.Delete)
             {
-                Actions.Run(Path, fullPath);
+                Actions.Run(trigger, Path, fullPath);
             }
         }
     }
