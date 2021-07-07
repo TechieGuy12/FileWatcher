@@ -167,7 +167,7 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(NotificationTriggers.Change, e.Name, e.FullPath);
+            Watch.ProcessChange(NotificationTriggers.Change, e.Name, e.FullPath);           
         }
 
         /// <summary>

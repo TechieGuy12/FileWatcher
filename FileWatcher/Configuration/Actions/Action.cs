@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using IO = System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using TE.FileWatcher.Logging;
+using TE.FileWatcher.FileSystem;
 
 namespace TE.FileWatcher.Configuration.Actions
 {
@@ -123,7 +124,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </returns>
         private string GetRelativePath(string watchPath, string fullPath)
         {
-            string relativeFullPath = Path.GetDirectoryName(fullPath);
+            string relativeFullPath = IO.Path.GetDirectoryName(fullPath);
             return GetRelativeFullPath(watchPath, relativeFullPath);
         }
 
@@ -138,12 +139,12 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </returns>
         private string GetFilename(string fullPath, bool includeExtension)
         {
-            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
+            if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
             {
                 return null;
             }
 
-            return includeExtension ? Path.GetFileNameWithoutExtension(fullPath) : Path.GetFileName(fullPath);
+            return includeExtension ? IO.Path.GetFileNameWithoutExtension(fullPath) : IO.Path.GetFileName(fullPath);
         }
 
         /// <summary>
@@ -157,12 +158,12 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </returns>
         private string GetFileExtension(string fullPath)
         {
-            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
+            if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
             {
                 return null;
             }
 
-            return Path.GetExtension(fullPath);
+            return IO.Path.GetExtension(fullPath);
         }
 
         private void GetPlaceHolders(string watchPath, string fullPath)
@@ -202,32 +203,26 @@ namespace TE.FileWatcher.Configuration.Actions
 
         private string GetDestination(string watchPath, string fullPath)
         {
-            if (_destinationPlaceholders?.Count <= 0)
-            {
-                GetPlaceHolders(watchPath, fullPath);
-            }
+            string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
+            string relativePath = GetRelativePath(watchPath, fullPath);
+            string fileName = GetFilename(fullPath, true);
+            string fileNameWithoutExtension = GetFilename(fullPath, false);
+            string extension = GetFileExtension(fullPath);
 
-            string destination = fullPath;
-            foreach (KeyValuePair<string, string> placeholder in _destinationPlaceholders)
-            {
-                destination = destination.Replace(placeholder.Key, placeholder.Value);
-            }
+            string destination = Destination;
+            destination = destination.Replace(PLACEHOLDER_FULLPATH, relativeFullPath);
+            destination = destination.Replace(PLACEHOLDER_PATH, relativePath);
+            destination = destination.Replace(PLACEHOLDER_FILENAME, fileName);
+            destination = destination.Replace(PLACEHOLDER_FILE, fileNameWithoutExtension);
+            destination = destination.Replace(PLACEHOLDER_EXTENSION, extension);
 
             return destination;
         }
 
         private string GetSource(string watchPath, string fullPath)
         {
-            if (_sourcePlaceholders?.Count <= 0)
-            {
-                GetPlaceHolders(watchPath, fullPath);
-            }
-
-            string source = fullPath;
-            foreach (KeyValuePair<string, string> placeholder in _sourcePlaceholders)
-            {
-                source = source.Replace(placeholder.Key, placeholder.Value);
-            }
+            string source = Source;
+            source = source.Replace(PLACEHOLDER_FULLPATH, fullPath);
 
             return source;
         }
@@ -252,17 +247,33 @@ namespace TE.FileWatcher.Configuration.Actions
             string source = GetSource(watchPath, fullPath);
             string destination = GetDestination(watchPath, fullPath);
 
-            switch (Type)
+            try
             {
-                case ActionType.Copy:
-                    Console.WriteLine($"Copy {source} {destination}");
-                    break;
-                case ActionType.Move:
-                    Console.WriteLine($"Move {source} {destination}");
-                    break;
-                case ActionType.Delete:
-                    Console.WriteLine($"Delete {source} ");
-                    break;
+                switch (Type)
+                {
+                    case ActionType.Copy:
+                        File.Copy(source, destination, Verify);
+                        Logger.WriteLine($"Copied {source} to {destination}.");
+                        break;
+                    case ActionType.Move:
+                        File.Move(source, destination, Verify);
+                        Logger.WriteLine($"Moved {source} to {destination}.");
+                        break;
+                    case ActionType.Delete:
+                        File.Delete(source);
+                        Logger.WriteLine($"Deleted {source}.");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                string message = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    message = ex.InnerException.Message;
+                }
+                Logger.WriteLine($"Could not {Type.ToString().ToLower()} file {source}. Reason: {message}");
+                return;
             }
         }
     }

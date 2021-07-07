@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.IO;
+using System.Threading;
 
 namespace TE.FileWatcher.FileSystem
 {
@@ -73,6 +75,24 @@ namespace TE.FileWatcher.FileSystem
             return (sourceHash.Equals(destinationHash));
         }
 
+        private static bool IsFileReady(string source)
+        {
+            int attempts = 0;
+            bool fileReady = false;
+            while ((attempts <= RETRIES) && !fileReady)
+            try
+            {
+                using FileStream fileStream = IO.File.OpenRead(source);
+                fileReady = true;
+            }
+            catch
+            {
+                Thread.Sleep(1000);
+            }
+
+            return fileReady;
+        }
+
         /// <summary>
         /// Copies a file to a specified location.
         /// </summary>
@@ -111,17 +131,19 @@ namespace TE.FileWatcher.FileSystem
 
             if (!IO.File.Exists(source))
             {
-                throw new IO.FileNotFoundException($"The file '{source}' was not found.");
+                throw new FileNotFoundException($"The file '{source}' was not found.");
             }
-            
+
             try
             {
                 int attempts = 0;
                 bool fileCopied = false;
-                while (attempts <= RETRIES)
+                while ((attempts <= RETRIES) && !fileCopied)
                 {
-                    IO.File.Copy(source, destination);
-                    fileCopied = Verify(source, destination);
+                    Console.WriteLine($"{source} to {destination}");
+                    IO.File.Copy(source, destination, true);
+                    fileCopied = (verify == true) ? Verify(source, destination) : true;
+                    fileCopied = true;
 
                     if (!fileCopied)
                     {
@@ -206,7 +228,7 @@ namespace TE.FileWatcher.FileSystem
             {
                 int attempts = 0;
                 bool fileDeleted = false;
-                while (attempts <= RETRIES)
+                while ((attempts <= RETRIES) && !fileDeleted)
                 {
                     IO.File.Delete(source);
                     fileDeleted = !IO.File.Exists(source);
