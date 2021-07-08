@@ -43,7 +43,7 @@ namespace TE.FileWatcher
             {
                 new Option<string>(
                     aliases: new string[] { "--folder", "-f" },
-                    description: "The folder containing the configuration and notification XML files."),
+                    description: "The folder containing the configuration XML file."),
 
                 new Option<string>(
                     aliases: new string[] { "--configFile", "-cf" },
