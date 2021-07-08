@@ -154,8 +154,7 @@ namespace TE.FileWatcher.FileSystem
                     IO.File.Copy(source, destination, true);
                     WaitForFile(destination);
 
-                    fileCopied = (verify == true) ? Verify(source, destination) : true;
-                    fileCopied = true;                    
+                    fileCopied = verify != true || Verify(source, destination);                  
 
                     if (!fileCopied)
                     {
