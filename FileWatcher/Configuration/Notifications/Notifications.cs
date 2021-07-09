@@ -35,7 +35,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Gets or sets the notifications list.
         /// </summary>
         [XmlElement("notification")]
-        public List<Notification> NotificationList { get; set; } = new List<Notification>();
+        public List<Notification> NotificationList { get; set; }
 
         /// <summary>
         /// Initializes an instance of the <see cref="Notifications"/> class.
@@ -58,6 +58,13 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </param>
         private async void OnElapsed(object source, ElapsedEventArgs e)
         {
+            // If there are no notifications, then stop the timer
+            if (NotificationList?.Count <= 0)
+            {
+                _timer.Stop();
+                return;
+            }
+
             // Ensure the wait time is not less than the minimum wait time
             if (WaitTime < MIN_WAIT_TIME)
             {
@@ -118,16 +125,19 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </param>
         public void Send(TriggerType trigger, string message)
         {
-            if (NotificationList == null || NotificationList.Count <= 0)
+            if (NotificationList?.Count <= 0)
             {
                 return;
             }
 
             foreach (Notification notification in NotificationList)
             {
-                if (notification.Triggers.Current.HasFlag(trigger))
+                if (notification.Triggers?.TriggerList.Count > 0)
                 {
-                    notification.QueueRequest(message);
+                    if (notification.Triggers.Current.HasFlag(trigger))
+                    {
+                        notification.QueueRequest(message);
+                    }
                 }
             }
         }

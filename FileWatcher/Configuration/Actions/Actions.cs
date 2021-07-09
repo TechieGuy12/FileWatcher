@@ -15,7 +15,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("action")]
-        public List<Action> ActionList { get; set; } = new List<Action>();
+        public List<Action> ActionList { get; set; }
 
         /// <summary>
         /// Runs all the actions for the watch.
@@ -28,7 +28,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </param>
         public void Run(TriggerType trigger, string watchPath, string fullPath)
         {
-            if (ActionList == null || ActionList.Count <= 0)
+            if (ActionList?.Count <= 0)
             {
                 return;
             }
@@ -40,9 +40,12 @@ namespace TE.FileWatcher.Configuration.Actions
             
             foreach (Action action in ActionList)
             {
-                if (action.Triggers.Current.HasFlag(trigger))
+                if (action.Triggers?.TriggerList.Count > 0)
                 {
-                    action.Run(watchPath, fullPath);
+                    if (action.Triggers.Current.HasFlag(trigger))
+                    {
+                        action.Run(watchPath, fullPath);
+                    }
                 }
             }
         }

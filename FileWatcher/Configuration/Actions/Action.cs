@@ -277,11 +277,7 @@ namespace TE.FileWatcher.Configuration.Actions
             }
             catch (Exception ex)
             {
-                string message = ex.Message;
-                if (ex.InnerException != null)
-                {
-                    message = ex.InnerException.Message;
-                }
+                string message = (ex.InnerException == null) ? ex.Message : ex.InnerException.Message;
                 Logger.WriteLine($"Could not {Type.ToString().ToLower()} file {source}. Reason: {message}");
                 return;
             }

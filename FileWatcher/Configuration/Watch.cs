@@ -22,19 +22,19 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the exclusions
         /// </summary>
         [XmlElement("exclusions")]
-        public Exclusions.Exclusions Exclusions { get; set; } = new Exclusions.Exclusions();
+        public Exclusions.Exclusions Exclusions { get; set; }
 
         /// <summary>
         /// Gets or sets the notifications for the watch.
         /// </summary>
         [XmlElement("notifications")]
-        public Notifications.Notifications Notifications { get; set; } = new Notifications.Notifications();
+        public Notifications.Notifications Notifications { get; set; }
 
         /// <summary>
         /// Gets or sets the actions for the watch.
         /// </summary>
         [XmlElement("actions")]
-        public Actions.Actions Actions { get; set; } = new Actions.Actions();
+        public Actions.Actions Actions { get; set; }
 
         /// <summary>
         /// Gets the string value for the message type.
@@ -89,25 +89,28 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            // If the file or folder is in the exclude list, then don't take
-            // any further actions
-            if (Exclusions.Exclude(Path, name, fullPath))
+            if (Exclusions != null)
             {
-                return;
+                // If the file or folder is in the exclude list, then don't take
+                // any further actions
+                if (Exclusions.Exclude(Path, name, fullPath))
+                {
+                    return;
+                }
             }
 
             // Send the notifications
             string messageType = GetMessageTypeString(trigger);
             if (!string.IsNullOrWhiteSpace(messageType))
             {
-                Notifications.Send(trigger, $"{messageType}: {fullPath}");
+                Notifications?.Send(trigger, $"{messageType}: {fullPath}");
             }
 
             // Only run the actions if a file wasn't deleted, as the file no
             // longer exists so no action can be taken on the file
             if (trigger != TriggerType.Delete)
             {
-                Actions.Run(trigger, Path, fullPath);
+                Actions?.Run(trigger, Path, fullPath);
             }
         }
     }

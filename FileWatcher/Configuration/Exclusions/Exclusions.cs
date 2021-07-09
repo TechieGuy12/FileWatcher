@@ -29,25 +29,25 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// Gets or sets the files node.
         /// </summary>
         [XmlElement("files")]
-        public Files Files { get; set; } = new Files();
+        public Files Files { get; set; }
 
         /// <summary>
         /// Gets or sets the folders node.
         /// </summary>
         [XmlElement("folders")]
-        public Folders Folders { get; set; } = new Folders();
+        public Folders Folders { get; set; }
 
         /// <summary>
         /// Gets or sets the paths node.
         /// </summary>
         [XmlElement("paths")]
-        public Paths Paths { get; set; } = new Paths();
+        public Paths Paths { get; set; }
 
         /// <summary>
         /// Gets or sets the attributes node.
         /// </summary>
         [XmlElement("attributes")]
-        public Attributes Attributes { get; set; } = new Attributes();
+        public Attributes Attributes { get; set; }
 
         /// <summary>
         /// The folder paths stored in the <see cref="Watch"/> class are
