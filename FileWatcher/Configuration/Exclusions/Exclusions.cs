@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using TE.FileWatcher.Logging;
 
 namespace TE.FileWatcher.Configuration.Exclusions
 {
@@ -59,6 +60,11 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </summary>
         private void GetFolders()
         {
+            if (Folders == null)
+            {
+                return;
+            }
+
             if (!IsPathValid(_watchPath))
             {
                 return;
@@ -80,6 +86,11 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </summary>
         private void GetPaths()
         {
+            if (Paths == null)
+            {
+                return;
+            }
+
             if (!IsPathValid(_watchPath))
             {
                 return;
@@ -104,17 +115,25 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         private bool ExcludeFile(string name)
         {
+            if (Files == null || Files.Name.Count <= 0)
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(name))
             {
                 return false;
             }
 
-            if (Files.Name.Count <= 0)
+            if (Files.Name.Contains(name))
+            {
+                Logger.WriteLine($"The file name '{name}' is set to be excluded.");
+                return true;
+            }
+            else
             {
                 return false;
             }
-
-            return Files.Name.Contains(name);
         }
 
         /// <summary>
@@ -133,6 +152,11 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         private bool ExcludeAttribute(string path)
         {
+            if (Attributes == null || Attributes.Attribute.Count <= 0)
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(path))
             {
                 return false;
@@ -143,22 +167,24 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 return false;
             }
 
-            if (Attributes.Attribute.Count <= 0)
-            {
-                return false;
-            }
-
             bool hasAttribute = false;
-            FileAttributes fileAttributes = File.GetAttributes(path);
-            foreach (FileAttributes attribute in Attributes.Attribute)
+            try
             {
-                if (fileAttributes.HasFlag(attribute))
+                FileAttributes fileAttributes = File.GetAttributes(path);
+                foreach (FileAttributes attribute in Attributes.Attribute)
                 {
-                    hasAttribute = true;
-                    break;
+                    if (fileAttributes.HasFlag(attribute))
+                    {
+                        Logger.WriteLine($"The path '{path}' as the attribute '{attribute}'.");
+                        hasAttribute = true;
+                        break;
+                    }
                 }
             }
-
+            catch
+            {
+                hasAttribute = false;
+            }
             return hasAttribute;
         }
 
@@ -174,12 +200,12 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         private bool ExcludeFolder(string path)
         {
-            if (string.IsNullOrWhiteSpace(path))
+            if (_folders == null || _folders.Count <= 0)
             {
                 return false;
             }
 
-            if (_folders.Count <= 0)
+            if (string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
@@ -189,6 +215,7 @@ namespace TE.FileWatcher.Configuration.Exclusions
             {
                 if (path.Contains(folder) || Path.GetDirectoryName(path).Contains(folder))
                 {
+                    Logger.WriteLine($"The path '{path}' contains the folder '{folder}'.");
                     exclude = true;
                     break;
                 }
@@ -209,17 +236,28 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         private bool ExcludePath(string path)
         {
+            if (_paths == null || _paths.Count <= 0)
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
-            if (_paths.Count <= 0)
+            bool exclude = false;
+            foreach (string aPath in _paths)
             {
-                return false;
+                if (path.Contains(aPath))
+                {
+                    Logger.WriteLine($"The path '{path}' contains the path '{aPath}'.");
+                    exclude = true;
+                    break;
+                }
             }
 
-            return _paths.Contains(path);
+            return exclude;
         }
 
         /// <summary>

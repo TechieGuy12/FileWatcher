@@ -28,7 +28,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </param>
         public void Run(TriggerType trigger, string watchPath, string fullPath)
         {
-            if (ActionList?.Count <= 0)
+            if (ActionList == null || ActionList.Count <= 0)
             {
                 return;
             }
