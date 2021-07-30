@@ -22,6 +22,10 @@ namespace TE.FileWatcher
         // The file system watcher object
         private FileSystemWatcher _fsWatcher = new FileSystemWatcher();
 
+        private ChangeInfo _lastChange;
+
+        private DateTime _lastWriteTime;
+
         /// <summary>
         /// Gets the <see cref="Watch"/> object associated with this watcher.
         /// </summary>
@@ -130,14 +134,14 @@ namespace TE.FileWatcher
 
             _fsWatcher = new FileSystemWatcher(Watch.Path);
 
-            _fsWatcher.NotifyFilter = NotifyFilters.Attributes
-                                 | NotifyFilters.CreationTime
-                                 | NotifyFilters.DirectoryName
+            _fsWatcher.NotifyFilter = //NotifyFilters.Attributes
+                                 //| NotifyFilters.CreationTime
+                                 NotifyFilters.DirectoryName
                                  | NotifyFilters.FileName
-                                 | NotifyFilters.LastAccess
-                                 | NotifyFilters.LastWrite
-                                 | NotifyFilters.Security
-                                 | NotifyFilters.Size;
+                                 //| NotifyFilters.LastAccess
+                                 | NotifyFilters.LastWrite;
+                                 //| NotifyFilters.Security
+                                 //| NotifyFilters.Size;
 
             _fsWatcher.Changed += OnChanged;
             _fsWatcher.Created += OnCreated;
@@ -167,7 +171,13 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(TriggerType.Change, e.Name, e.FullPath);           
+
+            ChangeInfo change = GetChange(TriggerType.Change, e.Name, e.FullPath);
+            if (change != null)
+            {
+                Watch.ProcessChange(change);
+            }
+            
         }
 
         /// <summary>
@@ -186,7 +196,11 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(TriggerType.Create, e.Name, e.FullPath);
+            ChangeInfo change = GetChange(TriggerType.Create, e.Name, e.FullPath);
+            if (change != null)
+            {
+                Watch.ProcessChange(change);
+            }
         }
 
         /// <summary>
@@ -205,7 +219,11 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(TriggerType.Delete, e.Name, e.FullPath);
+            ChangeInfo change = GetChange(TriggerType.Delete, e.Name, e.FullPath);
+            if (change != null)
+            {
+                Watch.ProcessChange(change);
+            }
         }
 
         /// <summary>
@@ -224,7 +242,11 @@ namespace TE.FileWatcher
                 return;
             }
 
-            Watch.ProcessChange(TriggerType.Rename, e.Name, e.FullPath);
+            ChangeInfo change = GetChange(TriggerType.Rename, e.Name, e.FullPath);
+            if (change != null)
+            {
+                Watch.ProcessChange(change);
+            }
         }
 
         /// <summary>
@@ -241,6 +263,76 @@ namespace TE.FileWatcher
             Logger.WriteLine(
                 $"An error occurred while watching the file system. Exception: {e.GetException().Message}", 
                 LogLevel.ERROR);
+        }
+
+        /// <summary>
+        /// Gets the <see cref="ChangeInfo"/> object associated with the change.
+        /// </summary>
+        /// <param name="trigger">
+        /// The type of change.
+        /// </param>
+        /// <param name="name">
+        /// The name of the file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the file or folder.
+        /// </param>
+        /// <returns>
+        /// The <see cref="ChangeInfo"/> object of the change, otherwise <c>null</c>.
+        /// </returns>
+        private ChangeInfo GetChange(TriggerType trigger, string name, string fullPath)
+        {
+            Logger.WriteLine("GetChange");
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return null;
+            }
+            
+            try
+            {
+                ChangeInfo change = new ChangeInfo(trigger, name, fullPath);
+                DateTime writeTime = default;
+
+                if (File.Exists(change.FullPath))
+                {
+                    writeTime = File.GetLastWriteTime(change.FullPath);
+                }
+
+                if (_lastChange == null)
+                {
+                    _lastChange = change;
+                    _lastWriteTime = writeTime;
+                    return change;
+                }
+
+                if (_lastChange.FullPath.Equals(change.FullPath))
+                {
+                    if (_lastChange.Trigger.Equals(TriggerType.Create))
+                    {
+                        _lastChange = change;
+                        _lastWriteTime = writeTime;
+                        return null;
+                    }
+
+                    if (_lastChange.Trigger.Equals(TriggerType.Change) && trigger.Equals(TriggerType.Change))
+                    {
+                        if (_lastWriteTime.Equals(writeTime))
+                        {
+                            _lastChange = change;
+                            _lastWriteTime = writeTime;
+                            return null;
+                        }
+                    }
+                }
+
+                _lastChange = change;
+                _lastWriteTime = writeTime;
+                return change;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
