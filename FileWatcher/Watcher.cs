@@ -267,6 +267,9 @@ namespace TE.FileWatcher
 
         /// <summary>
         /// Gets the <see cref="ChangeInfo"/> object associated with the change.
+        /// This method will mark related changes as invalid - such as multiple
+        /// changes related to a file copy - to avoid any duplicate work being
+        /// done on a file or folder.
         /// </summary>
         /// <param name="trigger">
         /// The type of change.
@@ -282,7 +285,6 @@ namespace TE.FileWatcher
         /// </returns>
         private ChangeInfo GetChange(TriggerType trigger, string name, string fullPath)
         {
-            Logger.WriteLine("GetChange");
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
             {
                 return null;
@@ -290,44 +292,63 @@ namespace TE.FileWatcher
             
             try
             {
+                // Ignore folder changes as those would be valid for other
+                // change events
+                if (Directory.Exists(fullPath) && trigger == TriggerType.Change)
+                {
+                    return null;
+                }
+
+                // The flag indicating the change is a valid change and not one
+                // derived from a previous change
+                bool isValid = true;
+
+                // The current information on the change
                 ChangeInfo change = new ChangeInfo(trigger, name, fullPath);
+
+                // The last write time of the file
                 DateTime writeTime = default;
 
+                // Verify the file exists before attempting to get the last
+                // write time
                 if (File.Exists(change.FullPath))
                 {
                     writeTime = File.GetLastWriteTime(change.FullPath);
                 }
 
-                if (_lastChange == null)
+                // Check if the change is related to the same file as the last
+                // change that was captured
+                if (_lastChange != null && _lastChange.FullPath.Equals(change.FullPath))
                 {
-                    _lastChange = change;
-                    _lastWriteTime = writeTime;
-                    return change;
-                }
-
-                if (_lastChange.FullPath.Equals(change.FullPath))
-                {
-                    if (_lastChange.Trigger.Equals(TriggerType.Create))
+                    // If the last change was a copy, then this change is
+                    // associated with that change as a copy raises multiple
+                    // change events for a file - a copy, and several change
+                    // events - so mark this change event as invalid
+                    if (_lastChange.Trigger == TriggerType.Create)
                     {
-                        _lastChange = change;
-                        _lastWriteTime = writeTime;
-                        return null;
+                        isValid = false;
                     }
 
-                    if (_lastChange.Trigger.Equals(TriggerType.Change) && trigger.Equals(TriggerType.Change))
+                    // Check if both the last change was a change, and the
+                    // current change is also a change, and the write times
+                    // are the same. If all conditions are met, then this indicates
+                    // the change being made was associated with another action,
+                    // such as a copy, and not an actual change made by the user,
+                    // so flag the change as not valid.
+                    if ((_lastChange.Trigger == TriggerType.Change && trigger ==TriggerType.Change) &&
+                        _lastWriteTime.Equals(writeTime))
                     {
-                        if (_lastWriteTime.Equals(writeTime))
-                        {
-                            _lastChange = change;
-                            _lastWriteTime = writeTime;
-                            return null;
-                        }
+                        isValid = false;
                     }
                 }
 
+                // Store the last change and write time for this change
                 _lastChange = change;
                 _lastWriteTime = writeTime;
-                return change;
+
+                // Return the change if it is valid, or null if the change
+                // isn't valid
+                return isValid ? change : null;
             }
             catch
             {
