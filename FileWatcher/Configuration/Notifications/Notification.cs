@@ -124,9 +124,20 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <param name="message">
         /// The value that replaces the <c>[message]</c> placeholder.
         /// </param>
-        internal void QueueRequest(string message)
+        /// <param name="trigger">
+        /// The trigger for the request.
+        /// </param>
+        internal void QueueRequest(string message, TriggerType trigger)
         {
-            _message.Append(CleanMessage(message) + @"\n");
+            if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
+            {
+                return;
+            }
+
+            if (Triggers.Current.HasFlag(trigger))
+            {
+                _message.Append(CleanMessage(message) + @"\n");
+            }            
         }
 
         /// <summary>

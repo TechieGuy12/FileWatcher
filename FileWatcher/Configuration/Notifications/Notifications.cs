@@ -59,7 +59,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         private async void OnElapsed(object source, ElapsedEventArgs e)
         {
             // If there are no notifications, then stop the timer
-            if (NotificationList?.Count <= 0)
+            if (NotificationList == null || NotificationList.Count <= 0)
             {
                 _timer.Stop();
                 return;
@@ -125,20 +125,14 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </param>
         public void Send(TriggerType trigger, string message)
         {
-            if (NotificationList?.Count <= 0)
+            if (NotificationList == null || NotificationList.Count <= 0)
             {
                 return;
             }
 
             foreach (Notification notification in NotificationList)
             {
-                if (notification.Triggers?.TriggerList.Count > 0)
-                {
-                    if (notification.Triggers.Current.HasFlag(trigger))
-                    {
-                        notification.QueueRequest(message);
-                    }
-                }
+                notification.QueueRequest(message, trigger);
             }
         }
     }
