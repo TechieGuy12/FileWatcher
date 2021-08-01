@@ -65,7 +65,7 @@ namespace TE.FileWatcher.Configuration
                     return _triggers;
                 }
 
-                if (TriggerList?.Count > 0)
+                if (TriggerList != null && TriggerList.Count > 0)
                 {
                     foreach (TriggerType trigger in TriggerList)
                     {

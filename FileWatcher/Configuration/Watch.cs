@@ -102,6 +102,11 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         private void DoWork(object sender, DoWorkEventArgs e)
         {
+            if (_queue == null)
+            {                
+                _queue = new ConcurrentQueue<ChangeInfo>();
+            }
+
             if (_queue.IsEmpty)
             {
                 Thread.Sleep(100);
@@ -122,18 +127,24 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    // Send the notifications
-                    string messageType = GetMessageTypeString(change.Trigger);
-                    if (!string.IsNullOrWhiteSpace(messageType))
+                    if (Notifications != null)
                     {
-                        Notifications?.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                        // Send the notifications
+                        string messageType = GetMessageTypeString(change.Trigger);
+                        if (!string.IsNullOrWhiteSpace(messageType))
+                        {
+                            Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                        }
                     }
 
-                    // Only run the actions if a file wasn't deleted, as the file no
-                    // longer exists so no action can be taken on the file
-                    if (change.Trigger != TriggerType.Delete)
+                    if (Actions != null)
                     {
-                        Actions?.Run(change.Trigger, Path, change.FullPath);
+                        // Only run the actions if a file wasn't deleted, as the file no
+                        // longer exists so no action can be taken on the file
+                        if (change.Trigger != TriggerType.Delete)
+                        {
+                            Actions?.Run(change.Trigger, Path, change.FullPath);
+                        }
                     }
                 }
             }
@@ -153,7 +164,7 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public void ProcessChange(ChangeInfo change)
         {
-            if (change == null)
+            if (change == null || _queue == null || _worker == null)
             {
                 return;
             }
