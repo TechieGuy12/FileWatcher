@@ -216,6 +216,7 @@ namespace TE.FileWatcher
                 return false;
             }
 
+            Logger.WriteLine("All watchers have closed.");
             return true;
         }
 

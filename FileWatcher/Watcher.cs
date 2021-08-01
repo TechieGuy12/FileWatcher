@@ -76,6 +76,7 @@ namespace TE.FileWatcher
 
             _fsWatcher = null;
             _disposed = true;
+            Logger.WriteLine($"Watcher ended for {Watch.Path}.");
         }
 
         /// <summary>
@@ -260,9 +261,19 @@ namespace TE.FileWatcher
         /// </param>
         private void OnError(object sender, ErrorEventArgs e)
         {
-            Logger.WriteLine(
-                $"An error occurred while watching the file system. Exception: {e.GetException().Message}", 
-                LogLevel.ERROR);
+            if (e.GetException().GetType() == typeof(InternalBufferOverflowException))
+            {
+                Logger.WriteLine(
+                    $"File System Watcher internal buffer overflow.",
+                    LogLevel.ERROR);
+            }
+            else
+            {
+                Logger.WriteLine(
+                    $"An error occurred while watching the file system. Exception: {e.GetException().Message}",
+                    LogLevel.ERROR);
+            }
+            NotAccessibleError(_fsWatcher, e);
         }
 
         /// <summary>
@@ -354,6 +365,28 @@ namespace TE.FileWatcher
             {
                 return null;
             }
+        }
+
+        private void NotAccessibleError(FileSystemWatcher source, ErrorEventArgs e)
+        {
+            source.EnableRaisingEvents = false;
+            int iMaxAttempts = 120;
+            int iTimeOut = 30000;
+            int i = 0;
+            while (source.EnableRaisingEvents == false && i < iMaxAttempts)
+            {
+                i += 1;
+                try
+                {
+                    source.EnableRaisingEvents = true;
+                }
+                catch
+                {
+                    source.EnableRaisingEvents = false;
+                    System.Threading.Thread.Sleep(iTimeOut);
+                }
+            }
+
         }
     }
 }
