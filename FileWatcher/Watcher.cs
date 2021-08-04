@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using TE.FileWatcher.Configuration;
 using TE.FileWatcher.Configuration.Notifications;
 using TE.FileWatcher.Logging;
@@ -25,6 +26,8 @@ namespace TE.FileWatcher
         private ChangeInfo _lastChange;
 
         private DateTime _lastWriteTime;
+
+        private Timer _timer;
 
         /// <summary>
         /// Gets the <see cref="Watch"/> object associated with this watcher.
@@ -124,6 +127,9 @@ namespace TE.FileWatcher
         private void Initialize()
         {
             CreateWatcher();
+            _timer = new Timer(600000);
+            _timer.Enabled = true;
+            _timer.Elapsed += OnElapsed;
         }
 
         /// <summary>
@@ -274,6 +280,21 @@ namespace TE.FileWatcher
                     LogLevel.ERROR);
             }
             NotAccessibleError(_fsWatcher, e);
+        }
+
+        /// <summary>
+        /// Called when the timers elapsed time has been reached.
+        /// </summary>
+        /// <param name="source">
+        /// The timer object.
+        /// </param>
+        /// <param name="e">
+        /// The information associated witht he elapsed time.
+        /// </param>
+        private void OnElapsed(object source, ElapsedEventArgs e)
+        {
+            _fsWatcher.EnableRaisingEvents = false;
+            _fsWatcher.EnableRaisingEvents = true;
         }
 
         /// <summary>
