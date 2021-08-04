@@ -84,13 +84,13 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Gets or sets the triggers of the request.
         /// </summary>
         [XmlElement("triggers")]
-        public Triggers Triggers { get; set; } = new Triggers();
+        public Triggers Triggers { get; set; }
 
         /// <summary>
         /// Gets or sets the data to send for the request.
         /// </summary>
         [XmlElement("data")]
-        public Data Data { get; set; } = new Data();
+        public Data Data { get; set; }
 
         /// <summary>
         /// Returns a value indicating if there is a message waiting to be sent
@@ -124,9 +124,20 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <param name="message">
         /// The value that replaces the <c>[message]</c> placeholder.
         /// </param>
-        internal void QueueRequest(string message)
+        /// <param name="trigger">
+        /// The trigger for the request.
+        /// </param>
+        internal void QueueRequest(string message, TriggerType trigger)
         {
-            _message.Append(CleanMessage(message) + @"\n");
+            if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
+            {
+                return;
+            }
+
+            if (Triggers.Current.HasFlag(trigger))
+            {
+                _message.Append(CleanMessage(message) + @"\n");
+            }            
         }
 
         /// <summary>
@@ -138,7 +149,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         internal async Task<HttpResponseMessage> SendAsync()
         {
             // If there isn't a message to be sent, then just return
-            if (_message.Length <= 0)
+            if (_message?.Length <= 0)
             {
                 return null;
             }
@@ -173,10 +184,13 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </returns>
         private string CleanMessage(string message)
         {
-            //const string reduceMultiSpace = @"[ ]{2,}";
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return message;
+            }
+            
             message = message.Replace(@"\", @"\\").Trim();
             return Regex.Replace(message, @"\r\n?|\n", "\n");
-            //return Regex.Replace(body.Replace("\t", ""), reduceMultiSpace, " ");
         }
     }
 }

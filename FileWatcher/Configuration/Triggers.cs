@@ -47,7 +47,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets a list of notification triggers.
         /// </summary>
         [XmlElement("trigger")]
-        public List<TriggerType> TriggerList { get; set; } = new List<TriggerType>();
+        public List<TriggerType> TriggerList { get; set; }
 
         /// <summary>
         /// Gets the current combined triggers using the list from the
@@ -58,14 +58,19 @@ namespace TE.FileWatcher.Configuration
         {
             get
             {
+                // Return the triggers if they have already been combined
+                // by checking if they are not equal to the default value
                 if (_triggers != TriggerType.None)
                 {
                     return _triggers;
                 }
 
-                foreach(TriggerType trigger in TriggerList)
+                if (TriggerList != null && TriggerList.Count > 0)
                 {
-                    _triggers |= trigger;
+                    foreach (TriggerType trigger in TriggerList)
+                    {
+                        _triggers |= trigger;
+                    }
                 }
 
                 return _triggers;

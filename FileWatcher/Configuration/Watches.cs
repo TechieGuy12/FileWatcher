@@ -23,6 +23,6 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the watches list.
         /// </summary>
         [XmlElement("watch")]
-        public List<Watch> WatchList { get; set; } = new List<Watch>();
+        public List<Watch> WatchList { get; set; }
     }
 }

@@ -134,7 +134,6 @@ namespace TE.FileWatcher.FileSystem
             if (!IO.File.Exists(source))
             {
                 return;
-                //throw new FileNotFoundException($"The file '{source}' was not found.");
             }
 
             if (Directory.IsValid(source))

@@ -134,8 +134,6 @@ namespace TE.FileWatcher
                 Console.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
                 return null;
             }
-
-
         }
 
         /// <summary>
@@ -184,15 +182,11 @@ namespace TE.FileWatcher
                 return false;
             }
 
-            Task[] tasks = new Task[watches.WatchList.Count];
-            int count = 0;
-
             foreach (Watch watch in watches.WatchList)
             {
                 try
                 {
-                    tasks[count] = Task.Run(() => { Watcher watcher = new Watcher(watch); });
-                    count++;
+                    Watcher watcher = new Watcher(watch);
                 }
                 catch (Exception ex)
                 {
@@ -200,22 +194,9 @@ namespace TE.FileWatcher
                 }
             }
 
-            Console.WriteLine("Press enter to exit.");
-            Console.ReadLine();
+            new System.Threading.AutoResetEvent(false).WaitOne();
 
-            try
-            {
-                Task.WaitAll(tasks);
-            }
-            catch (AggregateException ae)
-            {
-                foreach (Exception exception in ae.Flatten().InnerExceptions)
-                {
-                    Logger.WriteLine(exception.Message, LogLevel.ERROR);
-                }
-                return false;
-            }
-
+            Logger.WriteLine("All watchers have closed.");
             return true;
         }
 
