@@ -125,15 +125,18 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 return false;
             }
 
-            if (Files.Name.Contains(name))
+            bool exclude = false;
+            foreach (string fileName in Files.Name)
             {
-                Logger.WriteLine($"The file name '{name}' is set to be excluded.");
-                return true;
+                if (name.EndsWith(fileName))
+                {
+                    Logger.WriteLine($"The file name '{fileName}' is set to be excluded.");
+                    exclude = true;
+                    break;
+                }
             }
-            else
-            {
-                return false;
-            }
+
+            return exclude;
         }
 
         /// <summary>

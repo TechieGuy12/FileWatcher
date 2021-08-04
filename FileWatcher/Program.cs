@@ -134,8 +134,6 @@ namespace TE.FileWatcher
                 Console.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
                 return null;
             }
-
-
         }
 
         /// <summary>
