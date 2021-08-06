@@ -25,9 +25,6 @@ namespace TE.FileWatcher
         // The default configuration file name
         const string DEFAULT_CONFIG_FILE = "config.xml";
 
-        // The default notifications file name
-        const string DEFAULT_NOTIFICATION_FILE = "notification.xml";
-
         /// <summary>
         /// The main function.
         /// </summary>
