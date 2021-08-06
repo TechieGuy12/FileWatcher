@@ -90,7 +90,7 @@ namespace TE.FileWatcher
             }
 
             // Run the watcher tasks
-            if (RunWatcherTasks(watches))
+            if (StartWatchers(watches))
             {
                 return SUCCESS;
             }
@@ -174,7 +174,7 @@ namespace TE.FileWatcher
         /// <returns>
         /// True if the tasks were started and run successfully, otherwise false.
         /// </returns>
-        private static bool RunWatcherTasks(Watches watches)
+        private static bool StartWatchers(Watches watches)
         {
             if (watches == null)
             {
@@ -182,18 +182,7 @@ namespace TE.FileWatcher
                 return false;
             }
 
-            foreach (Watch watch in watches.WatchList)
-            {
-                try
-                {
-                    Watcher watcher = new Watcher(watch);
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                }
-            }
-
+            watches.Start();
             new System.Threading.AutoResetEvent(false).WaitOne();
 
             Logger.WriteLine("All watchers have closed.");
