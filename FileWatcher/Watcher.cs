@@ -23,10 +23,13 @@ namespace TE.FileWatcher
         // The file system watcher object
         private FileSystemWatcher _fsWatcher = new FileSystemWatcher();
 
+        // Information about the last change
         private ChangeInfo _lastChange;
 
+        // The write time for the last change
         private DateTime _lastWriteTime;
 
+        // The timer used to "reset" the FileSystemWatch object
         private Timer _timer;
 
         /// <summary>
@@ -283,13 +286,18 @@ namespace TE.FileWatcher
         }
 
         /// <summary>
-        /// Called when the timers elapsed time has been reached.
+        /// Called when the timers elapsed time has been reached. The timer is
+        /// used because the FileSystemWatcher object tends to stop raising
+        /// events after a period of time. After the elapsed time, this method
+        /// will disable and then re-enable event raising to sort of "reset" 
+        /// the FilesSystemWatcher and prevent it from stop listening to
+        /// events.
         /// </summary>
         /// <param name="source">
         /// The timer object.
         /// </param>
         /// <param name="e">
-        /// The information associated witht he elapsed time.
+        /// The information associated with the elapsed time.
         /// </param>
         private void OnElapsed(object source, ElapsedEventArgs e)
         {
@@ -388,6 +396,16 @@ namespace TE.FileWatcher
             }
         }
 
+        /// <summary>
+        /// Reset the FileSystemWatcher object by disabling and attempting to
+        /// re-enable the event listening for the object.
+        /// </summary>
+        /// <param name="source">
+        /// The source.
+        /// </param>
+        /// <param name="e">
+        /// The event arguments related to the exception.
+        /// </param>
         private void NotAccessibleError(FileSystemWatcher source, ErrorEventArgs e)
         {
             source.EnableRaisingEvents = false;
