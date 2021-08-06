@@ -26,21 +26,16 @@ namespace TE.FileWatcher.Configuration
         [XmlElement("watch")]
         public List<Watch> WatchList { get; set; }
 
-        [XmlIgnore]
-        List<Watcher> _runningWatchers;
-
         /// <summary>
         /// Starts the watches.
         /// </summary>
         public void Start()
         {
-            _runningWatchers = new List<Watcher>();
-
             foreach (Watch watch in WatchList)
             {
                 try
                 {
-                    _runningWatchers.Add(new Watcher(watch));
+                    watch.Start();
                 }
                 catch (Exception ex)
                 {
