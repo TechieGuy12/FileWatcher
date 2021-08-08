@@ -9,6 +9,9 @@ using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration.Notifications
 {
+    /// <summary>
+    /// A notification that will be triggered.
+    /// </summary>
     public class Notification
     {
         // The message to send with the request.
@@ -149,7 +152,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         internal async Task<HttpResponseMessage> SendAsync()
         {
             // If there isn't a message to be sent, then just return
-            if (_message?.Length <= 0)
+            if (_message == null || _message.Length <= 0)
             {
                 return null;
             }
@@ -165,7 +168,7 @@ namespace TE.FileWatcher.Configuration.Notifications
                 await Request.SendAsync(
                     Method,
                     Uri,
-                    Data.Headers.HeaderList,
+                    Data.Headers,
                     content,
                     Data.MimeType);
 
