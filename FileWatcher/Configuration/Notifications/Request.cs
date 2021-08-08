@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -40,8 +41,16 @@ namespace TE.FileWatcher.Configuration.Notifications
         // XML mime type
         private const string MIME_TYPE_XML = "application/xml";
 
-        // The HTTP client
-        private static HttpClient _httpClient;
+        private static ServiceCollection _services;
+
+        private static ServiceProvider _serviceProvider;
+
+        static Request()
+        {
+            _services = new ServiceCollection();
+            _services.AddHttpClient();
+            _serviceProvider = _services.BuildServiceProvider();
+        }
 
         /// <summary>
         /// Sends a request to a remote system asychronously.
@@ -51,8 +60,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <param name="uri"></param>
         /// The URL of the request.
         /// <param name="headers"></param>
-        /// A <see cref="List{T}"/> of <see cref="Header"/> objects associated
-        /// with the request.
+        /// The <see cref="Headers"/> object associated with the request.
         /// <param name="body">
         /// The content body of the request.
         /// </param>
@@ -68,7 +76,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         internal static async Task<HttpResponseMessage> SendAsync(
             HttpMethod method,
             Uri uri,
-            List<Header> headers,
+            Headers headers,
             string body,
             MimeType mimeType)
         {
@@ -77,22 +85,16 @@ namespace TE.FileWatcher.Configuration.Notifications
                 throw new ArgumentNullException(nameof(uri));
             }
 
-            if (_httpClient == null)
-            {
-                _httpClient = new HttpClient();
-            }
-
             HttpRequestMessage request = new HttpRequestMessage(method, uri);
-            foreach (Header header in headers)
-            {
-                request.Headers.Add(header.Name, header.Value);
-            }
+
+            headers.Set(request);
             request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
 
             HttpResponseMessage response = null;
             try
             {
-                response = await _httpClient.SendAsync(request);
+                var client = _serviceProvider.GetService<HttpClient>();
+                response = await client.SendAsync(request);
             }
             catch (Exception ex)
             {
