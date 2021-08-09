@@ -13,6 +13,9 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public abstract class RunnableBase
     {
+        // The exact path placeholder
+        protected const string PLACEHOLDER_EXACTPATH = "[exactpath]";
+
         // The full path placeholder
         protected const string PLACEHOLDER_FULLPATH = "[fullpath]";
 
@@ -71,6 +74,7 @@ namespace TE.FileWatcher.Configuration
             string extension = GetFileExtension(fullPath);
 
             string replacedValue = value;
+            replacedValue = replacedValue.Replace(PLACEHOLDER_EXACTPATH, fullPath);
             replacedValue = replacedValue.Replace(PLACEHOLDER_FULLPATH, relativeFullPath);
             replacedValue = replacedValue.Replace(PLACEHOLDER_PATH, relativePath);
             replacedValue = replacedValue.Replace(PLACEHOLDER_FILENAME, fileName);
