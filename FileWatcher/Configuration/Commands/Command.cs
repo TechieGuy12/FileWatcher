@@ -66,17 +66,24 @@ namespace TE.FileWatcher.Configuration.Commands
             string commandPath = GetCommand(watchPath, fullPath);
             string arguments = GetArguments(watchPath, fullPath);
 
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = commandPath;
-            startInfo.Arguments = arguments;
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.FileName = commandPath;
+                startInfo.Arguments = arguments;
 
-            process = new Process();
-            process.StartInfo = startInfo;
-            process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.UseShellExecute = false;
-            process.EnableRaisingEvents = true;
-            process.Exited += OnProcessExit;
-            process.Start();
+                process = new Process();
+                process.StartInfo = startInfo;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = false;
+                process.EnableRaisingEvents = true;
+                process.Exited += OnProcessExit;
+                process.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Could not run the command '{commandPath} {arguments}'. Reason: {ex.Message}");
+            }
         }
 
         /// <summary>
