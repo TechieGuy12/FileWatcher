@@ -40,8 +40,8 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <summary>
         /// Initializes an instance of the <see cref="Notifications"/> class.
         /// </summary>
-        public Notifications()
-        {            
+        public Notifications()        
+        {
             _timer = new Timer(WaitTime);
             _timer.Elapsed += OnElapsed;
             _timer.Start();

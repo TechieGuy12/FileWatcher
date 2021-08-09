@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using TE.FileWatcher.Logging;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -24,5 +25,23 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         [XmlElement("watch")]
         public List<Watch> WatchList { get; set; }
+
+        /// <summary>
+        /// Starts the watches.
+        /// </summary>
+        public void Start()
+        {
+            foreach (Watch watch in WatchList)
+            {
+                try
+                {
+                    watch.Start();
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                }
+            }
+        }
     }
 }

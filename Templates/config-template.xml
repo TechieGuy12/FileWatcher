@@ -110,7 +110,7 @@
         <actions>
             <action>
                 <!--
-                    What events will trigger the notificaton.
+                    What events will trigger the action.
                     Values:
                         Change
                         Create
@@ -131,13 +131,19 @@
                 <!--
                     The source path of the action. 
                     Placeholders:
-                        [fullpath] - the full path to the changed file (default)
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
                 -->
                 <source></source>
                 <!--
                     The destination path of the action.
                     This value does not apply to the Delete action.
                     Placeholders:
+                        [exactpath] - full path of the changed file
                         [fullpath] - full path of the changed file without the path of the watch
                         [path] - the path of the changed file without the path of the watch and the file
                         [file] - the name of the file with the extension
@@ -153,6 +159,46 @@
                 -->
                 <verify></verify>
             </action>
-        </actions>    
+        </actions>
+        <!--
+            Run commands when a change is detected.
+        -->
+        <commands>
+            <command>
+                <!--
+                    What events will trigger the command.
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger></trigger>
+                </triggers>            
+                <!--
+                    The path of the command to run.
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->            
+                <path></path>
+                <!--
+                    The arguments of the command to run.
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->                   
+                <arguments></arguments>
+            </command>
+        </commands>    
     </watch>
 </watches>
