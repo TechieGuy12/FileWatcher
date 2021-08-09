@@ -40,13 +40,7 @@ namespace TE.FileWatcher.Configuration.Actions
             
             foreach (Action action in ActionList)
             {
-                if (action.Triggers?.TriggerList.Count > 0)
-                {
-                    if (action.Triggers.Current.HasFlag(trigger))
-                    {
-                        action.Run(watchPath, fullPath);
-                    }
-                }
+                action.Run(watchPath, fullPath, trigger);
             }
         }
     }
