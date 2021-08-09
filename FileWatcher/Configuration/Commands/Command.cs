@@ -69,6 +69,7 @@ namespace TE.FileWatcher.Configuration.Commands
 
             if (!File.Exists(commandPath))
             {
+                Logger.WriteLine($"The command '{commandPath}' was not found. Command was not run.");
                 return;
             }
 
@@ -154,7 +155,7 @@ namespace TE.FileWatcher.Configuration.Commands
                 return;
             }
 
-            Logger.WriteLine($"The execution {process.StartInfo.FileName} {process.StartInfo.Arguments} has exited. Exit code: {process.ExitCode}.");
+            Logger.WriteLine($"The execution '{process.StartInfo.FileName} {process.StartInfo.Arguments}' has exited. Exit code: {process.ExitCode}.");
         }
     }
 }
