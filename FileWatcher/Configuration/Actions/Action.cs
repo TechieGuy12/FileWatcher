@@ -180,13 +180,10 @@ namespace TE.FileWatcher.Configuration.Actions
         {
             if (string.IsNullOrWhiteSpace(Source))
             {
-                Source = PLACEHOLDER_FULLPATH;
+                return null;
             }
 
-            string source = Source;
-            source = source.Replace(PLACEHOLDER_FULLPATH, fullPath);
-
-            return source;
+            return ReplacePlaceholders(Source, watchPath, fullPath);
         }
     }
 }
