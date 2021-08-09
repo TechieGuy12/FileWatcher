@@ -61,6 +61,12 @@ namespace TE.FileWatcher.Configuration
         public Actions.Actions Actions { get; set; }
 
         /// <summary>
+        /// Gets or sets the commands for the watch.
+        /// </summary>
+        [XmlElement("commands")]
+        public Commands.Commands Commands { get; set; }
+
+        /// <summary>
         /// Gets the flag indicating the watch is running.
         /// </summary>
         [XmlIgnore]
@@ -185,6 +191,11 @@ namespace TE.FileWatcher.Configuration
                         {
                             Actions?.Run(change.Trigger, Path, change.FullPath);
                         }
+                    }
+
+                    if (Commands != null)
+                    {
+                        Commands.Run(change.Trigger, Path, change.FullPath);
                     }
                 }
             }
