@@ -5,12 +5,17 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>TE.FileWatcher</RootNamespace>
     <AssemblyName>fw</AssemblyName>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishTrimmed>true</PublishTrimmed>   
+    <PublishTrimmed>true</PublishTrimmed>
+    <Authors>Paul Salmon</Authors>
+    <Product>FileWatcher</Product>
+    <Description>Monitor folders and files on the local system for changes.</Description>
+    <Copyright>©2021</Copyright>
+    <RepositoryUrl>https://github.com/TechieGuy12/FileWatcher</RepositoryUrl>   
   </PropertyGroup>
 
   <ItemGroup>
