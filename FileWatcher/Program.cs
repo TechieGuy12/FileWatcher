@@ -103,7 +103,7 @@ namespace TE.FileWatcher
 
             try
             {
-                Logger.SetFullPath(watches.Logging.LogPath);
+                Logger.SetLogger(watches.Logging);
                 return true;
             }
             catch (Exception ex)

@@ -22,6 +22,19 @@ namespace TE.FileWatcher.Configuration
         public string LogPath { get; set; }
 
         /// <summary>
+        /// Gets or sets the size (in megabytes) of a log file before it is
+        /// backed up and a new log file is created.
+        /// </summary>
+        [XmlElement("size")]
+        public int Size { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of log file to retain.
+        /// </summary>
+        [XmlElement("number")]
+        public int Number { get; set; }
+
+        /// <summary>
         /// Initializes an instance of the <see cref="Logging"/> class.
         /// </summary>
         /// <exception cref="ArgumentException">
@@ -36,6 +49,8 @@ namespace TE.FileWatcher.Configuration
         public Logging() 
         {
             LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULT_LOG_NAME);
+            Size = 5;
+            Number = 10;
         }
     }
 }
