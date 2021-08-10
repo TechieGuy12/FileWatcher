@@ -156,6 +156,8 @@ namespace TE.FileWatcher.Configuration.Commands
             }
 
             Logger.WriteLine($"The execution '{process.StartInfo.FileName} {process.StartInfo.Arguments}' has exited. Exit code: {process.ExitCode}.");
+            process.Dispose();
+            process = null;
         }
     }
 }
