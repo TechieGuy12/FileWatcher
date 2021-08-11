@@ -8,14 +8,14 @@
         <path></path>
         <!--
             The maximum size (in MB) of the log file before it is backed up and a
-            new log file is created.
+            new log file is created. Cannot be left blank.
 
-            Default: 5 MB
+            Default: 5
         -->
         <size></size>
         <!--
             The number of log files to keep. Once this number is reached, old log
-            files are deleted.
+            files are deleted. Cannot be left blank.
 
             Default: 10
         -->
