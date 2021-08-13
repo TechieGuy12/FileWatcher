@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,7 +16,14 @@ namespace TE.FileWatcher.Configuration.Commands
     /// </summary>
     public class Command : RunnableBase
     {
-        private Process process;
+        // The process that will run the command
+        private Process _process;
+
+        // A queue containing the information to start the command process
+        private ConcurrentQueue<ProcessStartInfo> _processInfo;
+
+        // Flag indicating that a process is running
+        private bool _isProcessRunning = false;
 
         /// <summary>
         /// Gets or sets the arguments associated with the file to execute.
@@ -75,21 +83,66 @@ namespace TE.FileWatcher.Configuration.Commands
 
             try
             {
+                if (_processInfo == null)
+                {
+                    _processInfo = new ConcurrentQueue<ProcessStartInfo>();
+                }
+
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = commandPath;
                 startInfo.Arguments = arguments;
+                _processInfo.Enqueue(startInfo);
 
-                process = new Process();
-                process.StartInfo = startInfo;
-                process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.UseShellExecute = false;
-                process.EnableRaisingEvents = true;
-                process.Exited += OnProcessExit;
-                process.Start();
+                // Execute the next process in the queue
+                Execute();
             }
             catch (Exception ex)
             {
                 Logger.WriteLine($"Could not run the command '{commandPath} {arguments}'. Reason: {ex.Message}");
+            }
+        }
+
+        private void Execute()
+        {
+            // If the queue is null or empty, then no command is waiting to nbe
+            // executed
+            if (_processInfo == null || _processInfo.IsEmpty)
+            {
+                return;
+            }
+
+            // If a command is currently running, then don't start another
+            if (_isProcessRunning)
+            {
+                return;
+            }
+
+            try
+            {
+                if (_processInfo.TryDequeue(out ProcessStartInfo startInfo))
+                {
+                    if (File.Exists(startInfo.FileName))
+                    {
+                        _process = new Process();
+                        _process.StartInfo = startInfo;
+                        _process.StartInfo.CreateNoWindow = true;
+                        _process.StartInfo.UseShellExecute = false;
+                        _process.EnableRaisingEvents = true;
+                        _process.Exited += OnProcessExit;
+                        _isProcessRunning = _process.Start();
+                    }
+                    else
+                    {
+                        Logger.WriteLine($"The command '{startInfo.FileName}' was not found. Command was not run.");
+
+                        // Execute the next process in the queue
+                        Execute();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}");
             }
         }
 
@@ -150,14 +203,19 @@ namespace TE.FileWatcher.Configuration.Commands
         /// </param>
         private void OnProcessExit(object sender, EventArgs args)
         {
-            if (process == null)
+            _isProcessRunning = false;
+
+            if (_process == null)
             {
                 return;
             }
 
-            Logger.WriteLine($"The execution '{process.StartInfo.FileName} {process.StartInfo.Arguments}' has exited. Exit code: {process.ExitCode}.");
-            process.Dispose();
-            process = null;
+            Logger.WriteLine($"The execution '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}' has exited. Exit code: {_process.ExitCode}.");
+            _process.Dispose();
+            _process = null;
+
+            // Execute the next process in the queue
+            Execute();
         }
     }
 }
