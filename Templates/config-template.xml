@@ -28,6 +28,13 @@
             to the value specified in this element.
         -->
         <path></path>
+        <!--
+            The amount of seconds to wait for the path to exist before
+            establishing the watch. This timeout can be used with paths that
+            are on external hard drives that may not be connected for a time
+            when FileWatcher is started.
+        -->
+        <timeout></timeout>
         <exclusions>
             <!-- 
                 Exclusions matching file name. The full name of a file,

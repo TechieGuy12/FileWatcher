@@ -43,6 +43,12 @@ namespace TE.FileWatcher.Configuration
         public string Path { get; set; }
 
         /// <summary>
+        /// Gets or sets the timeout value (in seconds) for the watch.
+        /// </summary>
+        [XmlElement("timeout")]
+        public int Timeout { get; set; }
+
+        /// <summary>
         /// Gets or sets the exclusions
         /// </summary>
         [XmlElement("exclusions")]
@@ -76,6 +82,70 @@ namespace TE.FileWatcher.Configuration
             {
                 return (_fsWatcher != null && _fsWatcher.EnableRaisingEvents);
             }
+        }
+
+        /// <summary>
+        /// Processes the file or folder change.
+        /// </summary>
+        /// <param name="trigger">
+        /// The type of change.
+        /// </param>
+        /// <param name="name">
+        /// The name of the file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the file or folder.
+        /// </param>
+        public void ProcessChange(ChangeInfo change)
+        {
+            if (change == null || _queue == null || _worker == null)
+            {
+                return;
+            }
+
+            _queue.Enqueue(change);
+            if (!_worker.IsBusy)
+            {
+                _worker.RunWorkerAsync();
+            }
+        }
+
+        /// <summary>
+        /// Starts the watch.
+        /// </summary>
+        public bool Start()
+        {
+            if (_fsWatcher != null || _timer != null)
+            {
+                Stop();
+            }
+
+            if (PathExists())
+            {
+                CreateFileSystemWatcher();
+                CreateQueue();
+                CreateBackgroundWorker();
+                CreateTimer();                
+            }
+            else
+            {
+                Logger.WriteLine($"The path '{Path}' does not exists, so the watch was not created.");
+            }
+
+            return IsRunning;
+        }
+
+        /// <summary>
+        /// Stops the watch.
+        /// </summary>
+        public bool Stop()
+        {
+            _worker = null;
+            _queue = null;
+            _timer = null;
+            _fsWatcher = null;
+
+            return !IsRunning;
         }
 
         /// <summary>
@@ -503,60 +573,32 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// Processes the file or folder change.
+        /// Waits for a specified amount of time before the path to watch
+        /// exists. The time value is provided by the <see cref="Timeout"/>
+        /// property.
         /// </summary>
-        /// <param name="trigger">
-        /// The type of change.
-        /// </param>
-        /// <param name="name">
-        /// The name of the file or folder.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the file or folder.
-        /// </param>
-        public void ProcessChange(ChangeInfo change)
+        /// <returns>
+        /// <c>true</c> if the path exists, otherwise <c>false</c>.
+        /// </returns>
+        private bool PathExists()
         {
-            if (change == null || _queue == null || _worker == null)
+            // The amount of time for the thread to sleep
+            const int SLEEP_TIME = 500;
+
+            // Calculate the total number of times the thread will wait based
+            // on the timeout value and the SLEEP_TIME
+            int waitTime = (Timeout * 1000) / SLEEP_TIME;
+
+            // The number of times the thread has slept
+            int i = 0;
+
+            while (!Directory.Exists(Path) && waitTime > i)
             {
-                return;
+                Thread.Sleep(SLEEP_TIME);
+                i++;
             }
 
-            _queue.Enqueue(change);
-            if (!_worker.IsBusy)
-            {
-                _worker.RunWorkerAsync();
-            }
-        }
-
-        /// <summary>
-        /// Starts the watch.
-        /// </summary>
-        public bool Start()
-        {
-            if (_fsWatcher != null || _timer != null)
-            {
-                Stop();
-            }
-
-            CreateFileSystemWatcher();
-            CreateQueue();
-            CreateBackgroundWorker();
-            CreateTimer();
-            
-            return IsRunning;
-        }
-
-        /// <summary>
-        /// Stops the watch.
-        /// </summary>
-        public bool Stop()
-        { 
-            _worker = null;
-            _queue = null;
-            _timer = null;
-            _fsWatcher = null;
-            
-            return !IsRunning;
+            return Directory.Exists(Path);
         }
     }
 }
