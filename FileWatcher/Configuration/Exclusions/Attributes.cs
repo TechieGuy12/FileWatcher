@@ -27,7 +27,7 @@ namespace TE.FileWatcher.Configuration.Exclusions
         {
             get
             {
-                HashSet<FileAttributes> attributes = new HashSet<FileAttributes>();
+                HashSet<FileAttributes> attributes = new HashSet<FileAttributes>(AttributeStrings.Count);
                 foreach (string attribute in AttributeStrings)
                 {
                     try

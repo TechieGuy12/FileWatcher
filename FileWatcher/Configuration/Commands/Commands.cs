@@ -4,21 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
 
-namespace TE.FileWatcher.Configuration.Actions
+namespace TE.FileWatcher.Configuration.Commands
 {
-    [XmlRoot("actions")]
-    public class Actions
+    /// <summary>
+    /// The commands to run when a change is detected.
+    /// </summary>
+    [XmlRoot("commands")]
+    public class Commands
     {
         /// <summary>
         /// Gets or sets the list of actions to perform.
         /// </summary>
-        [XmlElement("action")]
-        public List<Action> ActionList { get; set; }
+        [XmlElement("command")]
+        public List<Command> CommandList { get; set; }
 
         /// <summary>
-        /// Runs all the actions for the watch.
+        /// Runs all the commands for the watch.
         /// </summary>
         /// <param name="watchPath">
         /// The watch path.
@@ -28,7 +30,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </param>
         public void Run(TriggerType trigger, string watchPath, string fullPath)
         {
-            if (ActionList == null || ActionList.Count <= 0)
+            if (CommandList == null || CommandList.Count <= 0)
             {
                 return;
             }
@@ -37,10 +39,10 @@ namespace TE.FileWatcher.Configuration.Actions
             {
                 return;
             }
-            
-            foreach (Action action in ActionList)
+
+            foreach (Command command in CommandList)
             {
-                action.Run(watchPath, fullPath, trigger);
+                command.Run(watchPath, fullPath, trigger);
             }
         }
     }

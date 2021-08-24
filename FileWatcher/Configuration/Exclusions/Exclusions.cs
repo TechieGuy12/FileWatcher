@@ -15,10 +15,10 @@ namespace TE.FileWatcher.Configuration.Exclusions
     public class Exclusions
     {
         // The set of full path to the folders to ignore
-        private HashSet<string> _folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _folders;
 
         // The set of full path to the paths to ignore
-        private HashSet<string> _paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _paths;
 
         // Sets the flag indicating the ignore lists have been populated
         private bool _initialized = false;
@@ -70,6 +70,10 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 return;
             }
 
+            _folders = new HashSet<string>(
+                Folders.Name.Count,
+                StringComparer.OrdinalIgnoreCase);
+
             foreach (string folder in Folders.Name)
             {
                 string folderPath = Path.Combine(_watchPath, folder);
@@ -95,6 +99,10 @@ namespace TE.FileWatcher.Configuration.Exclusions
             {
                 return;
             }
+
+            _paths = new HashSet<string>(
+                Paths.Path.Count,
+                StringComparer.OrdinalIgnoreCase);
 
             foreach (string path in Paths.Path)
             {
