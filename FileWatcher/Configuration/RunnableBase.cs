@@ -106,7 +106,7 @@ namespace TE.FileWatcher.Configuration
             try
             {
                 int index = fullPath.IndexOf(watchPath, StringComparison.OrdinalIgnoreCase);
-                return (index < 0) ? fullPath : fullPath.Remove(index, watchPath.Length);
+                return (index < 0) ? fullPath : fullPath.Remove(index, watchPath.Length).Trim(IO.Path.DirectorySeparatorChar);
             }
             catch (Exception ex)
                 when (ex is ArgumentException || ex is ArgumentNullException)
