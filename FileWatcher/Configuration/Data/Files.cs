@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TE.FileWatcher.Configuration.Exclusions
+namespace TE.FileWatcher.Configuration.Data
 {
     /// <summary>
     /// The files node in the XML file.

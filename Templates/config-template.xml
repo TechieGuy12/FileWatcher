@@ -35,6 +35,47 @@
             when FileWatcher is started.
         -->
         <timeout></timeout>
+        <filters>
+            <!-- 
+                Filters matching file name. The full name of a file,
+                regardless of which folder it is included in, is matched.
+             -->
+            <files>
+                <name></name>
+            </files>
+            <!-- 
+                Filters matching folder names. The folder names are relative
+                to the path element. For example, if path is C:\Temp and a name
+                is TestFolder, then the folder C:\Temp\TestFolder is matched.
+            -->
+            <folders>
+                <name></name>
+            </folders>
+            <!-- 
+                Filters matching folder/file attributes. The filters are
+                matched if a file contains any of the attributes specified.
+
+                Valid values:
+                    Archive
+                    Compressed
+                    Encrypted
+                    Hidden
+                    ReadOnly
+                    System
+            -->
+            <attributes>
+                <attribute></attribute>
+            </attributes>
+            <!-- 
+                Filters matching full paths. Similar to the folder names,
+                paths are relative to the path element and allow for exact file
+                path matching - for example, to exclude C:\Temp\TestFolder\thumbs.db,
+                specify TestFolder\thumbs.db.
+            -->
+            <paths>
+                <path></path>
+            </paths>
+        </filters>        
         <exclusions>
             <!-- 
                 Exclusions matching file name. The full name of a file,

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,15 +7,15 @@ using System.Xml.Serialization;
 using TE.FileWatcher.Configuration.Data;
 using TE.FileWatcher.Logging;
 
-namespace TE.FileWatcher.Configuration.Exclusions
+namespace TE.FileWatcher.Configuration.Filters
 {
     /// <summary>
-    /// An exclusions node in the XML file.
+    /// A filters node in the XML file.
     /// </summary>
-    public class Exclusions : FilterBase
+    public class Filters : FilterBase
     {
         /// <summary>
-        /// Returns the flag indicating if the change is to be ignored.
+        /// Returns the flag indicating if the change is a match.
         /// </summary>
         /// <param name="watchPath">
         /// The path associated with the watch.
@@ -30,7 +29,7 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// <returns>
         /// True if the change is to be ignored, otherwise false.
         /// </returns>
-        public bool Exclude(string watchPath, string name, string fullPath)
+        public bool IsMatch(string watchPath, string name, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
             {
@@ -42,7 +41,7 @@ namespace TE.FileWatcher.Configuration.Exclusions
                 Initialize(watchPath);
             }
 
-            FilterTypeName = "Exclude";
+            FilterTypeName = "Filter";
 
             return
                 FileMatch(name) ||

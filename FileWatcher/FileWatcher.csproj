@@ -15,7 +15,9 @@
     <Product>FileWatcher</Product>
     <Description>Monitor folders and files on the local system for changes.</Description>
     <Copyright>©2021</Copyright>
-    <RepositoryUrl>https://github.com/TechieGuy12/FileWatcher</RepositoryUrl>   
+    <RepositoryUrl>https://github.com/TechieGuy12/FileWatcher</RepositoryUrl>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>   
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Exclusions
+namespace TE.FileWatcher.Configuration.Data
 {
     /// <summary>
     /// The paths node within the exclusions node in the XML file.

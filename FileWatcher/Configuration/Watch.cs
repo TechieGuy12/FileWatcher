@@ -49,7 +49,13 @@ namespace TE.FileWatcher.Configuration
         public int Timeout { get; set; }
 
         /// <summary>
-        /// Gets or sets the exclusions
+        /// Gets or sets the filters.
+        /// </summary>
+        [XmlElement("filters")]
+        public Filters.Filters Filters { get; set; }
+
+        /// <summary>
+        /// Gets or sets the exclusions.
         /// </summary>
         [XmlElement("exclusions")]
         public Exclusions.Exclusions Exclusions { get; set; }
@@ -125,7 +131,7 @@ namespace TE.FileWatcher.Configuration
                 CreateFileSystemWatcher();
                 CreateQueue();
                 CreateBackgroundWorker();
-                CreateTimer();                
+                CreateTimer(); 
             }
             else
             {
@@ -230,16 +236,25 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
-
                 if (_queue.TryDequeue(out ChangeInfo change))
                 {
+                    if (Filters != null)
+                    {
+                        // If the file or folder is not a match, then don't take
+                        // any further actions
+                        if (!Filters.IsMatch(Path, change.Name, change.FullPath))
+                        {
+                            continue;
+                        }
+                    }
+
                     if (Exclusions != null)
                     {
-                        // If the file or folder is in the exclude list, then don't take
-                        // any further actions
+                        // If the file or folder is in the exclude list, then don't
+                        // take any further actions
                         if (Exclusions.Exclude(Path, change.Name, change.FullPath))
                         {
-                            return;
+                            continue;
                         }
                     }
 
@@ -259,7 +274,7 @@ namespace TE.FileWatcher.Configuration
                         // longer exists so no action can be taken on the file
                         if (change.Trigger != TriggerType.Delete)
                         {
-                            Actions?.Run(change.Trigger, Path, change.FullPath);
+                            Actions.Run(change.Trigger, Path, change.FullPath);
                         }
                     }
 
