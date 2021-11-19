@@ -258,7 +258,7 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    if (Notifications != null)
+                    if (Notifications != null && Notifications.NotificationList.Count > 0)
                     {
                         // Send the notifications
                         string messageType = GetMessageTypeString(change.Trigger);
@@ -268,7 +268,7 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    if (Actions != null)
+                    if (Actions != null && Actions.ActionList.Count > 0)
                     {
                         // Only run the actions if a file wasn't deleted, as the file no
                         // longer exists so no action can be taken on the file
@@ -278,7 +278,7 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    if (Commands != null)
+                    if (Commands != null && Commands.CommandList.Count > 0)
                     {
                         Commands.Run(change.Trigger, Path, change.FullPath);
                     }
