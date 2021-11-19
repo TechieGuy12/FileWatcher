@@ -58,6 +58,42 @@ namespace TE.FileWatcher.Configuration.Data
         private protected string FilterTypeName { get; set; } = "Filter";
 
         /// <summary>
+        /// Gets a value indicating if at least one valid filtering value has
+        /// been specified. An empty element could be added to the XML file,
+        /// so this method ensures a filtering element has a valid value
+        /// specified.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c> if at least one filtering value is specified, otherwise
+        /// <c>false</c>.
+        /// </returns>
+        public bool IsSpecified()
+        {
+            bool isSpecified = false;
+            if (Files != null && Files.Name.Count > 0)
+            {
+                isSpecified = true;
+            }
+
+            if (Folders != null && Folders.Name.Count > 0)
+            {
+                isSpecified = true;
+            }
+
+            if (Attributes != null && Attributes.Attribute.Count > 0)
+            {
+                isSpecified = true;
+            }
+
+            if (Paths != null && Paths.Path.Count > 0)
+            {
+                isSpecified = true;
+            }
+
+            return isSpecified;
+        }
+
+        /// <summary>
         /// Returns the flag indicating whether the attribute for a file that
         /// is changed matches the attributes from the configuration file.
         /// When a file is deleted, the attributes of the file cannot be checked
@@ -175,6 +211,10 @@ namespace TE.FileWatcher.Configuration.Data
                 {
                     Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
                     break;
+                }
+                else
+                {
+                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is not a match for folder '{path}'.");
                 }
             }
 

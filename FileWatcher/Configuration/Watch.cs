@@ -238,7 +238,7 @@ namespace TE.FileWatcher.Configuration
             {
                 if (_queue.TryDequeue(out ChangeInfo change))
                 {
-                    if (Filters != null)
+                    if (Filters != null && Filters.IsSpecified())
                     {
                         // If the file or folder is not a match, then don't take
                         // any further actions
@@ -248,7 +248,7 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    if (Exclusions != null)
+                    if (Exclusions != null && Exclusions.IsSpecified())
                     {
                         // If the file or folder is in the exclude list, then don't
                         // take any further actions
