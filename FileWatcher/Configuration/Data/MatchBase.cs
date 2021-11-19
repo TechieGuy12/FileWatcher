@@ -176,6 +176,10 @@ namespace TE.FileWatcher.Configuration.Data
                     Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is a match for file {name}.");
                     break;
                 }
+                //else
+                //{
+                //    Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is not a match for file {name}.");
+                //}
             }
 
             return isMatch;
@@ -212,10 +216,10 @@ namespace TE.FileWatcher.Configuration.Data
                     Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
                     break;
                 }
-                else
-                {
-                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is not a match for folder '{path}'.");
-                }
+                //else
+                //{
+                //    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is not a match for folder '{path}'.");
+                //}
             }
 
             return isMatch;
@@ -336,6 +340,58 @@ namespace TE.FileWatcher.Configuration.Data
         }
 
         /// <summary>
+        /// Gets a value indicating if a match is found between the changed
+        /// file/folder data, and the specified patterns.
+        /// </summary>
+        /// <param name="watchPath">
+        /// The path being watched.
+        /// </param>
+        /// <param name="name">
+        /// The name of the changed file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path to the changed file or folder.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> of a match is found, otherwise <c>false</c>.
+        /// </returns>
+        private protected bool IsMatchFound(string watchPath, string name, string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return false;
+            }
+
+            if (!_initialized)
+            {
+                Initialize(watchPath);
+            }
+
+            bool isMatch = false;
+            if (Files != null && Files.Name.Count > 0)
+            {
+                isMatch |= FileMatch(name);
+            }
+
+            if (Folders != null && Folders.Name.Count > 0)
+            {
+                isMatch |= FolderMatch(fullPath);
+            }
+
+            if (Attributes != null && Attributes.Attribute.Count > 0)
+            {
+                isMatch |= AttributeMatch(fullPath);
+            }
+
+            if (Paths != null && Paths.Path.Count > 0)
+            {
+                isMatch |= PathMatch(fullPath);
+            }
+
+            return isMatch;
+        }
+
+        /// <summary>
         /// Checks to ensure the provided path is valid.
         /// </summary>
         /// <param name="path"></param>
@@ -356,6 +412,5 @@ namespace TE.FileWatcher.Configuration.Data
 
             return true;
         }
-
     }
 }

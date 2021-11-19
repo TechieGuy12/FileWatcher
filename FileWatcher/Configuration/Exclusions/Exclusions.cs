@@ -32,40 +32,8 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// </returns>
         public bool Exclude(string watchPath, string name, string fullPath)
         {
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
-            {
-                return false;
-            }
-
-            if (!_initialized)
-            {
-                Initialize(watchPath);
-            }
-
             FilterTypeName = "Exclude";
-
-            bool isMatch = false;
-            if (Files != null && Files.Name.Count > 0)
-            {
-                isMatch |= FileMatch(name);
-            }
-
-            if (Folders != null && Folders.Name.Count > 0)
-            {
-                isMatch |= FolderMatch(fullPath);
-            }
-
-            if (Attributes != null && Attributes.Attribute.Count > 0)
-            {
-                isMatch |= AttributeMatch(fullPath);
-            }
-
-            if (Paths != null && Paths.Path.Count > 0)
-            {
-                isMatch |= PathMatch(fullPath);
-            }
-
-            return isMatch;
+            return IsMatchFound(watchPath, name, fullPath);
         }
     }
 }
