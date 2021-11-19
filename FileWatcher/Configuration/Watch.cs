@@ -258,29 +258,38 @@ namespace TE.FileWatcher.Configuration
                         }
                     }
 
-                    if (Notifications != null && Notifications.NotificationList.Count > 0)
+                    if (Notifications != null)
                     {
-                        // Send the notifications
-                        string messageType = GetMessageTypeString(change.Trigger);
-                        if (!string.IsNullOrWhiteSpace(messageType))
+                        if (Notifications.NotificationList != null && Notifications.NotificationList.Count > 0)
                         {
-                            Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                            // Send the notifications
+                            string messageType = GetMessageTypeString(change.Trigger);
+                            if (!string.IsNullOrWhiteSpace(messageType))
+                            {
+                                Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                            }
                         }
                     }
 
-                    if (Actions != null && Actions.ActionList.Count > 0)
+                    if (Actions != null)
                     {
-                        // Only run the actions if a file wasn't deleted, as the file no
-                        // longer exists so no action can be taken on the file
-                        if (change.Trigger != TriggerType.Delete)
+                        if (Actions.ActionList != null && Actions.ActionList.Count > 0)
                         {
-                            Actions.Run(change.Trigger, Path, change.FullPath);
+                            // Only run the actions if a file wasn't deleted, as the file no
+                            // longer exists so no action can be taken on the file
+                            if (change.Trigger != TriggerType.Delete)
+                            {
+                                Actions.Run(change.Trigger, Path, change.FullPath);
+                            }
                         }
                     }
 
-                    if (Commands != null && Commands.CommandList.Count > 0)
+                    if (Commands != null)
                     {
-                        Commands.Run(change.Trigger, Path, change.FullPath);
+                        if (Commands.CommandList != null && Commands.CommandList.Count > 0)
+                        {
+                            Commands.Run(change.Trigger, Path, change.FullPath);
+                        }
                     }
                 }
             }
