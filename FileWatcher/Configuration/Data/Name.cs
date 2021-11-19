@@ -1,49 +1,73 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration.Data
 {
+    /// <summary>
+    /// Methods and properties that manage a name value.
+    /// </summary>
     [XmlRoot(ElementName = "name")]
     public class Name
     {
-        private const string MATCH_TYPE_CONTAINS = "contains";
-        private const string MATCH_TYPE_EXACT = "exact";
+        // The regular expression
+        private Regex _regex;
 
         /// <summary>
-        /// The type of match.
+        /// Gets or sets the name pattern to match.
         /// </summary>
-        public enum MatchType
-        {
-            /// <summary>
-            /// An exact match.
-            /// </summary>
-            Exact,
-            /// <summary>
-            /// A match that contains the value.
-            /// </summary>
-            Contains
-        }
-
         [XmlText]
-        public string Value { get; set; }
+        public string Pattern { get; set; }
 
-        [XmlAttribute("match")]
-        public string Match { get; set; } = MATCH_TYPE_EXACT;
-
-        public MatchType GetMatchType()
+        /// <summary>
+        /// Checks to see if the <see cref="Pattern"/> property provides a
+        /// match for the <c>value</c> parameter.
+        /// </summary>
+        /// <param name="value">
+        /// The value to compare with the <see cref="Pattern"/> property.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the value is a match for the pattern, otherwise
+        /// <c>false</c>.
+        /// </returns>
+        public bool IsMatch(string value)
         {
-            if (Match.Equals(MATCH_TYPE_CONTAINS, StringComparison.OrdinalIgnoreCase))
+            bool isMatch = value.Equals(Pattern);
+            if (!isMatch)
             {
-                return MatchType.Contains;
+                isMatch = value.Contains(Pattern);
             }
-            else
+
+            if (!isMatch)
             {
-                return MatchType.Exact;
+                isMatch = PatternMatcher.StrictMatchPattern(
+                    Pattern.ToUpper(CultureInfo.InvariantCulture),
+                    value.ToUpper(CultureInfo.InvariantCulture));
             }
+
+            if (!isMatch)
+            {
+                try
+                {
+                    if (_regex == null)
+                    {
+                        string escapedPattern = Pattern.Replace(@"\", @"\\");
+                        _regex = new Regex(escapedPattern, RegexOptions.IgnoreCase);
+                    }
+                    isMatch = _regex.IsMatch(value);
+                }
+                catch
+                {
+                    isMatch = false;
+                }
+            }
+
+            return isMatch;
         }
     }
 }

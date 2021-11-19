@@ -13,7 +13,7 @@ namespace TE.FileWatcher.Configuration.Data
     /// A base class containing the properties and methods for filtering the
     /// files and folders of the watch.
     /// </summary>
-    public abstract class FilterBase
+    public abstract class MatchBase
     {
         // The set of full path to the folders to ignore
         private protected HashSet<string> _folders;
@@ -134,24 +134,10 @@ namespace TE.FileWatcher.Configuration.Data
             bool isMatch = false;
             foreach (Name fileName in Files.Name)
             {
-                if (fileName.GetMatchType() == Name.MatchType.Contains)
-                {
-                    if (name.Contains(fileName.Value))
-                    {
-                        isMatch = true;
-                    }
-                }
-                else
-                {
-                    if (name.Equals(fileName.Value))
-                    {
-                        isMatch = true;
-                    }
-                }
-
+                isMatch = fileName.IsMatch(name);
                 if (isMatch)
                 {
-                    Logger.WriteLine($"{FilterTypeName}: The file name '{fileName.Value}' is a match for file {name}.");
+                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is a match for file {name}.");
                     break;
                 }
             }
@@ -171,7 +157,7 @@ namespace TE.FileWatcher.Configuration.Data
         /// </returns>
         private protected bool FolderMatch(string path)
         {
-            if (_folders == null || _folders.Count <= 0)
+            if (Folders == null || Folders.Name.Count <= 0)
             {
                 return false;
             }
@@ -182,12 +168,12 @@ namespace TE.FileWatcher.Configuration.Data
             }
 
             bool isMatch = false;
-            foreach (string folder in _folders)
+            foreach (Name folder in Folders.Name)
             {
-                if (path.Contains(folder) || Path.GetDirectoryName(path).Contains(folder))
+                isMatch = folder.IsMatch(path);
+                if (isMatch)
                 {
-                    Logger.WriteLine($"{FilterTypeName}: The path '{path}' contains the folder '{folder}'.");
-                    isMatch = true;
+                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
                     break;
                 }
             }
@@ -251,15 +237,16 @@ namespace TE.FileWatcher.Configuration.Data
                 return;
             }
 
-            _folders = new HashSet<string>(
-                Folders.Name.Count,
-                StringComparer.OrdinalIgnoreCase);
+            //_folders = new HashSet<string>(
+            //    Folders.Name.Count,
+            //    StringComparer.OrdinalIgnoreCase);
 
             //foreach (string folder in Folders.Name)
             foreach (Name folderName in Folders.Name)
             {
-                string folderPath = Path.Combine(_watchPath, folderName.Value);
-                _folders.Add(folderPath);
+                //string folderPath = Path.Combine(_watchPath, folderName.Value);
+                folderName.Pattern = Path.Combine(_watchPath, folderName.Pattern);
+                //_folders.Add(folderPath);
             }
         }
 

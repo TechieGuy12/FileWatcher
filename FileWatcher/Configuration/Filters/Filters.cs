@@ -12,7 +12,7 @@ namespace TE.FileWatcher.Configuration.Filters
     /// <summary>
     /// A filters node in the XML file.
     /// </summary>
-    public class Filters : FilterBase
+    public class Filters : MatchBase
     {
         /// <summary>
         /// Returns the flag indicating if the change is a match.
@@ -43,11 +43,28 @@ namespace TE.FileWatcher.Configuration.Filters
 
             FilterTypeName = "Filter";
 
-            return
-                FileMatch(name) ||
-                FolderMatch(fullPath) ||
-                AttributeMatch(fullPath) ||
-                PathMatch(fullPath);
+            bool isMatch = false;
+            if (Files != null && Files.Name.Count > 0)
+            {
+                isMatch |= FileMatch(name);
+            }
+
+            if (Folders != null && Folders.Name.Count > 0)
+            {
+                isMatch |= FolderMatch(fullPath);
+            }
+
+            if (Attributes != null && Attributes.Attribute.Count > 0)
+            {
+                isMatch |= AttributeMatch(fullPath);
+            }
+
+            if (Paths != null && Paths.Path.Count > 0)
+            {
+                isMatch |= PathMatch(fullPath);
+            }
+
+            return isMatch;
         }
     }
 }
