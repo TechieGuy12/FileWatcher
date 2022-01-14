@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using IO = System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using TE.FileWatcher.Logging;
-using TE.FileWatcher.FileSystem;
+using TEFS = TE.FileWatcher.FileSystem;
 
 namespace TE.FileWatcher.Configuration.Actions
 {
@@ -110,21 +109,21 @@ namespace TE.FileWatcher.Configuration.Actions
                 switch (Type)
                 {
                     case ActionType.Copy:
-                        if (File.IsValid(source))
+                        if (TEFS.File.IsValid(source))
                         {
                             File.Copy(source, destination, Verify);
                             Logger.WriteLine($"Copied {source} to {destination}.");
                         }
                         break;
                     case ActionType.Move:
-                        if (File.IsValid(source))
+                        if (TEFS.File.IsValid(source))
                         {
                             File.Move(source, destination, Verify);
                             Logger.WriteLine($"Moved {source} to {destination}.");
                         }
                         break;
                     case ActionType.Delete:
-                        if (File.IsValid(source))
+                        if (TEFS.File.IsValid(source))
                         {
                             File.Delete(source);
                             Logger.WriteLine($"Deleted {source}.");
