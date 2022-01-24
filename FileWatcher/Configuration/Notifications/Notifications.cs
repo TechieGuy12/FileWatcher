@@ -23,7 +23,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         private const int MIN_WAIT_TIME = 30000;
 
         // The timer
-        private Timer _timer;
+        private System.Timers.Timer _timer;
 
         /// <summary>
         /// Gets or sets the wait time between notification requests.
@@ -35,14 +35,14 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Gets or sets the notifications list.
         /// </summary>
         [XmlElement("notification")]
-        public List<Notification> NotificationList { get; set; }
+        public List<Notification>? NotificationList { get; set; }
 
         /// <summary>
         /// Initializes an instance of the <see cref="Notifications"/> class.
         /// </summary>
         public Notifications()        
         {
-            _timer = new Timer(WaitTime);
+            _timer = new System.Timers.Timer(WaitTime);
             _timer.Elapsed += OnElapsed;
             _timer.Start();
         }
@@ -56,7 +56,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <param name="e">
         /// The information associated witht he elapsed time.
         /// </param>
-        private async void OnElapsed(object source, ElapsedEventArgs e)
+        private async void OnElapsed(object? source, ElapsedEventArgs e)
         {
             // If there are no notifications, then stop the timer
             if (NotificationList == null || NotificationList.Count <= 0)
