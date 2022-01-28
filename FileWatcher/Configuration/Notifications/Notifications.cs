@@ -23,7 +23,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         private const int MIN_WAIT_TIME = 30000;
 
         // The timer
-        private System.Timers.Timer _timer;
+        private readonly System.Timers.Timer _timer;
 
         /// <summary>
         /// Gets or sets the wait time between notification requests.
@@ -84,19 +84,15 @@ namespace TE.FileWatcher.Configuration.Notifications
                 try
                 {
                     Logger.WriteLine($"Sending the request to {notification.Url}.");
-                    using (HttpResponseMessage response = await notification.SendAsync())
+                    using HttpResponseMessage response = await notification.SendAsync();
+                    if (response == null)
                     {
-                        if (response == null)
-                        {
-                            continue;
-                        }
-
-                        using (HttpContent httpContent = response.Content)
-                        {
-                            string resultContent = await httpContent.ReadAsStringAsync();
-                            Logger.WriteLine($"Response: {response.StatusCode}. Content: {resultContent}");
-                        }
+                        continue;
                     }
+
+                    using HttpContent httpContent = response.Content;
+                    string resultContent = await httpContent.ReadAsStringAsync();
+                    Logger.WriteLine($"Response: {response.StatusCode}. Content: {resultContent}");
                 }
                 catch (AggregateException aex)
                 {

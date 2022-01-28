@@ -25,13 +25,16 @@ namespace TE.FileWatcher.FileSystem
 				return;
             }
 
-			string folders = IO.Path.GetDirectoryName(path);
+			string? folders = Path.GetDirectoryName(path);
 
-			// If the destination directory doesn't exist, create
-			// create it to avoid any exceptions						
-			if (!IO.Directory.Exists(folders))
+			if (!string.IsNullOrWhiteSpace(folders))
 			{
-				IO.Directory.CreateDirectory(folders);
+				// If the destination directory doesn't exist, create
+				// create it to avoid any exceptions						
+				if (!IO.Directory.Exists(folders))
+				{
+					IO.Directory.CreateDirectory(folders);
+				}
 			}
 		}
 

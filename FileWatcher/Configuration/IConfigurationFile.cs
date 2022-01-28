@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace TE.FileWatcher.Configuration
         /// A <see cref="Watches"/> object if the file was read successfully,
         /// otherwise null.
         /// </returns>
-        public Watches Read();
+        [RequiresUnreferencedCode("Could call functionality incompatible with trimming.")]
+        public Watches? Read();
     }
 }

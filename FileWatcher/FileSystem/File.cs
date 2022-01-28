@@ -19,7 +19,7 @@ namespace TE.FileWatcher.FileSystem
         private const int RETRIES = 5;
 
         // The hash algorithm to use when verifying the files
-        private const string HASH_ALGORITHM = "SHA256";
+        //private const string HASH_ALGORITHM = "SHA256";
 
         /// <summary>
         /// Gets the hash of the file.
@@ -30,18 +30,19 @@ namespace TE.FileWatcher.FileSystem
         /// <returns>
         /// The hash of the file, otherwise <c>null</c>.
         /// </returns>
-        private static string GetFileHash(string fullPath)
+        private static string? GetFileHash(string fullPath)
         {
             try
             {
-                using (var hashAlgorithm = HashAlgorithm.Create(HASH_ALGORITHM))
+                using var hashAlgorithm = SHA256.Create();
+                if (hashAlgorithm == null)
                 {
-                    using (var stream = IO.File.OpenRead(fullPath))
-                    {
-                        var hash = hashAlgorithm.ComputeHash(stream);
-                        return BitConverter.ToString(hash).Replace("-", "");
-                    }
+                    return null;
                 }
+
+                using var stream = IO.File.OpenRead(fullPath);
+                var hash = hashAlgorithm.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "");
             }
             catch
             {
@@ -64,10 +65,15 @@ namespace TE.FileWatcher.FileSystem
         /// </returns>
         private static bool Verify(string source, string destination)
         {
-            string sourceHash = GetFileHash(source);
-            string destinationHash = GetFileHash(destination);
-
             if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
+            {
+                return false;
+            }
+
+            string? sourceHash = GetFileHash(source);
+            string? destinationHash = GetFileHash(destination);
+            
+            if (string.IsNullOrWhiteSpace(sourceHash))
             {
                 return false;
             }
@@ -176,7 +182,7 @@ namespace TE.FileWatcher.FileSystem
         /// <returns>
         /// <c>true</c> if the file is valid, otherwise <c>false</c>.
         /// </returns>
-        public static bool IsValid(string path)
+        public static bool IsValid(string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {

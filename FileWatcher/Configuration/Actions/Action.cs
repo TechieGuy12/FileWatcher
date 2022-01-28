@@ -15,12 +15,12 @@ namespace TE.FileWatcher.Configuration.Actions
     public class Action : RunnableBase
     {
         // The placeholders for the destination path
-        private Dictionary<string, string> _destinationPlaceholders 
-            = new Dictionary<string, string>();
+        //private Dictionary<string, string> _destinationPlaceholders 
+        //    = new Dictionary<string, string>();
 
         // The placeholders for the source path
-        private Dictionary<string, string> _sourcePlaceholders
-            = new Dictionary<string, string>();
+        //private Dictionary<string, string> _sourcePlaceholders
+        //    = new Dictionary<string, string>();
 
         /// <summary>
         /// The type of action to perform.
@@ -64,7 +64,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the destination of the action.
         /// </summary>
         [XmlElement("destination")]
-        public string Destination { get; set; }
+        public string? Destination { get; set; }
 
         /// <summary>
         /// Gets or sets the verify flag.
@@ -101,8 +101,13 @@ namespace TE.FileWatcher.Configuration.Actions
                 return;
             }
 
-            string source = GetSource(watchPath, fullPath);
-            string destination = GetDestination(watchPath, fullPath);
+            string? source = GetSource(watchPath, fullPath);
+            string? destination = GetDestination(watchPath, fullPath);
+
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return;
+            }
 
             try
             {
@@ -111,15 +116,35 @@ namespace TE.FileWatcher.Configuration.Actions
                     case ActionType.Copy:
                         if (TEFS.File.IsValid(source))
                         {
+                            if (string.IsNullOrWhiteSpace(destination))
+                            {
+                                Logger.WriteLine($"The file '{source}' could not be copied because the destination file was not specified.");
+                                return;
+                            }
+
                             File.Copy(source, destination, Verify);
                             Logger.WriteLine($"Copied {source} to {destination}.");
+                        }
+                        else
+                        {
+                            Logger.WriteLine($"The file '{source}' could not be copied because the path was not valid, the file doesn't exists, or it was in use.");
                         }
                         break;
                     case ActionType.Move:
                         if (TEFS.File.IsValid(source))
                         {
+                            if (string.IsNullOrWhiteSpace(destination))
+                            {
+                                Logger.WriteLine($"The file '{source}' could not be moved because the destination file was not specified.");
+                                return;
+                            }
+
                             File.Move(source, destination, Verify);
                             Logger.WriteLine($"Moved {source} to {destination}.");
+                        }
+                        else
+                        {
+                            Logger.WriteLine($"The file '{source}' could not be moved because the path was not valid, the file doesn't exists, or it was in use.");
                         }
                         break;
                     case ActionType.Delete:
@@ -127,6 +152,10 @@ namespace TE.FileWatcher.Configuration.Actions
                         {
                             File.Delete(source);
                             Logger.WriteLine($"Deleted {source}.");
+                        }
+                        else
+                        {
+                            Logger.WriteLine($"The file '{source}' could not be deleted because the path was not valid, the file doesn't exists, or it was in use.");
                         }
                         break;
                 }
@@ -152,7 +181,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// <returns>
         /// The destination string value.
         /// </returns>
-        private string GetDestination(string watchPath, string fullPath)
+        private string? GetDestination(string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(Destination))
             {
@@ -175,7 +204,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// <returns>
         /// The source string value.
         /// </returns>
-        private string GetSource(string watchPath, string fullPath)
+        private string? GetSource(string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(Source))
             {

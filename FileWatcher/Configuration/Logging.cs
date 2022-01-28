@@ -16,13 +16,13 @@ namespace TE.FileWatcher.Configuration
     public class Logging
     {
         // The log path
-        private string _logPath;
+        private string? _logPath;
 
         /// <summary>
         /// Gets or sets the path of the log file.
         /// </summary>
         [XmlElement("path")]
-        public string LogPath
+        public string? LogPath
         { 
             get
             {

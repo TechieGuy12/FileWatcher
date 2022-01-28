@@ -29,6 +29,9 @@ namespace TE.FileWatcher.Configuration.Filters
         /// <returns>
         /// True if the change is to be ignored, otherwise false.
         /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         public bool IsMatch(string watchPath, string name, string fullPath)
         {
             FilterTypeName = "Filter";

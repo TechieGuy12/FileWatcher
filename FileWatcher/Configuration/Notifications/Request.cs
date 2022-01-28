@@ -41,9 +41,9 @@ namespace TE.FileWatcher.Configuration.Notifications
         // XML mime type
         private const string MIME_TYPE_XML = "application/xml";
 
-        private static ServiceCollection _services;
+        private static readonly ServiceCollection _services;
 
-        private static ServiceProvider _serviceProvider;
+        private static readonly ServiceProvider _serviceProvider;
 
         static Request()
         {
@@ -76,8 +76,8 @@ namespace TE.FileWatcher.Configuration.Notifications
         internal static async Task<HttpResponseMessage> SendAsync(
             HttpMethod method,
             Uri uri,
-            Headers headers,
-            string body,
+            Headers? headers,
+            string? body,
             MimeType mimeType)
         {
             if (uri == null)
@@ -85,16 +85,36 @@ namespace TE.FileWatcher.Configuration.Notifications
                 throw new ArgumentNullException(nameof(uri));
             }
 
-            HttpRequestMessage request = new HttpRequestMessage(method, uri);
+            HttpRequestMessage request = new(method, uri);
 
-            headers.Set(request);
-            request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
+            if (headers != null)
+            {
+                headers.Set(request);
+            }
 
-            HttpResponseMessage response = null;
+            if (body != null)
+            {
+                request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
+            }
+
+            HttpResponseMessage? response = null;
             try
             {
                 var client = _serviceProvider.GetService<HttpClient>();
-                response = await client.SendAsync(request);
+                if (client != null)
+                {
+                    response = await client.SendAsync(request);
+                }
+                else
+                {
+                    if (response == null)
+                    {
+                        response = new HttpResponseMessage();
+                    }
+
+                    response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                    response.ReasonPhrase = $"Request could not be sent. Reason: The HTTP client service could not be initialized.";
+                }
             }
             catch (Exception ex)
             {

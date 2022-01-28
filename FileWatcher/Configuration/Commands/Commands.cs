@@ -17,7 +17,7 @@ namespace TE.FileWatcher.Configuration.Commands
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("command")]
-        public List<Command> CommandList { get; set; }
+        public List<Command>? CommandList { get; set; }
 
         /// <summary>
         /// Runs all the commands for the watch.

@@ -16,40 +16,40 @@ namespace TE.FileWatcher.Configuration.Data
     public abstract class MatchBase
     {
         // The set of full path to the folders to ignore
-        private protected HashSet<string> _folders;
+        private protected HashSet<string>? _folders;
 
         // The set of full path to the paths to ignore
-        private protected HashSet<string> _paths;
+        private protected HashSet<string>? _paths;
 
         // Sets the flag indicating the ignore lists have been populated
         private protected bool _initialized = false;
 
         // The path associated with the watch
-        private protected string _watchPath;
+        private protected string? _watchPath;
 
         /// <summary>
         /// Gets or sets the files node.
         /// </summary>
         [XmlElement("files")]
-        public Files Files { get; set; }
+        public Files? Files { get; set; }
 
         /// <summary>
         /// Gets or sets the folders node.
         /// </summary>
         [XmlElement("folders")]
-        public Folders Folders { get; set; }
+        public Folders? Folders { get; set; }
 
         /// <summary>
         /// Gets or sets the paths node.
         /// </summary>
         [XmlElement("paths")]
-        public Paths Paths { get; set; }
+        public Paths? Paths { get; set; }
 
         /// <summary>
         /// Gets or sets the attributes node.
         /// </summary>
         [XmlElement("attributes")]
-        public Attributes Attributes { get; set; }
+        public Attributes? Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets the type of filter used for logging.
@@ -176,10 +176,6 @@ namespace TE.FileWatcher.Configuration.Data
                     Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is a match for file {name}.");
                     break;
                 }
-                //else
-                //{
-                //    Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is not a match for file {name}.");
-                //}
             }
 
             return isMatch;
@@ -216,10 +212,6 @@ namespace TE.FileWatcher.Configuration.Data
                     Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
                     break;
                 }
-                //else
-                //{
-                //    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is not a match for folder '{path}'.");
-                //}
             }
 
             return isMatch;
@@ -269,6 +261,9 @@ namespace TE.FileWatcher.Configuration.Data
         /// the folders. This is then used to compare with any folder that
         /// is changed.
         /// </summary>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         private void GetFolders()
         {
             if (Folders == null)
@@ -281,16 +276,13 @@ namespace TE.FileWatcher.Configuration.Data
                 return;
             }
 
-            //_folders = new HashSet<string>(
-            //    Folders.Name.Count,
-            //    StringComparer.OrdinalIgnoreCase);
-
-            //foreach (string folder in Folders.Name)
             foreach (Name folderName in Folders.Name)
             {
-                //string folderPath = Path.Combine(_watchPath, folderName.Value);
-                folderName.Pattern = Path.Combine(_watchPath, folderName.Pattern);
-                //_folders.Add(folderPath);
+                if (_watchPath != null && folderName.Pattern != null)
+                {
+                    folderName.Pattern = 
+                        Path.Combine(_watchPath, folderName.Pattern);
+                }
             }
         }
 
@@ -301,6 +293,9 @@ namespace TE.FileWatcher.Configuration.Data
         /// to create the absolute path of each specified path value. This is
         /// then used to compare with any path that is changed.
         /// </summary>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         private void GetPaths()
         {
             if (Paths == null)
@@ -319,15 +314,23 @@ namespace TE.FileWatcher.Configuration.Data
 
             foreach (string path in Paths.Path)
             {
-                string fullPath = Path.Combine(_watchPath, path);
-                _paths.Add(fullPath);
+                if (_watchPath != null)
+                {
+                    string fullPath = Path.Combine(_watchPath, path);
+                    _paths.Add(fullPath);
+                }
             }
         }
 
         /// <summary>
         /// Initialize the values in the exclusion lists. 
         /// </summary>
-        /// <param name="watchPath"></param>
+        /// <param name="watchPath">
+        /// The path to watch.
+        /// </param>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         private protected void Initialize(string watchPath)
         {
             _watchPath = watchPath;
@@ -355,6 +358,9 @@ namespace TE.FileWatcher.Configuration.Data
         /// <returns>
         /// <c>true</c> of a match is found, otherwise <c>false</c>.
         /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         private protected bool IsMatchFound(string watchPath, string name, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
@@ -398,7 +404,7 @@ namespace TE.FileWatcher.Configuration.Data
         /// <exception cref="FileWatcherException">
         /// Thrown when there is a problem with the path.
         /// </exception>
-        private protected bool IsPathValid(string path)
+        private protected static bool IsPathValid(string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {

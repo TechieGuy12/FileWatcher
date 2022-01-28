@@ -60,7 +60,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The value with the placeholders replaced with the actual strings.
         /// </returns>
-        protected string ReplacePlaceholders(string value, string watchPath, string fullPath)
+        protected static string? ReplacePlaceholders(string value, string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
             {
@@ -68,10 +68,10 @@ namespace TE.FileWatcher.Configuration
             }
 
             string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
-            string relativePath = GetRelativePath(watchPath, fullPath);
-            string fileName = GetFilename(fullPath, true);
-            string fileNameWithoutExtension = GetFilename(fullPath, false);
-            string extension = GetFileExtension(fullPath);
+            string? relativePath = GetRelativePath(watchPath, fullPath);
+            string? fileName = GetFilename(fullPath, true);
+            string? fileNameWithoutExtension = GetFilename(fullPath, false);
+            string? extension = GetFileExtension(fullPath);
 
             string replacedValue = value;
             replacedValue = replacedValue.Replace(PLACEHOLDER_EXACTPATH, fullPath);
@@ -96,7 +96,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The relative path.
         /// </returns>
-        private string GetRelativeFullPath(string watchPath, string fullPath)
+        private static string GetRelativeFullPath(string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
             {
@@ -128,9 +128,14 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The relative path without the file name, otherwise <c>null</c>.
         /// </returns>
-        private string GetRelativePath(string watchPath, string fullPath)
+        private static string? GetRelativePath(string watchPath, string fullPath)
         {
-            string relativeFullPath = IO.Path.GetDirectoryName(fullPath);
+            string? relativeFullPath = IO.Path.GetDirectoryName(fullPath);
+            if (relativeFullPath == null)
+            {
+                return null;
+            }
+
             return GetRelativeFullPath(watchPath, relativeFullPath);
         }
 
@@ -143,7 +148,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The name of the file, otherwise <c>null</c>.
         /// </returns>
-        private string GetFilename(string fullPath, bool includeExtension)
+        private static string? GetFilename(string fullPath, bool includeExtension)
         {
             if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
             {
@@ -162,7 +167,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The extension of the full, otherwise <c>null</c>.
         /// </returns>
-        private string GetFileExtension(string fullPath)
+        private static string? GetFileExtension(string fullPath)
         {
             if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
             {

@@ -46,7 +46,7 @@ namespace TE.FileWatcher.Logging
         private const int MEGABYTE = 1048576;
 
         // The queue of log messages
-        private static ConcurrentQueue<Message> queue;
+        private static readonly ConcurrentQueue<Message> queue;
 
         /// <summary>
         /// Gets the path to the log.
@@ -75,7 +75,7 @@ namespace TE.FileWatcher.Logging
         public static int LogNumber { get; set; }
 
         // The object used for the lock
-        private static object locker = new object();
+        private static readonly object locker = new();
        
         /// <summary>
         /// Initializes an instance of the <see cref="Logger"/> class.
@@ -83,7 +83,9 @@ namespace TE.FileWatcher.Logging
         /// <exception cref="InvalidOperationException">
         /// Thrown when the logger could not be initialized.
         /// </exception>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static Logger()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             LogPath = Path.GetTempPath();
             LogName = DEFAULT_LOG_NAME;
@@ -111,7 +113,16 @@ namespace TE.FileWatcher.Logging
         /// </param>
         public static void SetLogger(Configuration.Logging logOptions)
         {
-            SetFullPath(logOptions.LogPath);
+            if (logOptions == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(logOptions.LogPath))
+            {
+                SetFullPath(logOptions.LogPath);
+            }
+
             LogSize = logOptions.Size;
             LogNumber = logOptions.Number;
         }
@@ -163,12 +174,12 @@ namespace TE.FileWatcher.Logging
         {
             if (string.IsNullOrWhiteSpace(logPath))
             {
-                throw new ArgumentNullException("The logPath argument is null or empty.");
+                throw new ArgumentNullException(nameof(logPath));
             }
 
             if (string.IsNullOrWhiteSpace(logName))
             {
-                throw new ArgumentNullException("The logName argument is null or empty.");
+                throw new ArgumentNullException(nameof(logName));
             }
             
             string fullPath = Path.Combine(logPath, logName);
@@ -192,12 +203,12 @@ namespace TE.FileWatcher.Logging
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
-                throw new ArgumentNullException("The fullPath argument is null or empty.");
+                throw new ArgumentNullException(nameof(fullPath));
             }
 
             // Separate the path and log name so each can be check to ensure
             // they are valid
-            string path = Path.GetDirectoryName(fullPath);
+            string? path = Path.GetDirectoryName(fullPath);
             string name = Path.GetFileName(fullPath);
 
             if (!IsFolderValid(path))
@@ -210,10 +221,19 @@ namespace TE.FileWatcher.Logging
                 throw new IOException($"The log file name '{name}' is not valid");
             }
 
-            // Store the path, name and the full path if all the checks pass
-            LogPath = path;
-            LogName = name;
-            LogFullPath = Path.Combine(path, name);
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                // Store the path, name and the full path if all the checks pass
+                LogPath = path;
+                LogName = name;
+                LogFullPath = Path.Combine(path, name);
+            }
+            else
+            {
+                LogPath = string.Empty;
+                LogName = name;
+                LogFullPath = string.Empty;
+            }
         }
 
         /// <summary>
@@ -226,7 +246,7 @@ namespace TE.FileWatcher.Logging
         /// <returns>
         /// True if the folder is valid and exists, otherwise false.
         /// </returns>
-        private static bool IsFolderValid(string folder)
+        private static bool IsFolderValid(string? folder)
         {
             if (string.IsNullOrWhiteSpace(folder))
             {
@@ -299,7 +319,7 @@ namespace TE.FileWatcher.Logging
             {
                 // Get and check the log size to see if it is still less than the
                 // specified log size
-                FileInfo fileInfo = new FileInfo(LogFullPath);
+                FileInfo fileInfo = new(LogFullPath);
                 if (fileInfo.Length < (LogSize * MEGABYTE))
                 {
                     return;
@@ -339,22 +359,20 @@ namespace TE.FileWatcher.Logging
         /// </summary>
         private static void WriteToLog()
         {
-            while (queue.TryDequeue(out Message message))
+            while (queue.TryDequeue(out Message? message))
             {
                 try
                 {
                     lock (locker)
                     {
                         RolloverLog();
-                        using (StreamWriter writer = new StreamWriter(LogFullPath, true))
-                        {
-                            writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
-                        }
+                        using StreamWriter writer = new(LogFullPath, true);
+                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Message error = new Message($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
+                    Message error = new($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
                     Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {error.LevelString} {error.Value}");
                 }
             }

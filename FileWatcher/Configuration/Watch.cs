@@ -19,28 +19,28 @@ namespace TE.FileWatcher.Configuration
     public class Watch
     {
         // The file system watcher object
-        private FileSystemWatcher _fsWatcher;
+        private FileSystemWatcher? _fsWatcher;
 
         // Information about the last change
-        private ChangeInfo _lastChange;
+        private ChangeInfo? _lastChange;
 
         // The write time for the last change
         private DateTime _lastWriteTime;
 
         // The timer used to "reset" the FileSystemWatch object
-        private System.Timers.Timer _timer;
+        private System.Timers.Timer? _timer;
 
         // The background worker that processes the file/folder changes
-        private BackgroundWorker _worker;
+        private BackgroundWorker? _worker;
 
         // The queue that will contain the changes
-        private ConcurrentQueue<ChangeInfo> _queue;
+        private ConcurrentQueue<ChangeInfo>? _queue;
 
         /// <summary>
         /// Gets or sets the path of the watch.
         /// </summary>
         [XmlElement("path")]
-        public string Path { get; set; }
+        public string? Path { get; set; }
 
         /// <summary>
         /// Gets or sets the timeout value (in seconds) for the watch.
@@ -52,31 +52,31 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the filters.
         /// </summary>
         [XmlElement("filters")]
-        public Filters.Filters Filters { get; set; }
+        public Filters.Filters? Filters { get; set; }
 
         /// <summary>
         /// Gets or sets the exclusions.
         /// </summary>
         [XmlElement("exclusions")]
-        public Exclusions.Exclusions Exclusions { get; set; }
+        public Exclusions.Exclusions? Exclusions { get; set; }
 
         /// <summary>
         /// Gets or sets the notifications for the watch.
         /// </summary>
         [XmlElement("notifications")]
-        public Notifications.Notifications Notifications { get; set; }
+        public Notifications.Notifications? Notifications { get; set; }
 
         /// <summary>
         /// Gets or sets the actions for the watch.
         /// </summary>
         [XmlElement("actions")]
-        public Actions.Actions Actions { get; set; }
+        public Actions.Actions? Actions { get; set; }
 
         /// <summary>
         /// Gets or sets the commands for the watch.
         /// </summary>
         [XmlElement("commands")]
-        public Commands.Commands Commands { get; set; }
+        public Commands.Commands? Commands { get; set; }
 
         /// <summary>
         /// Gets the flag indicating the watch is running.
@@ -159,8 +159,10 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void CreateBackgroundWorker()
         {
-            _worker = new BackgroundWorker();
-            _worker.WorkerSupportsCancellation = false;
+            _worker = new BackgroundWorker
+            {
+                WorkerSupportsCancellation = false
+            };
             _worker.DoWork += DoWork;
         }
 
@@ -169,19 +171,25 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void CreateFileSystemWatcher()
         {
+            if (string.IsNullOrWhiteSpace(Path))
+            {
+                Logger.WriteLine("The path to watch was not specified.");
+                return;
+            }
+
             Logger.WriteLine($"Creating watch for {Path}.");
 
-            _fsWatcher = new FileSystemWatcher(Path);
-
-            _fsWatcher.NotifyFilter =
-                NotifyFilters.Attributes
-                | NotifyFilters.CreationTime
-                //NotifyFilters.DirectoryName
-                | NotifyFilters.FileName
-                //| NotifyFilters.LastAccess
-                | NotifyFilters.LastWrite
-                | NotifyFilters.Security
-                | NotifyFilters.Size;
+            _fsWatcher = new FileSystemWatcher(Path)
+            {
+                NotifyFilter =
+                    NotifyFilters.Attributes
+                    | NotifyFilters.CreationTime
+                    | NotifyFilters.DirectoryName
+                    | NotifyFilters.FileName                    
+                    | NotifyFilters.LastWrite
+                    | NotifyFilters.Security
+                    | NotifyFilters.Size
+            };
 
             _fsWatcher.Changed += OnChanged;
             _fsWatcher.Created += OnCreated;
@@ -208,8 +216,10 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void CreateTimer()
         {
-            _timer = new System.Timers.Timer(600000);
-            _timer.Enabled = true;
+            _timer = new System.Timers.Timer(600000)
+            {
+                Enabled = true
+            };
             _timer.Elapsed += OnElapsed;
         }
 
@@ -222,8 +232,13 @@ namespace TE.FileWatcher.Configuration
         /// <param name="e">
         /// Arguments associated with the background worker.
         /// </param>
-        private void DoWork(object sender, DoWorkEventArgs e)
+        private void DoWork(object? sender, DoWorkEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(Path))
+            {
+                return;
+            }
+
             if (_queue == null)
             {
                 _queue = new ConcurrentQueue<ChangeInfo>();
@@ -236,59 +251,62 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
-                if (_queue.TryDequeue(out ChangeInfo change))
+                if (_queue.TryDequeue(out ChangeInfo? change))
                 {
-                    if (Filters != null && Filters.IsSpecified())
+                    if (change != null)
                     {
-                        // If the file or folder is not a match, then don't take
-                        // any further actions
-                        if (!Filters.IsMatch(Path, change.Name, change.FullPath))
+                        if (Filters != null && Filters.IsSpecified())
                         {
-                            continue;
-                        }
-                    }
-
-                    if (Exclusions != null && Exclusions.IsSpecified())
-                    {
-                        // If the file or folder is in the exclude list, then don't
-                        // take any further actions
-                        if (Exclusions.Exclude(Path, change.Name, change.FullPath))
-                        {
-                            continue;
-                        }
-                    }
-
-                    if (Notifications != null)
-                    {
-                        if (Notifications.NotificationList != null && Notifications.NotificationList.Count > 0)
-                        {
-                            // Send the notifications
-                            string messageType = GetMessageTypeString(change.Trigger);
-                            if (!string.IsNullOrWhiteSpace(messageType))
+                            // If the file or folder is not a match, then don't take
+                            // any further actions
+                            if (!Filters.IsMatch(Path, change.Name, change.FullPath))
                             {
-                                Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                                continue;
                             }
                         }
-                    }
 
-                    if (Actions != null)
-                    {
-                        if (Actions.ActionList != null && Actions.ActionList.Count > 0)
+                        if (Exclusions != null && Exclusions.IsSpecified())
                         {
-                            // Only run the actions if a file wasn't deleted, as the file no
-                            // longer exists so no action can be taken on the file
-                            if (change.Trigger != TriggerType.Delete)
+                            // If the file or folder is in the exclude list, then don't
+                            // take any further actions
+                            if (Exclusions.Exclude(Path, change.Name, change.FullPath))
                             {
-                                Actions.Run(change.Trigger, Path, change.FullPath);
+                                continue;
                             }
                         }
-                    }
 
-                    if (Commands != null)
-                    {
-                        if (Commands.CommandList != null && Commands.CommandList.Count > 0)
+                        if (Notifications != null)
                         {
-                            Commands.Run(change.Trigger, Path, change.FullPath);
+                            if (Notifications.NotificationList != null && Notifications.NotificationList.Count > 0)
+                            {
+                                // Send the notifications
+                                string? messageType = GetMessageTypeString(change.Trigger);
+                                if (!string.IsNullOrWhiteSpace(messageType))
+                                {
+                                    Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                                }
+                            }
+                        }
+
+                        if (Actions != null)
+                        {
+                            if (Actions.ActionList != null && Actions.ActionList.Count > 0)
+                            {
+                                // Only run the actions if a file wasn't deleted, as the file no
+                                // longer exists so no action can be taken on the file
+                                if (change.Trigger != TriggerType.Delete)
+                                {
+                                    Actions.Run(change.Trigger, Path, change.FullPath);
+                                }
+                            }
+                        }
+
+                        if (Commands != null)
+                        {
+                            if (Commands.CommandList != null && Commands.CommandList.Count > 0)
+                            {
+                                Commands.Run(change.Trigger, Path, change.FullPath);
+                            }
                         }
                     }
                 }
@@ -313,7 +331,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The <see cref="ChangeInfo"/> object of the change, otherwise <c>null</c>.
         /// </returns>
-        private ChangeInfo GetChange(TriggerType trigger, string name, string fullPath)
+        private ChangeInfo? GetChange(TriggerType trigger, string? name, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
             {
@@ -334,7 +352,7 @@ namespace TE.FileWatcher.Configuration
                 bool isValid = true;
 
                 // The current information on the change
-                ChangeInfo change = new ChangeInfo(trigger, name, fullPath);
+                ChangeInfo change = new(trigger, name, fullPath);
 
                 // The last write time of the file
                 DateTime writeTime = default;
@@ -395,9 +413,9 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The string value for the message type, otherwise <c>null</c>.
         /// </returns>
-        private string GetMessageTypeString(TriggerType trigger)
+        private static string? GetMessageTypeString(TriggerType trigger)
         {
-            string messageType = null;
+            string? messageType = null;
             switch (trigger)
             {
                 case TriggerType.Create:
@@ -427,7 +445,7 @@ namespace TE.FileWatcher.Configuration
         /// <param name="e">
         /// The event arguments related to the exception.
         /// </param>
-        private void NotAccessibleError(FileSystemWatcher source, ErrorEventArgs e)
+        private static void NotAccessibleError(FileSystemWatcher source, ErrorEventArgs e)
         {
             source.EnableRaisingEvents = false;
             int iMaxAttempts = 120;
@@ -466,7 +484,7 @@ namespace TE.FileWatcher.Configuration
             }
 
 
-            ChangeInfo change = GetChange(TriggerType.Change, e.Name, e.FullPath);
+            ChangeInfo? change = GetChange(TriggerType.Change, e.Name, e.FullPath);
             if (change != null)
             {
                 ProcessChange(change);
@@ -490,7 +508,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            ChangeInfo change = GetChange(TriggerType.Create, e.Name, e.FullPath);
+            ChangeInfo? change = GetChange(TriggerType.Create, e.Name, e.FullPath);
             if (change != null)
             {
                 ProcessChange(change);
@@ -513,7 +531,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            ChangeInfo change = GetChange(TriggerType.Delete, e.Name, e.FullPath);
+            ChangeInfo? change = GetChange(TriggerType.Delete, e.Name, e.FullPath);
             if (change != null)
             {
                 ProcessChange(change);
@@ -534,7 +552,7 @@ namespace TE.FileWatcher.Configuration
         /// <param name="e">
         /// The information associated with the elapsed time.
         /// </param>
-        private void OnElapsed(object source, ElapsedEventArgs e)
+        private void OnElapsed(object? source, ElapsedEventArgs e)
         {
             if (_fsWatcher != null)
             {
@@ -559,7 +577,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            ChangeInfo change = GetChange(TriggerType.Rename, e.Name, e.FullPath);
+            ChangeInfo? change = GetChange(TriggerType.Rename, e.Name, e.FullPath);
             if (change != null)
             {
                 ProcessChange(change);
