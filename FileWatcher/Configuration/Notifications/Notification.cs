@@ -15,45 +15,19 @@ namespace TE.FileWatcher.Configuration.Notifications
     public class Notification
     {
         // The message to send with the request.
-        private StringBuilder _message;
+        private readonly StringBuilder _message;
 
         /// <summary>
         /// Gets or sets the URL of the request.
         /// </summary>
         [XmlElement("url")]
-        public string Url { get; set; }
-
-        /// <summary>
-        /// Gets the URI value of the string URL.
-        /// </summary>
-        [XmlIgnore]
-        public Uri Uri
-        {
-            get
-            {
-                try
-                {
-                    if (string.IsNullOrWhiteSpace(Url))
-                    {
-                        return null;
-                    }
-
-                    Uri uri = new Uri(Url);
-                    return uri;
-                }
-                catch (Exception ex)
-                    when (ex is ArgumentNullException || ex is UriFormatException)
-                {
-                    return null;
-                }
-            }
-        }
+        public string? Url { get; set; }
         
         /// <summary>
         /// Gets or sets the string representation of the request method.
         /// </summary>
         [XmlElement("method")]
-        public string MethodString { get; set; }
+        public string? MethodString { get; set; }
 
         /// <summary>
         /// Gets the request method.
@@ -87,13 +61,13 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Gets or sets the triggers of the request.
         /// </summary>
         [XmlElement("triggers")]
-        public Triggers Triggers { get; set; }
+        public Triggers? Triggers { get; set; }
 
         /// <summary>
         /// Gets or sets the data to send for the request.
         /// </summary>
         [XmlElement("data")]
-        public Data Data { get; set; }
+        public Data? Data { get; set; }
 
         /// <summary>
         /// Returns a value indicating if there is a message waiting to be sent
@@ -149,25 +123,37 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <exception cref="NullReferenceException">
         /// Thrown when the URL is null or empty.
         /// </exception>
+        /// <exception cref="UriFormatException">
+        /// Thrown when the URL is not in a valid format.
+        /// </exception>
         internal async Task<HttpResponseMessage> SendAsync()
         {
             // If there isn't a message to be sent, then just return
             if (_message == null || _message.Length <= 0)
             {
-                return null;
+                return new HttpResponseMessage();
             }
 
-            if (Uri == null)
+            if (GetUri() == null)
             {
                 throw new NullReferenceException("The URL is null or empty.");
             }
 
-            string content = Data.Body.Replace("[message]", _message.ToString());
+            if (Data == null)
+            {
+                throw new NullReferenceException("Data for the request was not provided.");
+            }
+
+            string content = string.Empty;
+            if (Data.Body != null)
+            {
+                content = Data.Body.Replace("[message]", _message.ToString());
+            }
 
             HttpResponseMessage response =
                 await Request.SendAsync(
                     Method,
-                    Uri,
+                    GetUri(),
                     Data.Headers,
                     content,
                     Data.MimeType);
@@ -186,7 +172,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <returns>
         /// The JSON string with the special characters escaped.
         /// </returns>
-        private string CleanMessage(string s)
+        private static string CleanMessage(string s)
         {
             if (s == null || s.Length == 0)
             {
@@ -196,8 +182,8 @@ namespace TE.FileWatcher.Configuration.Notifications
             char c = '\0';
             int i;
             int len = s.Length;
-            StringBuilder sb = new StringBuilder(len + 4);
-            String t;
+            StringBuilder sb = new(len + 4);
+            string t;
 
             for (i = 0; i < len; i += 1)
             {
@@ -231,8 +217,9 @@ namespace TE.FileWatcher.Configuration.Notifications
                     default:
                         if (c < ' ')
                         {
-                            t = "000" + String.Format("X", c);
-                            sb.Append("\\u" + t.Substring(t.Length - 4));
+                            t = "000" + string.Format("{0:X}", c);
+                            sb.Append(string.Concat("\\u", t.AsSpan(t.Length - 4)));
+                            //sb.Append("\\u" + t.Substring(t.Length - 4));
                         }
                         else
                         {
@@ -242,6 +229,23 @@ namespace TE.FileWatcher.Configuration.Notifications
                 }
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Gets the URI value of the string URL.
+        /// </summary>
+        /// <exception cref="UriFormatException">
+        /// Thrown if the URL is not in a valid format.
+        /// </exception>
+        private Uri GetUri()
+        {
+            if (string.IsNullOrWhiteSpace(Url))
+            {
+                throw new UriFormatException();
+            }
+
+            Uri uri = new(Url);
+            return uri;
         }
     }
 }

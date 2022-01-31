@@ -17,10 +17,10 @@ namespace TE.FileWatcher.Configuration.Commands
     public class Command : RunnableBase
     {
         // The process that will run the command
-        private Process _process;
+        private Process? _process;
 
         // A queue containing the information to start the command process
-        private ConcurrentQueue<ProcessStartInfo> _processInfo;
+        private ConcurrentQueue<ProcessStartInfo>? _processInfo;
 
         // Flag indicating that a process is running
         private bool _isProcessRunning = false;
@@ -29,13 +29,13 @@ namespace TE.FileWatcher.Configuration.Commands
         /// Gets or sets the arguments associated with the file to execute.
         /// </summary>
         [XmlElement("arguments")]
-        public string Arguments { get; set; }
+        public string? Arguments { get; set; }
 
         /// <summary>
         /// Gets or sets the full path to the file to executed.
         /// </summary>
         [XmlElement("path")]
-        public string Path { get; set; }
+        public string? Path { get; set; }
 
         /// <summary>
         /// Gets or sets the triggers of the action.
@@ -72,8 +72,14 @@ namespace TE.FileWatcher.Configuration.Commands
                 return;
             }
 
-            string commandPath = GetCommand(watchPath, fullPath);
-            string arguments = GetArguments(watchPath, fullPath);
+            string? commandPath = GetCommand(watchPath, fullPath);
+            string? arguments = GetArguments(watchPath, fullPath);
+
+            if (string.IsNullOrWhiteSpace(commandPath))
+            {
+                Logger.WriteLine($"The command was not provided. Command was not run.");
+                return;
+            }
 
             if (!File.Exists(commandPath))
             {
@@ -88,9 +94,16 @@ namespace TE.FileWatcher.Configuration.Commands
                     _processInfo = new ConcurrentQueue<ProcessStartInfo>();
                 }
 
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = commandPath;
-                startInfo.Arguments = arguments;
+                ProcessStartInfo startInfo = new()
+                {
+                    FileName = commandPath
+                };
+
+                if (arguments != null)
+                {
+                    startInfo.Arguments = arguments;
+                }
+
                 _processInfo.Enqueue(startInfo);
 
                 // Execute the next process in the queue
@@ -119,12 +132,14 @@ namespace TE.FileWatcher.Configuration.Commands
 
             try
             {
-                if (_processInfo.TryDequeue(out ProcessStartInfo startInfo))
+                if (_processInfo.TryDequeue(out ProcessStartInfo? startInfo))
                 {
                     if (File.Exists(startInfo.FileName))
                     {
-                        _process = new Process();
-                        _process.StartInfo = startInfo;
+                        _process = new Process
+                        {
+                            StartInfo = startInfo
+                        };
                         _process.StartInfo.CreateNoWindow = true;
                         _process.StartInfo.UseShellExecute = false;
                         _process.EnableRaisingEvents = true;
@@ -142,7 +157,14 @@ namespace TE.FileWatcher.Configuration.Commands
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}");
+                if (_process != null)
+                {
+                    Logger.WriteLine($"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}");
+                }
+                else
+                {
+                    Logger.WriteLine($"Could not run the command. Reason: {ex.Message}");
+                }
             }
         }
 
@@ -159,7 +181,7 @@ namespace TE.FileWatcher.Configuration.Commands
         /// <returns>
         /// The command path string value.
         /// </returns>
-        private string GetArguments(string watchPath, string fullPath)
+        private string? GetArguments(string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(Arguments))
             {
@@ -182,7 +204,7 @@ namespace TE.FileWatcher.Configuration.Commands
         /// <returns>
         /// The command path string value.
         /// </returns>
-        private string GetCommand(string watchPath, string fullPath)
+        private string? GetCommand(string watchPath, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(Path))
             {
@@ -201,7 +223,7 @@ namespace TE.FileWatcher.Configuration.Commands
         /// <param name="args">
         /// The event arguments.
         /// </param>
-        private void OnProcessExit(object sender, EventArgs args)
+        private void OnProcessExit(object? sender, EventArgs args)
         {
             _isProcessRunning = false;
 

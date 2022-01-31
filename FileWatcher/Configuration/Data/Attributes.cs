@@ -27,7 +27,7 @@ namespace TE.FileWatcher.Configuration.Data
         {
             get
             {
-                HashSet<FileAttributes> attributes = new HashSet<FileAttributes>(AttributeStrings.Count);
+                HashSet<FileAttributes> attributes = new(AttributeStrings.Count);
                 foreach (string attribute in AttributeStrings)
                 {
                     try

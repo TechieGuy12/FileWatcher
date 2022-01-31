@@ -15,7 +15,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("action")]
-        public List<Action> ActionList { get; set; }
+        public List<Action>? ActionList { get; set; }
 
         /// <summary>
         /// Runs all the actions for the watch.

@@ -16,13 +16,13 @@ namespace TE.FileWatcher.Configuration.Data
     public class Name
     {
         // The regular expression
-        private Regex _regex;
+        private Regex? _regex;
 
         /// <summary>
         /// Gets or sets the name pattern to match.
         /// </summary>
         [XmlText]
-        public string Pattern { get; set; }
+        public string? Pattern { get; set; }
 
         /// <summary>
         /// Checks to see if the <see cref="Pattern"/> property provides a
@@ -37,6 +37,11 @@ namespace TE.FileWatcher.Configuration.Data
         /// </returns>
         public bool IsMatch(string value)
         {
+            if (string.IsNullOrWhiteSpace(Pattern))
+            {
+                return false;
+            }
+
             bool isMatch = value.Equals(Pattern);
             if (!isMatch)
             {

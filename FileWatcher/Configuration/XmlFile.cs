@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,7 +17,7 @@ namespace TE.FileWatcher.Configuration
         public const string DEFAULT_CONFIG_FILE = "config.xml";
 
         // Path to the configuration file
-        private string _fullPath;
+        private readonly string? _fullPath;
 
         /// <summary>
         /// Initializes an instance of the <see cref="XmlFile"/> class when
@@ -48,13 +49,13 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The folder path of the files, otherwise null.
         /// </returns>
-        private string GetFolderPath(string path)
+        private static string? GetFolderPath(string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 try
                 {
-                    path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                    path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule?.FileName);
                 }
                 catch (Exception ex)
                 {
@@ -86,9 +87,9 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The full path to the configuration file, otherwise null.
         /// </returns>
-        private string GetFullPath(string path, string name)
+        private static string? GetFullPath(string path, string name)
         {
-            string folderPath = GetFolderPath(path);
+            string? folderPath = GetFolderPath(path);
             if (folderPath == null)
             {
                 return null;
@@ -127,7 +128,8 @@ namespace TE.FileWatcher.Configuration
         /// A <see cref="Watches"/> object if the file was read successfully,
         /// otherwise null.
         /// </returns>
-        public Watches Read()
+        [RequiresUnreferencedCode("Calls XmlSerializer")]
+        public Watches? Read()
         {
             if (string.IsNullOrWhiteSpace(_fullPath))
             {
@@ -143,9 +145,9 @@ namespace TE.FileWatcher.Configuration
 
             try
             {
-                XmlSerializer serializer = new XmlSerializer(typeof(Watches));
-                using FileStream fs = new FileStream(_fullPath, FileMode.Open);
-                return (Watches)serializer.Deserialize(fs);
+                XmlSerializer serializer = new(typeof(Watches));
+                using FileStream fs = new(_fullPath, FileMode.Open);
+                return (Watches?)serializer.Deserialize(fs);
             }
             catch (Exception ex)
             {

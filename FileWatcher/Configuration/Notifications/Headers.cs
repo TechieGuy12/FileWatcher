@@ -18,7 +18,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Get or sets the list of headers to add to a request.
         /// </summary>
         [XmlElement("header")]
-        public List<Header> HeaderList { get; set; }
+        public List<Header>? HeaderList { get; set; }
 
         /// <summary>
         /// Sets the headers for a request.
@@ -28,14 +28,17 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </param>
         public void Set(HttpRequestMessage request)
         {
-            if (HeaderList.Count <= 0)
+            if (HeaderList == null || HeaderList.Count <= 0)
             {
                 return;
             }
 
             foreach (Header header in HeaderList)
             {
-                request.Headers.Add(header.Name, header.Value);
+                if (!string.IsNullOrWhiteSpace(header.Name))
+                {
+                    request.Headers.Add(header.Name, header.Value);
+                }
             }
         }
     }

@@ -19,13 +19,13 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Gets or sets the headers for the request.
         /// </summary>
         [XmlElement("headers")]
-        public Headers Headers { get; set; }
+        public Headers? Headers { get; set; }
 
         /// <summary>
         /// Gets or sets the body for the request.
         /// </summary>
         [XmlElement("body")]
-        public string Body { get; set; }
+        public string? Body { get; set; }
 
         /// <summary>
         /// Gets or sets the MIME type string value.

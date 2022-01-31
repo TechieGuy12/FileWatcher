@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Diagnostics.CodeAnalysis;
 using TE.FileWatcher.Configuration;
 using TE.FileWatcher.Logging;
 
@@ -26,9 +27,10 @@ namespace TE.FileWatcher
         /// <returns>
         /// Returns 0 on success, otherwise non-zero.
         /// </returns>
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
         static int Main(string[] args)
         {
-            RootCommand rootCommand = new RootCommand
+            RootCommand rootCommand = new()
             {
                 new Option<string>(
                     aliases: new string[] { "--folder", "-f" },
@@ -56,12 +58,13 @@ namespace TE.FileWatcher
         /// <returns>
         /// Returns 0 if no error occurred, otherwise non-zero.
         /// </returns>
+        [RequiresUnreferencedCode("Calls TE.FileWatcher.Configuration.IConfigurationFile.Read()")]
         private static int Run(string folder, string configFile)
         {            
             IConfigurationFile config = new XmlFile(folder, configFile);
 
             // Load the watches information from the config XML file
-            Watches watches = config.Read();
+            Watches? watches = config.Read();
             if (watches == null)
             {
                 return ERROR;

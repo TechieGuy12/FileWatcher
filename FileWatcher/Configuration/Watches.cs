@@ -24,13 +24,18 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the watches list.
         /// </summary>
         [XmlElement("watch")]
-        public List<Watch> WatchList { get; set; }
+        public List<Watch>? WatchList { get; set; }
 
         /// <summary>
         /// Starts the watches.
         /// </summary>
         public void Start()
         {
+            if (WatchList == null)
+            {
+                return;
+            }
+
             foreach (Watch watch in WatchList)
             {
                 try

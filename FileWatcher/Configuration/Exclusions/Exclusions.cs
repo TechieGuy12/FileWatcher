@@ -30,6 +30,9 @@ namespace TE.FileWatcher.Configuration.Exclusions
         /// <returns>
         /// True if the change is to be ignored, otherwise false.
         /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when there is a problem with the path.
+        /// </exception>
         public bool Exclude(string watchPath, string name, string fullPath)
         {
             FilterTypeName = "Exclude";
