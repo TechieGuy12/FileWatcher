@@ -134,7 +134,7 @@ namespace TE.FileWatcher
             }
 
             watches.Start();
-            new System.Threading.AutoResetEvent(false).WaitOne();
+            new AutoResetEvent(false).WaitOne();
 
             Logger.WriteLine("All watchers have closed.");
             return true;
