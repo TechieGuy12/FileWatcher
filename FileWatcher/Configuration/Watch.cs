@@ -173,7 +173,9 @@ namespace TE.FileWatcher.Configuration
         {
             if (string.IsNullOrWhiteSpace(Path))
             {
-                Logger.WriteLine("The path to watch was not specified.");
+                Logger.WriteLine(
+                    "The path to watch was not specified.",
+                    LogLevel.ERROR);
                 return;
             }
 

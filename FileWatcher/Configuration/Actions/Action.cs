@@ -110,7 +110,9 @@ namespace TE.FileWatcher.Configuration.Actions
                         {
                             if (string.IsNullOrWhiteSpace(destination))
                             {
-                                Logger.WriteLine($"The file '{source}' could not be copied because the destination file was not specified.");
+                                Logger.WriteLine(
+                                    $"The file '{source}' could not be copied because the destination file was not specified.",
+                                    LogLevel.ERROR);
                                 return;
                             }
 

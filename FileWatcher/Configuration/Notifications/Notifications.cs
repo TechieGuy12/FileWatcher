@@ -99,13 +99,17 @@ namespace TE.FileWatcher.Configuration.Notifications
                     foreach (Exception ex in aex.Flatten().InnerExceptions)
                     {
                         Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                        Logger.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}");
+                        Logger.WriteLine(
+                            $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
+                            LogLevel.ERROR);
                     }
                 }
                 catch (NullReferenceException ex)
                 {
                     Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                    Logger.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}");
+                    Logger.WriteLine(
+                        $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
+                        LogLevel.ERROR);
                 }
             }
         }
