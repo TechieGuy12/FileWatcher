@@ -461,7 +461,7 @@ namespace TE.FileWatcher.Configuration
                 catch
                 {
                     source.EnableRaisingEvents = false;
-                    System.Threading.Thread.Sleep(iTimeOut);
+                    Thread.Sleep(iTimeOut);
                 }
             }
 
