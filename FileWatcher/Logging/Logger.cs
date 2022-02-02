@@ -31,16 +31,6 @@ namespace TE.FileWatcher.Logging
         /// </summary>
         public const string DEFAULT_LOG_NAME = "fw.log";
 
-        /// <summary>
-        /// The default log file size.
-        /// </summary>
-        public const int DEFAULT_LOG_SIZE = 5;
-
-        /// <summary>
-        /// The default number of logs to retain.
-        /// </summary>
-        public const int DEFAULT_LOG_NUMBER = 10;
-
         // A megabyte - for the purists, this is actually a mebibyte, but let's
         // not split hairs as this is just a log file size after all
         private const int MEGABYTE = 1048576;
@@ -67,12 +57,12 @@ namespace TE.FileWatcher.Logging
         /// Gets or sets the size (in megabytes) of a log file before it is
         /// backed up and a new log file is created.
         /// </summary>
-        public static int LogSize { get; set; }
+        public static int LogSize { get; private set; }
 
         /// <summary>
         /// Gets or sets the number of log file to retain.
         /// </summary>
-        public static int LogNumber { get; set; }
+        public static int LogNumber { get; private set; }
 
         // The object used for the lock
         private static readonly object locker = new();
@@ -89,8 +79,8 @@ namespace TE.FileWatcher.Logging
         {
             LogPath = Path.GetTempPath();
             LogName = DEFAULT_LOG_NAME;
-            LogSize = DEFAULT_LOG_SIZE;
-            LogNumber = DEFAULT_LOG_NUMBER;
+            LogSize = Configuration.Logging.DEFAULT_LOG_SIZE;
+            LogNumber = Configuration.Logging.DEFAULT_LOG_NUMBER;
 
             try
             {
@@ -327,26 +317,30 @@ namespace TE.FileWatcher.Logging
 
                 int totalLogs = LogNumber - 1;
 
-                // Loop through the number of specified log files, and then copy
-                // previous log files to the next log number and then delete the
-                // log so the previous one can be copied
-                for (int i = totalLogs; i > 0; i--)
+                if (totalLogs > 0)
                 {
-                    string logFile = LogFullPath + $".{i - 1}";
-                    if (File.Exists(logFile))
+                    // Loop through the number of specified log files, and then copy
+                    // previous log files to the next log number and then delete the
+                    // log so the previous one can be copied
+                    for (int i = totalLogs; i > 0; i--)
                     {
-                        string nextlogFile = LogFullPath + $".{i}";
-                        File.Copy(logFile, nextlogFile, true);
-                        File.Delete(logFile);
+                        string logFile = LogFullPath + $".{i - 1}";
+                        if (File.Exists(logFile))
+                        {
+                            string nextlogFile = LogFullPath + $".{i}";
+                            File.Copy(logFile, nextlogFile, true);
+                            File.Delete(logFile);
+                        }
                     }
+
+                    // Copy the current log file to the first log number backup and
+                    // then delete the log file so it can be recreated
+                    string newLogFile = LogFullPath + $".1";
+                    File.Copy(LogFullPath, newLogFile, true);
                 }
 
-                // Copy the current log file to the first log number backup and
-                // then delete the log file so it can be recreated
-                string newLogFile = LogFullPath + $".1";
-                File.Copy(LogFullPath, newLogFile, true);
                 File.Delete(LogFullPath);
-                File.Create(LogFullPath);
+                File.Create(LogFullPath).Close();
             }
             catch (Exception ex)
             {
