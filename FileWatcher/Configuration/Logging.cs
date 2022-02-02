@@ -15,8 +15,24 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public class Logging
     {
+        /// <summary>
+        /// The default log size.
+        /// </summary>
+        public const int DEFAULT_LOG_SIZE = 5;
+
+        /// <summary>
+        /// The default log number.
+        /// </summary>
+        public const int DEFAULT_LOG_NUMBER = 10;
+
         // The log path
         private string? _logPath;
+
+        // The size of the log file
+        private int _logSize = DEFAULT_LOG_SIZE;
+
+        // The number of log files to retain
+        private int _logNumber = DEFAULT_LOG_NUMBER;
 
         /// <summary>
         /// Gets or sets the path of the log file.
@@ -39,13 +55,33 @@ namespace TE.FileWatcher.Configuration
         /// backed up and a new log file is created.
         /// </summary>
         [XmlElement("size")]
-        public int Size { get; set; }
+        public int Size
+        {
+            get
+            {
+                return _logSize;
+            }
+            set
+            {
+                _logSize = value > 0 ? value : DEFAULT_LOG_SIZE;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the number of log file to retain.
         /// </summary>
         [XmlElement("number")]
-        public int Number { get; set; }
+        public int Number
+        { 
+            get
+            {
+                return _logNumber;
+            }
+            set
+            {
+                _logNumber = value > 0 ? value : DEFAULT_LOG_NUMBER;
+            }
+        }
 
         /// <summary>
         /// Initializes an instance of the <see cref="Logging"/> class.
@@ -62,8 +98,8 @@ namespace TE.FileWatcher.Configuration
         public Logging() 
         {
             LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULT_LOG_NAME);
-            Size = 5;
-            Number = 10;
+            Size = DEFAULT_LOG_SIZE;
+            Number = DEFAULT_LOG_NUMBER;
         }
     }
 }
