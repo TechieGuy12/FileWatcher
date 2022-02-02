@@ -31,8 +31,9 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public void Start()
         {
-            if (WatchList == null)
+            if (WatchList == null || WatchList.Count <= 0)
             {
+                Logger.WriteLine("No watches were specified.", LogLevel.ERROR);
                 return;
             }
 
