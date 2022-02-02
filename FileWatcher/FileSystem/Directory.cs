@@ -31,7 +31,7 @@ namespace TE.FileWatcher.FileSystem
         {
 			if (string.IsNullOrWhiteSpace(path))
             {
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
             }
 
 			string? folders = Path.GetDirectoryName(path);
