@@ -22,4 +22,10 @@ File Watcher includes the following:
 
 **Logging.** Writes to a log file, that includes rollover functionality.
 
+## System Support
+
+- Windows
+- MacOS
+- Linux
+
 For information using File Watcher, please read the [Wiki](https://github.com/TechieGuy12/FileWatcher/wiki).
