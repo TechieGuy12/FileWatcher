@@ -1,6 +1,6 @@
 # File Watcher
 
-File Watcher is an application designed to monitor folders and files on the local system. When specific changes are detected a notification, an be sent to and endpoint via an API request, an action (copy, move, delete) can be performed, or a command executed.
+File Watcher is an application designed to monitor folders and files on the local system. When specific changes are detected a notification, can be sent to and endpoint via an API request, an action (copy, move, delete) can be performed, or a command executed.
 
 ## Features
 
