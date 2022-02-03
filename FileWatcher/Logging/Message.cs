@@ -43,11 +43,6 @@ namespace TE.FileWatcher.Logging
         }
 
         /// <summary>
-        /// Initializes a <see cref="Message"/> class.
-        /// </summary>
-        public Message() { }
-
-        /// <summary>
         /// Initializes a <see cref="Message"/> class when provided with the
         /// message value and log level.
         /// </summary>

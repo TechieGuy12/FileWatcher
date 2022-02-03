@@ -11,6 +11,9 @@ using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
 {
+    /// <summary>
+    /// The XML configuration file.
+    /// </summary>
     public class XmlFile : IConfigurationFile
     {
         // The default configuration file name
@@ -47,7 +50,7 @@ namespace TE.FileWatcher.Configuration
         /// The folder path.
         /// </param>
         /// <returns>
-        /// The folder path of the files, otherwise null.
+        /// The folder path of the files, otherwise <c>null</c>.
         /// </returns>
         private static string? GetFolderPath(string? path)
         {
@@ -85,7 +88,7 @@ namespace TE.FileWatcher.Configuration
         /// The name of the configuration file.
         /// </param>
         /// <returns>
-        /// The full path to the configuration file, otherwise null.
+        /// The full path to the configuration file, otherwise <c>null</c>.
         /// </returns>
         private static string? GetFullPath(string path, string name)
         {
@@ -126,7 +129,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         /// <returns>
         /// A <see cref="Watches"/> object if the file was read successfully,
-        /// otherwise null.
+        /// otherwise <c>null</c>.
         /// </returns>
         [RequiresUnreferencedCode("Calls XmlSerializer")]
         public Watches? Read()

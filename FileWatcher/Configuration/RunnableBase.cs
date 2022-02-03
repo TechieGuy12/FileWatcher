@@ -130,7 +130,7 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private static string? GetRelativePath(string watchPath, string fullPath)
         {
-            string? relativeFullPath = IO.Path.GetDirectoryName(fullPath);
+            string? relativeFullPath = Path.GetDirectoryName(fullPath);
             if (relativeFullPath == null)
             {
                 return null;
@@ -150,12 +150,12 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private static string? GetFilename(string fullPath, bool includeExtension)
         {
-            if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
+            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
             {
                 return null;
             }
 
-            return includeExtension ? IO.Path.GetFileNameWithoutExtension(fullPath) : IO.Path.GetFileName(fullPath);
+            return includeExtension ? Path.GetFileNameWithoutExtension(fullPath) : Path.GetFileName(fullPath);
         }
 
         /// <summary>
@@ -169,12 +169,12 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private static string? GetFileExtension(string fullPath)
         {
-            if (string.IsNullOrEmpty(fullPath) || !IO.File.Exists(fullPath))
+            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
             {
                 return null;
             }
 
-            return IO.Path.GetExtension(fullPath);
+            return Path.GetExtension(fullPath);
         }
     }
 }

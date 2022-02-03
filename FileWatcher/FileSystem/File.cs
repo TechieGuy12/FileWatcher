@@ -182,7 +182,7 @@ namespace TE.FileWatcher.FileSystem
         /// <returns>
         /// <c>true</c> if the file is valid, otherwise <c>false</c>.
         /// </returns>
-        public static bool IsValid(string? path)
+        public static bool IsValid(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {

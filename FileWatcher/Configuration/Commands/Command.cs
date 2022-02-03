@@ -77,13 +77,16 @@ namespace TE.FileWatcher.Configuration.Commands
 
             if (string.IsNullOrWhiteSpace(commandPath))
             {
-                Logger.WriteLine($"The command was not provided. Command was not run.");
+                Logger.WriteLine($"The command was not provided. Command was not run.",
+                    LogLevel.ERROR);
                 return;
             }
 
             if (!File.Exists(commandPath))
             {
-                Logger.WriteLine($"The command '{commandPath}' was not found. Command was not run.");
+                Logger.WriteLine(
+                    $"The command '{commandPath}' was not found. Command was not run.",
+                    LogLevel.ERROR);
                 return;
             }
 
@@ -111,7 +114,9 @@ namespace TE.FileWatcher.Configuration.Commands
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"Could not run the command '{commandPath} {arguments}'. Reason: {ex.Message}");
+                Logger.WriteLine(
+                    $"Could not run the command '{commandPath} {arguments}'. Reason: {ex.Message}",
+                    LogLevel.ERROR);
             }
         }
 
@@ -148,7 +153,9 @@ namespace TE.FileWatcher.Configuration.Commands
                     }
                     else
                     {
-                        Logger.WriteLine($"The command '{startInfo.FileName}' was not found. Command was not run.");
+                        Logger.WriteLine(
+                            $"The command '{startInfo.FileName}' was not found. Command was not run.",
+                            LogLevel.ERROR);
 
                         // Execute the next process in the queue
                         Execute();
@@ -159,11 +166,15 @@ namespace TE.FileWatcher.Configuration.Commands
             {
                 if (_process != null)
                 {
-                    Logger.WriteLine($"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}");
+                    Logger.WriteLine(
+                        $"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}",
+                        LogLevel.ERROR);
                 }
                 else
                 {
-                    Logger.WriteLine($"Could not run the command. Reason: {ex.Message}");
+                    Logger.WriteLine(
+                        $"Could not run the command. Reason: {ex.Message}",
+                        LogLevel.ERROR);
                 }
             }
         }

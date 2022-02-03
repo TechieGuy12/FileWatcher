@@ -14,14 +14,6 @@ namespace TE.FileWatcher.Configuration.Actions
     /// </summary>
     public class Action : RunnableBase
     {
-        // The placeholders for the destination path
-        //private Dictionary<string, string> _destinationPlaceholders 
-        //    = new Dictionary<string, string>();
-
-        // The placeholders for the source path
-        //private Dictionary<string, string> _sourcePlaceholders
-        //    = new Dictionary<string, string>();
-
         /// <summary>
         /// The type of action to perform.
         /// </summary>
@@ -118,7 +110,9 @@ namespace TE.FileWatcher.Configuration.Actions
                         {
                             if (string.IsNullOrWhiteSpace(destination))
                             {
-                                Logger.WriteLine($"The file '{source}' could not be copied because the destination file was not specified.");
+                                Logger.WriteLine(
+                                    $"The file '{source}' could not be copied because the destination file was not specified.",
+                                    LogLevel.ERROR);
                                 return;
                             }
 
@@ -127,7 +121,9 @@ namespace TE.FileWatcher.Configuration.Actions
                         }
                         else
                         {
-                            Logger.WriteLine($"The file '{source}' could not be copied because the path was not valid, the file doesn't exists, or it was in use.");
+                            Logger.WriteLine(
+                                $"The file '{source}' could not be copied because the path was not valid, the file doesn't exists, or it was in use.",
+                                LogLevel.ERROR);
                         }
                         break;
                     case ActionType.Move:
@@ -144,7 +140,9 @@ namespace TE.FileWatcher.Configuration.Actions
                         }
                         else
                         {
-                            Logger.WriteLine($"The file '{source}' could not be moved because the path was not valid, the file doesn't exists, or it was in use.");
+                            Logger.WriteLine(
+                                $"The file '{source}' could not be moved because the path was not valid, the file doesn't exists, or it was in use.",
+                                LogLevel.ERROR);
                         }
                         break;
                     case ActionType.Delete:
@@ -155,7 +153,9 @@ namespace TE.FileWatcher.Configuration.Actions
                         }
                         else
                         {
-                            Logger.WriteLine($"The file '{source}' could not be deleted because the path was not valid, the file doesn't exists, or it was in use.");
+                            Logger.WriteLine(
+                                $"The file '{source}' could not be deleted because the path was not valid, the file doesn't exists, or it was in use.", 
+                                LogLevel.ERROR);
                         }
                         break;
                 }
@@ -163,7 +163,7 @@ namespace TE.FileWatcher.Configuration.Actions
             catch (Exception ex)
             {
                 string message = (ex.InnerException == null) ? ex.Message : ex.InnerException.Message;
-                Logger.WriteLine($"Could not {Type.ToString().ToLower()} file {source}. Reason: {message}");
+                Logger.WriteLine($"Could not {Type.ToString().ToLower()} file {source}. Reason: {message}", LogLevel.ERROR);
                 return;
             }
         }

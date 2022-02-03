@@ -18,11 +18,20 @@ namespace TE.FileWatcher.FileSystem
 		/// <param name="path">
 		/// The path that includes the folder structure to create.
 		/// </param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown when an argument is null or empty.
+		/// </exception>
+		/// <exception cref="FileWatcherException">
+		/// Thrown when the directory could not be created.
+		/// </exception>
+		/// <exception cref="NullReferenceException">
+		/// Thrown when the directory from the path is null.
+		/// </exception>
         public static void Create(string path)
         {
 			if (string.IsNullOrWhiteSpace(path))
             {
-				return;
+				throw new ArgumentNullException(nameof(path));
             }
 
 			string? folders = Path.GetDirectoryName(path);
@@ -34,8 +43,16 @@ namespace TE.FileWatcher.FileSystem
 				if (!IO.Directory.Exists(folders))
 				{
 					IO.Directory.CreateDirectory(folders);
+					if (!IO.Directory.Exists(folders))
+                    {
+						throw new FileWatcherException($"The directory {folders} could not be created.");
+                    }
 				}
 			}
+			else
+            {
+				throw new NullReferenceException("The directory path could not be determined.");
+            }
 		}
 
 		/// <summary>
