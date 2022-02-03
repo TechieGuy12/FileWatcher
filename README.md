@@ -8,7 +8,7 @@ File Watcher includes the following:
 
 **Monitor files and folders.** Specify paths to folders on a local or external hard drive, and perform an action when a file or folder is created, modified, or deleted in the path.
 
-**Exclude specific files and folders.** Files and folders can be excluded from monitoring based on the name, attribute, or path.
+**Exclude, or include, specific files and folders.** Files and folders can be excluded from monitoring based on the name, attribute, or path.
 
 **Send notifications to an API endpoint.** Send an API request to an endpoint on a creation, modification, or deletion of a file or folder.
 
