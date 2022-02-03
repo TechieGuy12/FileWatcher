@@ -201,6 +201,11 @@ namespace TE.FileWatcher.Logging
             string? path = Path.GetDirectoryName(fullPath);
             string name = Path.GetFileName(fullPath);
 
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new IOException($"The directory path is null or empty.");
+            }
+
             if (!IsFolderValid(path))
             {
                 throw new IOException($"The directory name '{path}' is not valid.");
@@ -236,7 +241,7 @@ namespace TE.FileWatcher.Logging
         /// <returns>
         /// True if the folder is valid and exists, otherwise false.
         /// </returns>
-        private static bool IsFolderValid(string? folder)
+        private static bool IsFolderValid(string folder)
         {
             if (string.IsNullOrWhiteSpace(folder))
             {
