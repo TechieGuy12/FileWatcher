@@ -167,6 +167,44 @@ namespace TE.FileWatcher.FileSystem
         }
 
         /// <summary>
+        /// Gets the file extension.
+        /// </summary>
+        /// <param name="path">
+        /// The full path to the file.
+        /// </param>
+        /// <returns>
+        /// The extension of the full, otherwise <c>null</c>.
+        /// </returns>
+        public static string? GetExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !IO.File.Exists(path))
+            {
+                return null;
+            }
+
+            return Path.GetExtension(path);
+        }
+
+        /// <summary>
+        /// Gets the name of the file with or without the extension.
+        /// </summary>
+        /// <param name="path">
+        /// The full path to the file.
+        /// </param>
+        /// <returns>
+        /// The name of the file, otherwise <c>null</c>.
+        /// </returns>
+        public static string? GetName(string path, bool includeExtension)
+        {
+            if (string.IsNullOrEmpty(path) || !IO.File.Exists(path))
+            {
+                return null;
+            }
+
+            return includeExtension ? Path.GetFileNameWithoutExtension(path) : Path.GetFileName(path);
+        }
+
+        /// <summary>
         /// Returns a flag indicating the file is valid.
         /// </summary>
         /// <param name="path">
