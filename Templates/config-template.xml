@@ -220,6 +220,9 @@
                         [file] - the name of the file with the extension
                         [filename] - name of the file without the extension
                         [extension] - the file extension
+                        [createddate:{format}]
+                        [modifieddate:{format}]
+                        [currentdate:{format}]
                 -->
                 <destination></destination>
                 <!--
