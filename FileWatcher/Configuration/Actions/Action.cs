@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TE.FileWatcher.Logging;
 using TEFS = TE.FileWatcher.FileSystem;
@@ -13,7 +12,7 @@ namespace TE.FileWatcher.Configuration.Actions
     {
         // The regular expresson pattern for extracting the date type and the
         // specified date format to be used
-        const string PATTERN = @"^\[(?<datetype>.*):\{(?<format>.*)\}\]";
+        const string PATTERN = @"\[(?<datetype>.*):\{(?<format>.*)\}\]";
 
         // The created date placeholder value
         const string CREATED_DATE = "createddate";
@@ -134,7 +133,7 @@ namespace TE.FileWatcher.Configuration.Actions
                                 return;
                             }
 
-                            File.Copy(source, destination, Verify);
+                            TEFS.File.Copy(source, destination, Verify);
                             Logger.WriteLine($"Copied {source} to {destination}.");
                         }
                         else
@@ -153,7 +152,7 @@ namespace TE.FileWatcher.Configuration.Actions
                                 return;
                             }
 
-                            File.Move(source, destination, Verify);
+                            TEFS.File.Move(source, destination, Verify);
                             Logger.WriteLine($"Moved {source} to {destination}.");
                         }
                         else
@@ -166,7 +165,7 @@ namespace TE.FileWatcher.Configuration.Actions
                     case ActionType.Delete:
                         if (TEFS.File.IsValid(source))
                         {
-                            File.Delete(source);
+                            TEFS.File.Delete(source);
                             Logger.WriteLine($"Deleted {source}.");
                         }
                         else
@@ -318,7 +317,7 @@ namespace TE.FileWatcher.Configuration.Actions
                 }
             }    
 
-            return null;
+            return replacedValue;
         }
     }
 }
