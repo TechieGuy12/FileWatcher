@@ -1,4 +1,6 @@
-﻿using System.Xml.Serialization;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 using TE.FileWatcher.Logging;
 using TEFS = TE.FileWatcher.FileSystem;
 
@@ -9,6 +11,22 @@ namespace TE.FileWatcher.Configuration.Actions
     /// </summary>
     public class Action : RunnableBase
     {
+        // The regular expresson pattern for extracting the date type and the
+        // specified date format to be used
+        const string PATTERN = @"^\[(?<datetype>.*):\{(?<format>.*)\}\]";
+
+        // The created date placeholder value
+        const string CREATED_DATE = "createddate";
+
+        // The modified date placholder value
+        const string MODIFIED_DATE = "modifieddate";
+
+        // The current date placeholder value
+        const string CURRENT_DATE = "currentdate";
+
+        // The regular expression
+        private readonly Regex _regex;
+
         /// <summary>
         /// The type of action to perform.
         /// </summary>
@@ -58,6 +76,11 @@ namespace TE.FileWatcher.Configuration.Actions
         /// </summary>
         [XmlElement(ElementName = "verify", DataType = "boolean")]
         public bool Verify { get; set; }
+
+        public Action()
+        {
+            _regex = new Regex(PATTERN, RegexOptions.Compiled);
+        }
 
         /// <summary>
         /// Runs the action.
@@ -183,7 +206,12 @@ namespace TE.FileWatcher.Configuration.Actions
                 return null;
             }
 
-            return ReplacePlaceholders(Destination, watchPath, fullPath);
+            string? destination = ReplacePlaceholders(Destination, watchPath, fullPath);
+            if (!string.IsNullOrWhiteSpace(destination))
+            {
+                destination = ReplaceDatePlaceholders(destination, watchPath, fullPath);
+            }
+            return destination;
         }
 
         /// <summary>
@@ -207,6 +235,90 @@ namespace TE.FileWatcher.Configuration.Actions
             }
 
             return ReplacePlaceholders(Source, watchPath, fullPath);
+        }
+
+        /// <summary>
+        /// Replaces the date placeholders in a string with the actual values.
+        /// </summary>
+        /// <param name="value">
+        /// The value containing the placeholders.
+        /// </param>
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the changed file.
+        /// </param>
+        /// <returns>
+        /// The value with the placeholders replaced with the actual strings.
+        /// </returns>
+        private string? ReplaceDatePlaceholders(string value, string watchPath, string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            {
+                return null;
+            }
+
+            string replacedValue = value;
+
+            if (_regex.IsMatch(value))
+            {
+                MatchCollection matches = _regex.Matches(value);
+                if (matches.Count > 0)
+                {
+                    foreach (Match match in matches)
+                    {
+                        string dateType = match.Groups["datetype"].Value.ToLower();
+                        string format = match.Groups["format"].Value;
+
+                        DateTime? date;
+                        try
+                        {                            
+                            switch (dateType)
+                            {
+                                case CREATED_DATE:
+                                    date = TEFS.File.GetCreatedDate(fullPath);
+                                    break;
+                                case MODIFIED_DATE:
+                                    date = TEFS.File.GetModifiedDate(fullPath);
+                                    break;
+                                case CURRENT_DATE:
+                                    date = DateTime.Now;
+                                    break;
+                                default:
+                                    date = null;
+                                    break;
+                            }
+                        }
+                        catch (FileWatcherException ex)
+                        {
+                            date = null;
+                            Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                        }
+
+                        string? dateString;
+                        try
+                        {
+                            dateString = date?.ToString(format);
+                            if (string.IsNullOrWhiteSpace(dateString))
+                            {
+                                continue;
+                            }
+                        }
+                        catch (Exception ex)
+                            when (ex is ArgumentException || ex is FormatException)
+                        {
+                            Logger.WriteLine(
+                                $"The date could not be formatted properly using '{format}'. Reason: {ex.Message}", LogLevel.ERROR);
+                            continue;
+                        }
+
+                        replacedValue = replacedValue.Replace(match.Value, dateString);
+                    }
+                }
+            }    
+
+            return null;
         }
     }
 }
