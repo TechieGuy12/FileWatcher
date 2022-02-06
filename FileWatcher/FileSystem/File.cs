@@ -167,6 +167,35 @@ namespace TE.FileWatcher.FileSystem
         }
 
         /// <summary>
+        /// Gets the creation date/time for the file.
+        /// </summary>
+        /// <param name="path">
+        /// The full path to the file.
+        /// </param>
+        /// <returns>
+        /// The creation date/time of the file, otherwise <c>null</c>.
+        /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when the creation time could not be retrieved from the file.
+        /// </exception>
+        public static DateTime? GetCreatedDate(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            {
+                return null;
+            }
+
+            try
+            {
+                return IO.File.GetCreationTime(path);
+            }
+            catch (Exception ex)
+            {
+                throw new FileWatcherException($"The creation time could not be retrieved from the file '{path}'. Reason: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Gets the file extension.
         /// </summary>
         /// <param name="path">
@@ -177,12 +206,41 @@ namespace TE.FileWatcher.FileSystem
         /// </returns>
         public static string? GetExtension(string path)
         {
-            if (string.IsNullOrEmpty(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
             {
                 return null;
             }
 
             return Path.GetExtension(path);
+        }
+
+        /// <summary>
+        /// Gets the modified date/time for the file.
+        /// </summary>
+        /// <param name="path">
+        /// The full path to the file.
+        /// </param>
+        /// <returns>
+        /// The modified date/time of the file, otherwise <c>null</c>.
+        /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when the modified time could not be retrieved from the file.
+        /// </exception>
+        public static DateTime? GetModifiedDate(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            {
+                return null;
+            }
+
+            try
+            {
+                return IO.File.GetLastWriteTime(path);
+            }
+            catch (Exception ex)
+            {
+                throw new FileWatcherException($"The modified time could not be retrieved from the file '{path}'. Reason: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -196,7 +254,7 @@ namespace TE.FileWatcher.FileSystem
         /// </returns>
         public static string? GetName(string path, bool includeExtension)
         {
-            if (string.IsNullOrEmpty(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
             {
                 return null;
             }
