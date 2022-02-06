@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using TE.FileWatcher.Configuration.Data;
-using TE.FileWatcher.Logging;
+﻿using TE.FileWatcher.Configuration.Data;
 
 namespace TE.FileWatcher.Configuration.Filters
 {

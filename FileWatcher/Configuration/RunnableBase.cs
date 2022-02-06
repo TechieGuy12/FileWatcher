@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using IO = System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IO = System.IO;
 
 namespace TE.FileWatcher.Configuration
 {

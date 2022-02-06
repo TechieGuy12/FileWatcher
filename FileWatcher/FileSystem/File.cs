@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using IO = System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IO = System.IO;
 using System.Security.Cryptography;
-using System.IO;
-using System.Threading;
 
 namespace TE.FileWatcher.FileSystem
 {
