@@ -1,5 +1,5 @@
 ﻿using IO = System.IO;
-using FWFS = TE.FileWatcher.FileSystem;
+using TEFS = TE.FileWatcher.FileSystem;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -65,9 +65,9 @@ namespace TE.FileWatcher.Configuration
 
             string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
             string? relativePath = GetRelativePath(watchPath, fullPath);
-            string? fileName = FWFS.File.GetName(fullPath, true);
-            string? fileNameWithoutExtension = FWFS.File.GetName(fullPath, false);
-            string? extension = FWFS.File.GetExtension(fullPath);
+            string? fileName = TEFS.File.GetName(fullPath, true);
+            string? fileNameWithoutExtension = TEFS.File.GetName(fullPath, false);
+            string? extension = TEFS.File.GetExtension(fullPath);
 
             string replacedValue = value;
             replacedValue = replacedValue.Replace(PLACEHOLDER_EXACTPATH, fullPath);
