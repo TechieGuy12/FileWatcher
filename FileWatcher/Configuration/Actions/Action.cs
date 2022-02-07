@@ -76,6 +76,9 @@ namespace TE.FileWatcher.Configuration.Actions
         [XmlElement(ElementName = "verify", DataType = "boolean")]
         public bool Verify { get; set; }
 
+        /// <summary>
+        /// Creates an instance of the <see cref="Action"/> class.
+        /// </summary>
         public Action()
         {
             _regex = new Regex(PATTERN, RegexOptions.Compiled);
