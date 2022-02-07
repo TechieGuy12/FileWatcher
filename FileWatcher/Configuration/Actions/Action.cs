@@ -115,6 +115,17 @@ namespace TE.FileWatcher.Configuration.Actions
 
             if (string.IsNullOrWhiteSpace(source))
             {
+                Logger.WriteLine(
+                    $"The source file could not be determined. Watch path: {watchPath}, changed: {fullPath}.",
+                    LogLevel.ERROR);
+                return;
+            }
+
+            if (!TEFS.File.IsValid(source))
+            {
+                Logger.WriteLine(
+                    $"The file '{source}' could not be {GetActionString()} because the path was not valid, the file doesn't exists, or it was in use.",
+                    LogLevel.ERROR);
                 return;
             }
 
@@ -123,66 +134,139 @@ namespace TE.FileWatcher.Configuration.Actions
                 switch (Type)
                 {
                     case ActionType.Copy:
-                        if (TEFS.File.IsValid(source))
-                        {
-                            if (string.IsNullOrWhiteSpace(destination))
-                            {
-                                Logger.WriteLine(
-                                    $"The file '{source}' could not be copied because the destination file was not specified.",
-                                    LogLevel.ERROR);
-                                return;
-                            }
-
-                            TEFS.File.Copy(source, destination, Verify);
-                            Logger.WriteLine($"Copied {source} to {destination}.");
-                        }
-                        else
+                        if (string.IsNullOrWhiteSpace(destination))
                         {
                             Logger.WriteLine(
-                                $"The file '{source}' could not be copied because the path was not valid, the file doesn't exists, or it was in use.",
+                                $"The file '{source}' could not be copied because the destination file could not be determined. Destination in config file: {Destination}.",
                                 LogLevel.ERROR);
+                            return;
                         }
+
+                        TEFS.File.Copy(source, destination, Verify);
+                        Logger.WriteLine($"Copied {source} to {destination}.");
                         break;
+
                     case ActionType.Move:
-                        if (TEFS.File.IsValid(source))
+                        if (string.IsNullOrWhiteSpace(destination))
                         {
-                            if (string.IsNullOrWhiteSpace(destination))
-                            {
-                                Logger.WriteLine($"The file '{source}' could not be moved because the destination file was not specified.");
-                                return;
-                            }
+                            Logger.WriteLine(
+                                $"The file '{source}' could not be moved because the destination file could not be determined. Destination in config file: {Destination}.",
+                                LogLevel.ERROR);
+                            return;
+                        }
 
-                            TEFS.File.Move(source, destination, Verify);
-                            Logger.WriteLine($"Moved {source} to {destination}.");
-                        }
-                        else
-                        {
-                            Logger.WriteLine(
-                                $"The file '{source}' could not be moved because the path was not valid, the file doesn't exists, or it was in use.",
-                                LogLevel.ERROR);
-                        }
+                        TEFS.File.Move(source, destination, Verify);
+                        Logger.WriteLine($"Moved {source} to {destination}.");
                         break;
+
                     case ActionType.Delete:
-                        if (TEFS.File.IsValid(source))
-                        {
-                            TEFS.File.Delete(source);
-                            Logger.WriteLine($"Deleted {source}.");
-                        }
-                        else
-                        {
-                            Logger.WriteLine(
-                                $"The file '{source}' could not be deleted because the path was not valid, the file doesn't exists, or it was in use.", 
-                                LogLevel.ERROR);
-                        }
+                        TEFS.File.Delete(source);
+                        Logger.WriteLine($"Deleted {source}.");
                         break;
                 }
             }
             catch (Exception ex)
             {
                 string message = (ex.InnerException == null) ? ex.Message : ex.InnerException.Message;
-                Logger.WriteLine($"Could not {Type.ToString().ToLower()} file {source}. Reason: {message}", LogLevel.ERROR);
+                Logger.WriteLine(
+                    $"Could not {Type.ToString().ToLower()} file '{source}.' Reason: {message}",
+                    LogLevel.ERROR);
                 return;
             }
+        }
+
+        /// <summary>
+        /// Gets the string value that represents the action type.
+        /// </summary>
+        /// <returns>
+        /// A string value for the action type, otherwise <c>null</c>.
+        /// </returns>
+        private string? GetActionString()
+        {
+            return Type switch
+            {
+                ActionType.Copy => "copied",
+                ActionType.Move => "moved",
+                ActionType.Delete => "deleted",
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Gets the date value for the specified date type using the full path
+        /// of the changed file.
+        /// </summary>
+        /// <param name="dateType">
+        /// The type of date.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path to the changed file.
+        /// </param>
+        /// <returns>
+        /// The <see cref="DateTime"/> value for the type, otherwise <c>null</c>.
+        /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when the date could not be determined.
+        /// </exception>
+        private static DateTime? GetDate(string dateType, string fullPath)
+        {
+            // Determine the type of date type, and then get
+            // the value for the date
+            return dateType switch
+            {
+                CREATED_DATE => TEFS.File.GetCreatedDate(fullPath),
+                MODIFIED_DATE => TEFS.File.GetModifiedDate(fullPath),
+                CURRENT_DATE => DateTime.Now,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Gets the date string value using the specified date and format.
+        /// </summary>
+        /// <param name="date">
+        /// The date to be formatted.
+        /// </param>
+        /// <param name="format">
+        /// The format string.
+        /// </param>
+        /// <returns>
+        /// The formatted string value
+        /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when the date string value can not be created.
+        /// </exception>
+        private static string? GetDateString(DateTime date, string format)
+        {
+            if (string.IsNullOrEmpty(format))
+            {
+                Logger.WriteLine("The date format was not provided.");
+                return null;
+            }
+
+            try
+            {
+                // Format the date, or return null if there is an
+                // issue trying to format the date
+                string? dateString = date.ToString(format);
+                if (string.IsNullOrWhiteSpace(dateString))
+                {
+                    // There was an issue formatting the date, and
+                    // the date string value was null or contained
+                    // no value, so write a log message, and then
+                    // continue to the next match
+                    throw new FileWatcherException(
+                        $"The date could not be formatted. Format: {format}, date: {date}.");
+                }
+
+                return dateString;
+            }
+            catch (Exception ex)
+                when (ex is ArgumentException || ex is FormatException)
+            {
+                throw new FileWatcherException(
+                    $"The date could not be formatted properly using '{format}'. Reason: {ex.Message}");
+            }            
         }
 
         /// <summary>
@@ -280,63 +364,31 @@ namespace TE.FileWatcher.Configuration.Actions
                         // Store the specified date format
                         string format = match.Groups["format"].Value;
 
-                        DateTime? date;
                         try
                         {
-                            // Determine the type of date type, and then get
-                            // the value for the date
-                            switch (dateType)
+                            // Get the date for the specified date type
+                            DateTime? date = GetDate(dateType, fullPath);
+                            if (date != null)
                             {
-                                case CREATED_DATE:
-                                    date = TEFS.File.GetCreatedDate(fullPath);
-                                    break;
-                                case MODIFIED_DATE:
-                                    date = TEFS.File.GetModifiedDate(fullPath);
-                                    break;
-                                case CURRENT_DATE:
-                                    date = DateTime.Now;
-                                    break;
-                                default:
-                                    date = null;
-                                    break;
+                                // The string value for the date time using the date type
+                                // and format
+                                string? dateString = GetDateString((DateTime)date, format);
+
+                                // Replace the date placeholder with the formatted date
+                                // value
+                                replacedValue = replacedValue.Replace(match.Value, dateString);
+                            } else
+                            {
+                                Logger.WriteLine(
+                                    $"The date value is null. Date type: {dateType}, changed: {fullPath}, value: {value}, watch path: {watchPath}.",
+                                    LogLevel.WARNING);
                             }
                         }
                         catch (FileWatcherException ex)
                         {
-                            date = null;
                             Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                        }
-
-                        string? dateString;
-                        try
-                        {
-                            // Format the date, or return null if there is an
-                            // issue trying to format the date
-                            dateString = date?.ToString(format);
-                            if (string.IsNullOrWhiteSpace(dateString))
-                            {
-                                // There was an issue formatting the date, and
-                                // the date string value was null or contained
-                                // no value, so write a log message, and then
-                                // continue to the next match
-                                Logger.WriteLine(
-                                    $"The date could not be formatted. Format: {format}, date: {date?.ToString()}, destination: {value}, source: {fullPath}",
-                                    LogLevel.WARNING);
                                 continue;
-                            }
                         }
-                        catch (Exception ex)
-                            when (ex is ArgumentException || ex is FormatException)
-                        {
-                            Logger.WriteLine(
-                                $"The date could not be formatted properly using '{format}'. Reason: {ex.Message}",
-                                LogLevel.ERROR);
-                            continue;
-                        }
-
-                        // Replace the date placeholder with the formatted date
-                        // value
-                        replacedValue = replacedValue.Replace(match.Value, dateString);
                     }
                 }
             }    
