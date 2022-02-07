@@ -249,10 +249,12 @@ namespace TE.FileWatcher.Configuration.Actions
         /// The full path of the changed file.
         /// </param>
         /// <returns>
-        /// The value with the placeholders replaced with the actual strings.
+        /// The value with the placeholders replaced with the actual strings,
+        /// otherwise <c>null</c>.
         /// </returns>
         private string? ReplaceDatePlaceholders(string value, string watchPath, string fullPath)
         {
+            // Re
             if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
             {
                 return null;
@@ -262,17 +264,27 @@ namespace TE.FileWatcher.Configuration.Actions
 
             if (_regex.IsMatch(value))
             {
+                // Find all the regex matches that are in the string since there
+                // could be multiple date matches
                 MatchCollection matches = _regex.Matches(value);
                 if (matches.Count > 0)
                 {
+                    // Loop through each of the matches so the placeholder can
+                    // be replaced with the actual date values
                     foreach (Match match in matches)
                     {
+                        // Store the date type (createddate, modifieddate,
+                        // or currentdate) and change it to lowercase so it can
+                        // be easily compared later
                         string dateType = match.Groups["datetype"].Value.ToLower();
+                        // Store the specified date format
                         string format = match.Groups["format"].Value;
 
                         DateTime? date;
                         try
-                        {                            
+                        {
+                            // Determine the type of date type, and then get
+                            // the value for the date
                             switch (dateType)
                             {
                                 case CREATED_DATE:
@@ -298,9 +310,18 @@ namespace TE.FileWatcher.Configuration.Actions
                         string? dateString;
                         try
                         {
+                            // Format the date, or return null if there is an
+                            // issue trying to format the date
                             dateString = date?.ToString(format);
                             if (string.IsNullOrWhiteSpace(dateString))
                             {
+                                // There was an issue formatting the date, and
+                                // the date string value was null or contained
+                                // no value, so write a log message, and then
+                                // continue to the next match
+                                Logger.WriteLine(
+                                    $"The date could not be formatted. Format: {format}, date: {date?.ToString()}, destination: {value}, source: {fullPath}",
+                                    LogLevel.WARNING);
                                 continue;
                             }
                         }
@@ -308,10 +329,13 @@ namespace TE.FileWatcher.Configuration.Actions
                             when (ex is ArgumentException || ex is FormatException)
                         {
                             Logger.WriteLine(
-                                $"The date could not be formatted properly using '{format}'. Reason: {ex.Message}", LogLevel.ERROR);
+                                $"The date could not be formatted properly using '{format}'. Reason: {ex.Message}",
+                                LogLevel.ERROR);
                             continue;
                         }
 
+                        // Replace the date placeholder with the formatted date
+                        // value
                         replacedValue = replacedValue.Replace(match.Value, dateString);
                     }
                 }
