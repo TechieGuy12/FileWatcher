@@ -12,7 +12,7 @@ namespace TE.FileWatcher.Configuration.Actions
     {
         // The regular expresson pattern for extracting the date type and the
         // specified date format to be used
-        const string PATTERN = @"\[(?<datetype>.*):\{(?<format>.*)\}\]";
+        const string PATTERN = @"\[(?<datetype>.*):(?<format>.*)\]";
 
         // The created date placeholder value
         const string CREATED_DATE = "createddate";
