@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TE.FileWatcher.Configuration.Data
+﻿namespace TE.FileWatcher.Configuration.Data
 {
     /// <summary>
     /// A folders node in the XML file.

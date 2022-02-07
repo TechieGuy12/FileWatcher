@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TE.FileWatcher
+﻿namespace TE.FileWatcher
 {
     using System;
 

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using IO = System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IO = System.IO;
+using TEFS = TE.FileWatcher.FileSystem;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -69,9 +65,9 @@ namespace TE.FileWatcher.Configuration
 
             string relativeFullPath = GetRelativeFullPath(watchPath, fullPath);
             string? relativePath = GetRelativePath(watchPath, fullPath);
-            string? fileName = GetFilename(fullPath, true);
-            string? fileNameWithoutExtension = GetFilename(fullPath, false);
-            string? extension = GetFileExtension(fullPath);
+            string? fileName = TEFS.File.GetName(fullPath, true);
+            string? fileNameWithoutExtension = TEFS.File.GetName(fullPath, false);
+            string? extension = TEFS.File.GetExtension(fullPath);
 
             string replacedValue = value;
             replacedValue = replacedValue.Replace(PLACEHOLDER_EXACTPATH, fullPath);
@@ -137,44 +133,6 @@ namespace TE.FileWatcher.Configuration
             }
 
             return GetRelativeFullPath(watchPath, relativeFullPath);
-        }
-
-        /// <summary>
-        /// Gets the name of the file with or without the extension.
-        /// </summary>
-        /// <param name="fullPath">
-        /// The full path to the file.
-        /// </param>
-        /// <returns>
-        /// The name of the file, otherwise <c>null</c>.
-        /// </returns>
-        private static string? GetFilename(string fullPath, bool includeExtension)
-        {
-            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
-            {
-                return null;
-            }
-
-            return includeExtension ? Path.GetFileNameWithoutExtension(fullPath) : Path.GetFileName(fullPath);
-        }
-
-        /// <summary>
-        /// Gets the file extension.
-        /// </summary>
-        /// <param name="fullPath">
-        /// The full path to the file.
-        /// </param>
-        /// <returns>
-        /// The extension of the full, otherwise <c>null</c>.
-        /// </returns>
-        private static string? GetFileExtension(string fullPath)
-        {
-            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
-            {
-                return null;
-            }
-
-            return Path.GetExtension(fullPath);
         }
     }
 }
