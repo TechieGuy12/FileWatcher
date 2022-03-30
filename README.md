@@ -29,3 +29,5 @@ File Watcher includes the following:
 - Linux
 
 For information using File Watcher, please read the [Wiki](https://github.com/TechieGuy12/FileWatcher/wiki).
+
+For example use cases for File Watcher, please read [Use Cases](https://github.com/TechieGuy12/FileWatcher/wiki/Use-Cases).
