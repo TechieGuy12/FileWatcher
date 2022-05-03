@@ -11,9 +11,6 @@ namespace TE.FileWatcher.FileSystem
         // The number of times to retry a file action
         private const int RETRIES = 5;
 
-        // The hash algorithm to use when verifying the files
-        //private const string HASH_ALGORITHM = "SHA256";
-
         /// <summary>
         /// Gets the hash of the file.
         /// </summary>
@@ -326,6 +323,12 @@ namespace TE.FileWatcher.FileSystem
             }
 
             Copy(source, destination, verify);
+
+            // Set the time of the destination file to match the source file
+            // because the file was moved and not a new copy
+            SetDestinationCreationTime(source, destination);
+            SetDestinationModifiedTime(source, destination);
+
             Delete(source);
         }
 
@@ -374,6 +377,84 @@ namespace TE.FileWatcher.FileSystem
             catch (Exception ex)
             {
                 throw new FileWatcherException("The file could not be deleted.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Set the creation time on the destionation file to match the source
+        /// file.
+        /// </summary>
+        /// <param name="source">
+        /// Full path to the source file.
+        /// </param>
+        /// <param name="destination">
+        /// Full path to the destination file.
+        /// </param>
+        private static void SetDestinationCreationTime(string source, string destination)
+        { 
+            if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            if (!IsValid(source) || !IsValid(destination))
+            {
+                return;
+            }
+
+            DateTime? sourceTime = GetCreatedDate(source);
+            if (sourceTime == null)
+            {
+                return;
+            }
+
+            try
+            {
+                IO.File.SetCreationTime(destination, (DateTime)sourceTime);
+            }
+            catch
+            {
+                // Just swallow the exception as we are just setting the time
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Set the modified time on the destionation file to match the source
+        /// file.
+        /// </summary>
+        /// <param name="source">
+        /// Full path to the source file.
+        /// </param>
+        /// <param name="destination">
+        /// Full path to the destination file.
+        /// </param>
+        private static void SetDestinationModifiedTime(string source, string destination)
+        {
+            if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            if (!IsValid(source) || !IsValid(destination))
+            {
+                return;
+            }
+
+            DateTime? sourceTime = GetModifiedDate(source);
+            if (sourceTime == null)
+            {
+                return;
+            }
+
+            try
+            {
+                IO.File.SetLastWriteTime(destination, (DateTime)sourceTime);
+            }
+            catch
+            {
+                // Just swallow the exception as we are just setting the time
+                return;
             }
         }
     }
