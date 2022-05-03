@@ -31,23 +31,22 @@ namespace TE.FileWatcher.Configuration.Notifications
         {
             get
             {
-                HttpMethod method = HttpMethod.Post;
-                if (string.IsNullOrEmpty(MethodString))
+                if (string.IsNullOrWhiteSpace(MethodString))
                 {
-                    return method;
+                    return HttpMethod.Post;
                 }
 
-                try
+                switch (MethodString.ToLower())
                 {
-                    method = (HttpMethod)Enum.Parse(typeof(HttpMethod), MethodString.ToUpper(), true);
+                    case "get":
+                        return HttpMethod.Get;
+                    case "delete":
+                        return HttpMethod.Delete;
+                    case "put":
+                        return HttpMethod.Put;
+                    default:
+                        return HttpMethod.Post;
                 }
-                catch (Exception ex)
-                    when (ex is ArgumentNullException || ex is ArgumentException || ex is OverflowException)
-                {
-                    method = HttpMethod.Post;
-                }
-
-                return method;
             }
         }
 

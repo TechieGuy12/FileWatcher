@@ -69,7 +69,7 @@
             <!-- 
                 Filters matching full paths. Similar to the folder names,
                 paths are relative to the path element and allow for exact file
-                path matching - for example, to exclude C:\Temp\TestFolder\thumbs.db,
+                path matching - for example, to include C:\Temp\TestFolder\thumbs.db,
                 specify TestFolder\thumbs.db.
             -->
             <paths>
