@@ -217,8 +217,14 @@ namespace TE.FileWatcher.Configuration.Actions
             {
                 return null;
             }
+           
+            string? source = ReplacePlaceholders(Source, watchPath, fullPath);
+            if (!string.IsNullOrWhiteSpace(source))
+            {
+                source = ReplaceDatePlaceholders(source, watchPath, fullPath);
+            }
 
-            return ReplacePlaceholders(Source, watchPath, fullPath);
+            return source;
         }
 
 
