@@ -38,7 +38,7 @@ namespace TE.FileWatcher.Configuration.Commands
         public Triggers Triggers { get; set; } = new Triggers();
 
         /// <summary>
-        /// Runs the command.
+        /// Queues the command process to be run.
         /// </summary>
         /// <param name="watchPath">
         /// The watch path.
@@ -114,6 +114,9 @@ namespace TE.FileWatcher.Configuration.Commands
             }
         }
 
+        /// <summary>
+        /// Executes the next command process from the queue.
+        /// </summary>
         private void Execute()
         {
             // If the queue is null or empty, then no command is waiting to nbe
@@ -193,7 +196,13 @@ namespace TE.FileWatcher.Configuration.Commands
                 return null;
             }
 
-            return ReplacePlaceholders(Arguments, watchPath, fullPath);
+            string? arguments = ReplacePlaceholders(Arguments, watchPath, fullPath);
+            if (!string.IsNullOrWhiteSpace(arguments))
+            {
+                arguments = ReplaceDatePlaceholders(arguments, watchPath, fullPath);
+            }
+
+            return arguments;
         }
 
         /// <summary>
@@ -216,7 +225,13 @@ namespace TE.FileWatcher.Configuration.Commands
                 return null;
             }
 
-            return ReplacePlaceholders(Path, watchPath, fullPath);
+            string? path = ReplacePlaceholders(Path, watchPath, fullPath);
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                path = ReplaceDatePlaceholders(path, watchPath, fullPath);
+            }
+
+            return path;
         }
 
         /// <summary>
