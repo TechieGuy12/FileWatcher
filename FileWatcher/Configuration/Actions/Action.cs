@@ -60,6 +60,12 @@ namespace TE.FileWatcher.Configuration.Actions
         public bool Verify { get; set; }
 
         /// <summary>
+        /// Gets or sets the keep timestamps flag.
+        /// </summary>
+        [XmlElement(ElementName = "keepTimestamps", DataType = "boolean")]
+        public bool KeepTimestamps { get; set; }
+
+        /// <summary>
         /// Runs the action.
         /// </summary>
         /// <param name="watchPath">
@@ -120,8 +126,8 @@ namespace TE.FileWatcher.Configuration.Actions
                             return;
                         }
 
-                        TEFS.File.Copy(source, destination, Verify);
-                        Logger.WriteLine($"Copied {source} to {destination}.");
+                        TEFS.File.Copy(source, destination, Verify, KeepTimestamps);
+                        Logger.WriteLine($"Copied {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
                         break;
 
                     case ActionType.Move:
@@ -133,8 +139,8 @@ namespace TE.FileWatcher.Configuration.Actions
                             return;
                         }
 
-                        TEFS.File.Move(source, destination, Verify);
-                        Logger.WriteLine($"Moved {source} to {destination}.");
+                        TEFS.File.Move(source, destination, Verify, KeepTimestamps);
+                        Logger.WriteLine($"Moved {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
                         break;
 
                     case ActionType.Delete:

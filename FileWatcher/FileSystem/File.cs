@@ -115,7 +115,7 @@ namespace TE.FileWatcher.FileSystem
         /// <exception cref="FileWatcherException">
         /// Thrown when the file could not be copied to the destination.
         /// </exception>
-        public static void Copy(string source, string destination, bool verify)
+        public static void Copy(string source, string destination, bool verify, bool keepTimestamp)
         {
             if (string.IsNullOrWhiteSpace(source))
             {
@@ -155,6 +155,14 @@ namespace TE.FileWatcher.FileSystem
                     {
                         attempts++;
                     }
+                }
+
+                if (keepTimestamp)
+                {
+                    // Set the time of the destination file to match the source file
+                    // because the file was moved and not a new copy
+                    SetDestinationCreationTime(source, destination);
+                    SetDestinationModifiedTime(source, destination);
                 }
             }
             catch (Exception ex)
@@ -298,6 +306,10 @@ namespace TE.FileWatcher.FileSystem
         /// <param name="verify">
         /// Verify the file after the copy has completed.
         /// </param>
+        /// <param name="keepTimestamp">
+        /// Flag indicating the created and modified timestamps of the source
+        /// file will be applied to the destination file.
+        /// </param>
         /// <returns>
         /// <c>true</c> if the file was moved successfully, otherwise <c>false</c>.
         /// </returns>
@@ -310,7 +322,7 @@ namespace TE.FileWatcher.FileSystem
         /// <exception cref="FileWatcherException">
         /// Thrown when the file could not be moved to the destination.
         /// </exception>
-        public static void Move(string source, string destination, bool verify)
+        public static void Move(string source, string destination, bool verify, bool keepTimestamp)
         {
             if (string.IsNullOrWhiteSpace(source))
             {
@@ -322,13 +334,7 @@ namespace TE.FileWatcher.FileSystem
                 throw new ArgumentNullException(nameof(destination));
             }
 
-            Copy(source, destination, verify);
-
-            // Set the time of the destination file to match the source file
-            // because the file was moved and not a new copy
-            SetDestinationCreationTime(source, destination);
-            SetDestinationModifiedTime(source, destination);
-
+            Copy(source, destination, verify, keepTimestamp);
             Delete(source);
         }
 
@@ -412,7 +418,7 @@ namespace TE.FileWatcher.FileSystem
             {
                 IO.File.SetCreationTime(destination, (DateTime)sourceTime);
             }
-            catch
+            catch (Exception ex)
             {
                 // Just swallow the exception as we are just setting the time
                 return;
