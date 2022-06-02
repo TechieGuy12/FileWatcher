@@ -232,7 +232,15 @@
                         true
                         false (default)
                 -->
-                <verify></verify>
+              <verify></verify>
+              <!--
+                Keeps the creation and modified timestamps of the source file and applies
+                them to the destination file.
+                Values:
+                    true
+                    false (default)                    
+              -->
+              <keepTimestamps></keepTimestamps>
             </action>
         </actions>
         <!--

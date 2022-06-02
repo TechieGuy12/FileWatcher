@@ -22,17 +22,13 @@
         {
             get
             {
-                switch (Level)
+                return Level switch
                 {
-                    case LogLevel.WARNING:
-                        return "WARN";
-                    case LogLevel.ERROR:
-                        return "ERROR";
-                    case LogLevel.FATAL:
-                        return "FATAL";
-                    default:
-                        return "INFO";
-                }
+                    LogLevel.WARNING => "WARN",
+                    LogLevel.ERROR => "ERROR",
+                    LogLevel.FATAL => "FATAL",
+                    _ => "INFO",
+                };
             }
         }
 
