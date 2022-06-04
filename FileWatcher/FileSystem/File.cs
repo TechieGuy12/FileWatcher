@@ -418,7 +418,7 @@ namespace TE.FileWatcher.FileSystem
             {
                 IO.File.SetCreationTime(destination, (DateTime)sourceTime);
             }
-            catch (Exception ex)
+            catch
             {
                 // Just swallow the exception as we are just setting the time
                 return;
