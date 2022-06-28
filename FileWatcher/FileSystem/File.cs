@@ -11,6 +11,9 @@ namespace TE.FileWatcher.FileSystem
         // The number of times to retry a file action
         private const int RETRIES = 5;
 
+        // A megabyte
+        private const int MEGABYTE = 1024 * 1024;
+
         /// <summary>
         /// Gets the hash of the file.
         /// </summary>
@@ -30,9 +33,17 @@ namespace TE.FileWatcher.FileSystem
                     return null;
                 }
 
-                using var stream = IO.File.OpenRead(fullPath);
-                var hash = hashAlgorithm.ComputeHash(stream);
-                return BitConverter.ToString(hash).Replace("-", "");
+                using (var stream =
+                    new FileStream(
+                        fullPath,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.None,
+                        MEGABYTE))
+                {
+                    var hash = hashAlgorithm.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "");
+                }
             }
             catch
             {
