@@ -23,7 +23,8 @@
     <PackageTags>filesystem file-monitoring folder-monitoring</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageId>TE.FileWatcher</PackageId>   
+    <PackageId>TE.FileWatcher</PackageId> 
+    <AnalysisLevel>latest-all</AnalysisLevel>  
   </PropertyGroup>
 
   <ItemGroup>
