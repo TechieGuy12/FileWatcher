@@ -94,6 +94,7 @@ namespace TE.FileWatcher.Configuration.Actions
                 return;
             }
 
+            Logger.WriteLine($"Waiting for {WaitBefore} millseconds.");
             Thread.Sleep(WaitBefore);
 
             string? source = GetSource(watchPath, fullPath);

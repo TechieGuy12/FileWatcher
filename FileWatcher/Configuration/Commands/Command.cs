@@ -66,6 +66,7 @@ namespace TE.FileWatcher.Configuration.Commands
                 return;
             }
 
+            Logger.WriteLine($"Waiting for {WaitBefore} millseconds.");
             Thread.Sleep(WaitBefore);
 
             string? commandPath = GetCommand(watchPath, fullPath);
