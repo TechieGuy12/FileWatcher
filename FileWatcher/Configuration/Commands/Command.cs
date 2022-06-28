@@ -66,6 +66,8 @@ namespace TE.FileWatcher.Configuration.Commands
                 return;
             }
 
+            Thread.Sleep(WaitBefore);
+
             string? commandPath = GetCommand(watchPath, fullPath);
             string? arguments = GetArguments(watchPath, fullPath);
 

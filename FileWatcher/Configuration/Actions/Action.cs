@@ -94,6 +94,8 @@ namespace TE.FileWatcher.Configuration.Actions
                 return;
             }
 
+            Thread.Sleep(WaitBefore);
+
             string? source = GetSource(watchPath, fullPath);
             string? destination = GetDestination(watchPath, fullPath);
 
@@ -150,11 +152,16 @@ namespace TE.FileWatcher.Configuration.Actions
                 }
             }
             catch (Exception ex)
+                when(ex is ArgumentNullException || ex is FileNotFoundException || ex is FileWatcherException)
             {
-                string message = (ex.InnerException == null) ? ex.Message : ex.InnerException.Message;
+                Exception exception = ex.InnerException ?? ex;
                 Logger.WriteLine(
-                    $"Could not {Type.ToString().ToLower()} file '{source}.' Reason: {message}",
+                    $"Could not {Type.ToString().ToLower(System.Globalization.CultureInfo.CurrentCulture)} file '{source}.' Reason: {exception.Message}",
                     LogLevel.ERROR);
+                if (ex.StackTrace != null)
+                {
+                    Logger.WriteLine(ex.StackTrace);
+                }
                 return;
             }
         }
@@ -232,7 +239,5 @@ namespace TE.FileWatcher.Configuration.Actions
 
             return source;
         }
-
-
     }
 }

@@ -2,6 +2,7 @@
 using IO = System.IO;
 using TE.FileWatcher.Logging;
 using TEFS = TE.FileWatcher.FileSystem;
+using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -44,6 +45,12 @@ namespace TE.FileWatcher.Configuration
 
         // The regular expression
         private readonly Regex _regex;
+
+        /// <summary>
+        /// Gets or sets the number of milliseconds to wait before running.
+        /// </summary>
+        [XmlElement("waitbefore")]
+        public int WaitBefore { get; set; }
 
         /// <summary>
         /// Initializes an instance of the <see cref="RunnableBase"/> class.
