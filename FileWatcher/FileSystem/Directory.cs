@@ -1,4 +1,4 @@
-﻿using IO = System.IO;
+﻿using DotNetIO = System.IO;
 
 namespace TE.FileWatcher.FileSystem
 {
@@ -19,10 +19,10 @@ namespace TE.FileWatcher.FileSystem
 		/// <exception cref="FileWatcherException">
 		/// Thrown when the directory could not be created.
 		/// </exception>
-		/// <exception cref="NullReferenceException">
+		/// <exception cref="InvalidOperationException">
 		/// Thrown when the directory from the path is null.
 		/// </exception>
-        public static void Create(string path)
+		public static void Create(string path)
         {
 			if (string.IsNullOrWhiteSpace(path))
             {
@@ -35,10 +35,10 @@ namespace TE.FileWatcher.FileSystem
 			{
 				// If the destination directory doesn't exist, create
 				// create it to avoid any exceptions						
-				if (!IO.Directory.Exists(folders))
+				if (!DotNetIO.Directory.Exists(folders))
 				{
-					IO.Directory.CreateDirectory(folders);
-					if (!IO.Directory.Exists(folders))
+					DotNetIO.Directory.CreateDirectory(folders);
+					if (!DotNetIO.Directory.Exists(folders))
                     {
 						throw new FileWatcherException($"The directory {folders} could not be created.");
                     }
@@ -46,7 +46,7 @@ namespace TE.FileWatcher.FileSystem
 			}
 			else
             {
-				throw new NullReferenceException("The directory path could not be determined.");
+				throw new InvalidOperationException("The directory path could not be determined.");
             }
 		}
 
@@ -66,7 +66,7 @@ namespace TE.FileWatcher.FileSystem
 				return false;
             }
 
-			return IO.Directory.Exists(path);
+			return DotNetIO.Directory.Exists(path);
         }
     }
 }

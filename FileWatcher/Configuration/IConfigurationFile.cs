@@ -2,6 +2,9 @@
 
 namespace TE.FileWatcher.Configuration
 {
+    /// <summary>
+    /// Interface for the configuration file.
+    /// </summary>
     interface IConfigurationFile
     {
         /// <summary>

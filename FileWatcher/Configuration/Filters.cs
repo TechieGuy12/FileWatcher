@@ -1,6 +1,6 @@
-﻿using TE.FileWatcher.Configuration.Data;
+﻿using TE.FileWatcher.IO;
 
-namespace TE.FileWatcher.Configuration.Filters
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// A filters node in the XML file.

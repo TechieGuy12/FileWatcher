@@ -1,5 +1,8 @@
 ﻿namespace TE.FileWatcher.Configuration
 {
+    /// <summary>
+    /// Information about the change.
+    /// </summary>
     public class ChangeInfo
     {
         /// <summary>

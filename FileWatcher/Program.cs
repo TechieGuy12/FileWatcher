@@ -2,7 +2,7 @@
 using System.CommandLine.Invocation;
 using System.Diagnostics.CodeAnalysis;
 using TE.FileWatcher.Configuration;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher
 {
@@ -103,16 +103,9 @@ namespace TE.FileWatcher
                 return false;
             }
 
-            try
-            {
-                Logger.SetLogger(watches.Logging);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"The log file could not be set. Reason: {ex.Message}");
-                return false;
-            }
+            Logger.SetLogger(watches.Logging);
+            return true;
+
         }
 
         /// <summary>

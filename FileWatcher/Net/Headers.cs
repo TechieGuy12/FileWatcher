@@ -1,6 +1,7 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.ObjectModel;
+using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Notifications
+namespace TE.FileWatcher.Net
 {
     /// <summary>
     /// Contains the headers information.
@@ -11,7 +12,9 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// Get or sets the list of headers to add to a request.
         /// </summary>
         [XmlElement("header")]
-        public List<Header>? HeaderList { get; set; }
+#pragma warning disable CA2227 // Collection properties should be read only
+        public Collection<Header>? HeaderList { get; set; }
+#pragma warning restore CA2227 // Collection properties should be read only
 
         /// <summary>
         /// Sets the headers for a request.
@@ -21,6 +24,11 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </param>
         public void Set(HttpRequestMessage request)
         {
+            if (request == null)
+            {
+                return;
+            }
+
             if (HeaderList == null || HeaderList.Count <= 0)
             {
                 return;

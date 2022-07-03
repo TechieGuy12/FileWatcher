@@ -1,8 +1,9 @@
 ﻿using System.Text.RegularExpressions;
-using IO = System.IO;
-using TE.FileWatcher.Logging;
+using System.IO;
+using TE.FileWatcher.Log;
 using TEFS = TE.FileWatcher.FileSystem;
 using System.Xml.Serialization;
+using System.Globalization;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -13,31 +14,31 @@ namespace TE.FileWatcher.Configuration
     public abstract class RunnableBase
     {
         // The exact path placeholder
-        protected const string PLACEHOLDER_EXACTPATH = "[exactpath]";
+        protected const string PLACEHOLDEREXACTPATH = "[exactpath]";
 
         // The full path placeholder
-        protected const string PLACEHOLDER_FULLPATH = "[fullpath]";
+        protected const string PLACEHOLDERFULLPATH = "[fullpath]";
 
         // The path placholder
-        protected const string PLACEHOLDER_PATH = "[path]";
+        protected const string PLACEHOLDERPATH = "[path]";
 
         // The file placeholder
-        protected const string PLACEHOLDER_FILE = "[file]";
+        protected const string PLACEHOLDERFILE = "[file]";
 
         // The file name placeholder
-        protected const string PLACEHOLDER_FILENAME = "[filename]";
+        protected const string PLACEHOLDERFILENAME = "[filename]";
 
         // The file extension placeholder
-        protected const string PLACEHOLDER_EXTENSION = "[extension]";
+        protected const string PLACEHOLDEREXTENSION = "[extension]";
 
         // The created date placeholder value
-        protected const string PLACEHOLDER_CREATED_DATE = "createddate";
+        protected const string PLACEHOLDERCREATEDDATE = "createddate";
 
         // The modified date placholder value
-        protected const string PLACEHOLDER_MODIFIED_DATE = "modifieddate";
+        protected const string PLACEHOLDERMODIFIEDDATE = "modifieddate";
 
         // The current date placeholder value
-        protected const string PLACEHOLDER_CURRENT_DATE = "currentdate";
+        protected const string PLACEHOLDERCURRENTDATE = "currentdate";
 
         // The regular expresson pattern for extracting the date type and the
         // specified date format to be used
@@ -55,7 +56,7 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Initializes an instance of the <see cref="RunnableBase"/> class.
         /// </summary>
-        public RunnableBase()
+        protected RunnableBase()
         {
             _regex = new Regex(PATTERN, RegexOptions.Compiled);
         }
@@ -103,12 +104,12 @@ namespace TE.FileWatcher.Configuration
             string? extension = TEFS.File.GetExtension(fullPath);
 
             string replacedValue = value;
-            replacedValue = replacedValue.Replace(PLACEHOLDER_EXACTPATH, fullPath);
-            replacedValue = replacedValue.Replace(PLACEHOLDER_FULLPATH, relativeFullPath);
-            replacedValue = replacedValue.Replace(PLACEHOLDER_PATH, relativePath);
-            replacedValue = replacedValue.Replace(PLACEHOLDER_FILENAME, fileName);
-            replacedValue = replacedValue.Replace(PLACEHOLDER_FILE, fileNameWithoutExtension);
-            replacedValue = replacedValue.Replace(PLACEHOLDER_EXTENSION, extension);
+            replacedValue = replacedValue.Replace(PLACEHOLDEREXACTPATH, fullPath, StringComparison.Ordinal);
+            replacedValue = replacedValue.Replace(PLACEHOLDERFULLPATH, relativeFullPath, StringComparison.Ordinal);
+            replacedValue = replacedValue.Replace(PLACEHOLDERPATH, relativePath, StringComparison.Ordinal);
+            replacedValue = replacedValue.Replace(PLACEHOLDERFILENAME, fileName, StringComparison.Ordinal);
+            replacedValue = replacedValue.Replace(PLACEHOLDERFILE, fileNameWithoutExtension, StringComparison.Ordinal);
+            replacedValue = replacedValue.Replace(PLACEHOLDEREXTENSION, extension, StringComparison.Ordinal);
 
             return replacedValue;
         }
@@ -153,7 +154,7 @@ namespace TE.FileWatcher.Configuration
                         // Store the date type (createddate, modifieddate,
                         // or currentdate) and change it to lowercase so it can
                         // be easily compared later
-                        string dateType = match.Groups["datetype"].Value.ToLower();
+                        string dateType = match.Groups["datetype"].Value.ToLower(CultureInfo.CurrentCulture);
                         // Store the specified date format
                         string format = match.Groups["format"].Value;
 
@@ -169,7 +170,7 @@ namespace TE.FileWatcher.Configuration
 
                                 // Replace the date placeholder with the formatted date
                                 // value
-                                replacedValue = replacedValue.Replace(match.Value, dateString);
+                                replacedValue = replacedValue.Replace(match.Value, dateString, StringComparison.OrdinalIgnoreCase);
                             }
                             else
                             {
@@ -212,9 +213,9 @@ namespace TE.FileWatcher.Configuration
             // the value for the date
             return dateType switch
             {
-                PLACEHOLDER_CREATED_DATE => TEFS.File.GetCreatedDate(fullPath),
-                PLACEHOLDER_MODIFIED_DATE => TEFS.File.GetModifiedDate(fullPath),
-                PLACEHOLDER_CURRENT_DATE => DateTime.Now,
+                PLACEHOLDERCREATEDDATE => TEFS.File.GetCreatedDate(fullPath),
+                PLACEHOLDERMODIFIEDDATE => TEFS.File.GetModifiedDate(fullPath),
+                PLACEHOLDERCURRENTDATE => DateTime.Now,
                 _ => null
             };
         }
@@ -246,7 +247,7 @@ namespace TE.FileWatcher.Configuration
             {
                 // Format the date, or return null if there is an
                 // issue trying to format the date
-                string? dateString = date.ToString(format);
+                string? dateString = date.ToString(format, CultureInfo.CurrentCulture);
                 if (string.IsNullOrWhiteSpace(dateString))
                 {
                     // There was an issue formatting the date, and
@@ -289,7 +290,7 @@ namespace TE.FileWatcher.Configuration
             try
             {
                 int index = fullPath.IndexOf(watchPath, StringComparison.OrdinalIgnoreCase);
-                return (index < 0) ? fullPath : fullPath.Remove(index, watchPath.Length).Trim(IO.Path.DirectorySeparatorChar);
+                return (index < 0) ? fullPath : fullPath.Remove(index, watchPath.Length).Trim(Path.DirectorySeparatorChar);
             }
             catch (Exception ex)
                 when (ex is ArgumentException || ex is ArgumentNullException)

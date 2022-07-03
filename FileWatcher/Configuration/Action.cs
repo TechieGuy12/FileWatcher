@@ -1,8 +1,8 @@
 ﻿using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 using TEFS = TE.FileWatcher.FileSystem;
 
-namespace TE.FileWatcher.Configuration.Actions
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// The Action to perform during a watch event.
@@ -39,7 +39,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the source of the action.
         /// </summary>
         [XmlElement("source")]
-        public string Source { get; set; } = PLACEHOLDER_FULLPATH;
+        public string Source { get; set; } = PLACEHOLDERFULLPATH;
 
         /// <summary>
         /// Gets or sets the triggers of the action.
@@ -153,7 +153,7 @@ namespace TE.FileWatcher.Configuration.Actions
                 }
             }
             catch (Exception ex)
-                when(ex is ArgumentNullException || ex is FileNotFoundException || ex is FileWatcherException)
+                when (ex is ArgumentNullException || ex is FileNotFoundException || ex is FileWatcherException)
             {
                 Exception exception = ex.InnerException ?? ex;
                 Logger.WriteLine(
@@ -231,7 +231,7 @@ namespace TE.FileWatcher.Configuration.Actions
             {
                 return null;
             }
-           
+
             string? source = ReplacePlaceholders(Source, watchPath, fullPath);
             if (!string.IsNullOrWhiteSpace(source))
             {

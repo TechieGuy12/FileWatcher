@@ -1,7 +1,9 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Xml.Serialization;
+using TE.FileWatcher.Net;
 
-namespace TE.FileWatcher.Configuration.Notifications
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// A notification that will be triggered.
@@ -16,7 +18,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// </summary>
         [XmlElement("url")]
         public string? Url { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the string representation of the request method.
         /// </summary>
@@ -36,17 +38,13 @@ namespace TE.FileWatcher.Configuration.Notifications
                     return HttpMethod.Post;
                 }
 
-                switch (MethodString.ToLower())
+                return MethodString.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
                 {
-                    case "get":
-                        return HttpMethod.Get;
-                    case "delete":
-                        return HttpMethod.Delete;
-                    case "put":
-                        return HttpMethod.Put;
-                    default:
-                        return HttpMethod.Post;
-                }
+                    "get" => HttpMethod.Get,
+                    "delete" => HttpMethod.Delete,
+                    "put" => HttpMethod.Put,
+                    _ => HttpMethod.Post,
+                };
             }
         }
 
@@ -107,24 +105,24 @@ namespace TE.FileWatcher.Configuration.Notifications
             if (Triggers.Current.HasFlag(trigger))
             {
                 _message.Append(CleanMessage(message) + @"\n");
-            }            
+            }
         }
 
         /// <summary>
         /// Send the notification request.
         /// </summary>
-        /// <exception cref="NullReferenceException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the URL is null or empty.
         /// </exception>
         /// <exception cref="UriFormatException">
         /// Thrown when the URL is not in a valid format.
         /// </exception>
-        internal async Task<HttpResponseMessage> SendAsync()
+        internal async Task<Response?> SendAsync()
         {
             // If there isn't a message to be sent, then just return
             if (_message == null || _message.Length <= 0)
             {
-                return new HttpResponseMessage();
+                return null;
             }
 
             if (GetUri() == null)
@@ -134,25 +132,25 @@ namespace TE.FileWatcher.Configuration.Notifications
 
             if (Data == null)
             {
-                throw new NullReferenceException("Data for the request was not provided.");
+                throw new InvalidOperationException("Data for the request was not provided.");
             }
 
             string content = string.Empty;
             if (Data.Body != null)
             {
-                content = Data.Body.Replace("[message]", _message.ToString());
+                content = Data.Body.Replace("[message]", _message.ToString(), StringComparison.OrdinalIgnoreCase);
             }
 
-            HttpResponseMessage response =
+            Response response =
                 await Request.SendAsync(
                     Method,
                     GetUri(),
                     Data.Headers,
                     content,
-                    Data.MimeType);
+                    Data.MimeType).ConfigureAwait(false);
 
             _message.Clear();
-            return response;           
+            return response;
         }
 
         /// <summary>
@@ -210,9 +208,8 @@ namespace TE.FileWatcher.Configuration.Notifications
                     default:
                         if (c < ' ')
                         {
-                            t = "000" + string.Format("{0:X}", c);
+                            t = "000" + string.Format(CultureInfo.CurrentCulture,"{0:X}", c);
                             sb.Append(string.Concat("\\u", t.AsSpan(t.Length - 4)));
-                            //sb.Append("\\u" + t.Substring(t.Length - 4));
                         }
                         else
                         {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 
-namespace TE.FileWatcher.Configuration.Notifications
+namespace TE.FileWatcher.Net
 {
     internal static class Request
     {
@@ -36,16 +36,11 @@ namespace TE.FileWatcher.Configuration.Notifications
         // XML mime type
         private const string MIME_TYPE_XML = "application/xml";
 
-        private static readonly ServiceCollection _services;
+        // The collection of services - contains the HTTP clients
+        private static readonly ServiceCollection _services = new ServiceCollection();
 
-        private static readonly ServiceProvider _serviceProvider;
-
-        static Request()
-        {
-            _services = new ServiceCollection();
-            _services.AddHttpClient();
-            _serviceProvider = _services.BuildServiceProvider();
-        }
+        // The provider of the service - the HTTP client
+        private static ServiceProvider? _serviceProvider;
 
         /// <summary>
         /// Sends a request to a remote system asychronously.
@@ -68,7 +63,7 @@ namespace TE.FileWatcher.Configuration.Notifications
         /// <exception cref="ArgumentNullException">
         /// Thrown when an argument is null or empty.
         /// </exception>
-        internal static async Task<HttpResponseMessage> SendAsync(
+        internal static async Task<Response> SendAsync(
             HttpMethod method,
             Uri uri,
             Headers? headers,
@@ -80,49 +75,61 @@ namespace TE.FileWatcher.Configuration.Notifications
                 throw new ArgumentNullException(nameof(uri));
             }
 
-            HttpRequestMessage request = new(method, uri);
-
-            if (headers != null)
+            if (_serviceProvider == null)
             {
-                headers.Set(request);
+                _services.AddHttpClient();
+                _serviceProvider = _services.BuildServiceProvider();
             }
 
-            if (body != null)
+            using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
             {
-                request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
-            }
-
-            HttpResponseMessage? response = null;
-            try
-            {
-                var client = _serviceProvider.GetService<HttpClient>();
-                if (client != null)
+                if (headers != null)
                 {
-                    response = await client.SendAsync(request);
+                    headers.Set(request);
                 }
-                else
+
+                if (body != null)
                 {
-                    if (response == null)
+                    request.Content = new StringContent(body, Encoding.UTF8, GetMimeTypeString(mimeType));
+                }
+
+                try
+                {
+                    var client = _serviceProvider.GetService<HttpClient>();
+                    if (client != null)
                     {
-                        response = new HttpResponseMessage();
+                        using (HttpResponseMessage requestResponse =
+                            await client.SendAsync(request).ConfigureAwait(false))
+                        {
+                            using (HttpContent httpContent = requestResponse.Content)
+                            {
+                                string resultContent =
+                                    await httpContent.ReadAsStringAsync().ConfigureAwait(false);
+
+                                return new Response(
+                                    requestResponse.StatusCode,
+                                    requestResponse.ReasonPhrase,
+                                    resultContent);
+                            }
+                        }
                     }
-
-                    response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
-                    response.ReasonPhrase = $"Request could not be sent. Reason: The HTTP client service could not be initialized.";
+                    else
+                    {
+                        return new Response(
+                            System.Net.HttpStatusCode.InternalServerError,
+                            "Request could not be sent. Reason: The HTTP client service could not be initialized.",
+                            null); ;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                if (response == null)
+                catch (Exception ex)
+                    when (ex is ArgumentNullException || ex is InvalidOperationException || ex is HttpRequestException || ex is TaskCanceledException)
                 {
-                    response = new HttpResponseMessage();
-                }
-
-                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
-                response.ReasonPhrase = $"Request could not be sent. Reason: {ex.Message}";
-            }
-
-            return response;
+                    return new Response(
+                        System.Net.HttpStatusCode.InternalServerError,
+                        $"Request could not be sent. Reason: {ex.Message}",
+                        null);
+                }                
+            }            
         }
 
         /// <summary>

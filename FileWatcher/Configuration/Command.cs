@@ -1,14 +1,14 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 
-namespace TE.FileWatcher.Configuration.Commands
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// A command to run for a change.
     /// </summary>
-    public class Command : RunnableBase
+    public class Command : RunnableBase, IDisposable
     {
         // The process that will run the command
         private Process? _process;
@@ -17,7 +17,10 @@ namespace TE.FileWatcher.Configuration.Commands
         private ConcurrentQueue<ProcessStartInfo>? _processInfo;
 
         // Flag indicating that a process is running
-        private bool _isProcessRunning = false;
+        private bool _isProcessRunning;
+
+        // Flag indicating the class is disposed
+        private bool _disposed;
 
         /// <summary>
         /// Gets or sets the arguments associated with the file to execute.
@@ -87,34 +90,58 @@ namespace TE.FileWatcher.Configuration.Commands
                 return;
             }
 
-            try
+            if (_processInfo == null)
             {
-                if (_processInfo == null)
-                {
-                    _processInfo = new ConcurrentQueue<ProcessStartInfo>();
-                }
-
-                ProcessStartInfo startInfo = new()
-                {
-                    FileName = commandPath
-                };
-
-                if (arguments != null)
-                {
-                    startInfo.Arguments = arguments;
-                }
-
-                _processInfo.Enqueue(startInfo);
-
-                // Execute the next process in the queue
-                Execute();
+                _processInfo = new ConcurrentQueue<ProcessStartInfo>();
             }
-            catch (Exception ex)
+
+            ProcessStartInfo startInfo = new()
             {
-                Logger.WriteLine(
-                    $"Could not run the command '{commandPath} {arguments}'. Reason: {ex.Message}",
-                    LogLevel.ERROR);
+                FileName = commandPath
+            };
+
+            if (arguments != null)
+            {
+                startInfo.Arguments = arguments;
             }
+
+            _processInfo.Enqueue(startInfo);
+
+            // Execute the next process in the queue
+            Execute();
+        }
+
+        /// <summary>
+        /// Releases all resources used by the class.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Release all resources used by the class.
+        /// </summary>
+        /// <param name="disposing">
+        /// Indicates the whether the class is disposing.
+        /// </param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (_process != null)
+                {
+                    _process.Dispose();
+                }
+            }
+
+            _disposed = true;
         }
 
         /// <summary>
@@ -163,12 +190,14 @@ namespace TE.FileWatcher.Configuration.Commands
                 }
             }
             catch (Exception ex)
+                when (ex is ArgumentNullException || ex is InvalidOperationException || ex is PlatformNotSupportedException || ex is System.ComponentModel.Win32Exception || ex is ObjectDisposedException)
             {
                 if (_process != null)
                 {
                     Logger.WriteLine(
                         $"Could not run the command '{_process.StartInfo.FileName} {_process.StartInfo.Arguments}'. Reason: {ex.Message}",
                         LogLevel.ERROR);
+                    _process.Close();
                 }
                 else
                 {

@@ -1,4 +1,4 @@
-﻿namespace TE.FileWatcher.Configuration.Data
+﻿namespace TE.FileWatcher.IO
 {
     internal static class PatternMatcher
     {
@@ -108,8 +108,10 @@
             int previousDestCount;
             int matchesCount;
 
+#pragma warning disable IDE0059
             char nameChar = '\0';
             char exprChar = '\0';
+#pragma warning restore IDE0059
 
             int[] previousMatches = new int[MATCHES_ARRAY_SIZE];
             int[] currentMatches = new int[MATCHES_ARRAY_SIZE];
@@ -136,7 +138,7 @@
             //  Special case by far the most common wild card search of * or *.*
             //
 
-            if (expression.Equals("*") || expression.Equals("*.*"))
+            if (expression.Equals("*", StringComparison.OrdinalIgnoreCase) || expression.Equals("*.*", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -223,7 +225,9 @@
                 if (nameOffset < name.Length)
                 {
                     nameChar = name[nameOffset];
+#pragma warning disable IDE0059
                     length = 1;
+#pragma warning restore IDE0059
                     nameOffset++;
                 }
                 else

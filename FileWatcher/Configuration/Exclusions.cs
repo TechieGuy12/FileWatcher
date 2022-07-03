@@ -1,6 +1,6 @@
-﻿using TE.FileWatcher.Configuration.Data;
+﻿using TE.FileWatcher.IO;
 
-namespace TE.FileWatcher.Configuration.Exclusions
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// An exclusions node in the XML file.

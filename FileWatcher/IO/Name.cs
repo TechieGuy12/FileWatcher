@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Data
+namespace TE.FileWatcher.IO
 {
     /// <summary>
     /// Methods and properties that manage a name value.
@@ -30,17 +30,26 @@ namespace TE.FileWatcher.Configuration.Data
         /// <c>true</c> if the value is a match for the pattern, otherwise
         /// <c>false</c>.
         /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// The <paramref name="value"/> parameter is null or empty.
+        /// </exception>
+#pragma warning disable CA1031
         public bool IsMatch(string value)
         {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (string.IsNullOrWhiteSpace(Pattern))
             {
                 return false;
             }
 
-            bool isMatch = value.Equals(Pattern);
+            bool isMatch = value.Equals(Pattern, StringComparison.Ordinal);
             if (!isMatch)
             {
-                isMatch = value.Contains(Pattern);
+                isMatch = value.Contains(Pattern, StringComparison.Ordinal);
             }
 
             if (!isMatch)
@@ -56,7 +65,7 @@ namespace TE.FileWatcher.Configuration.Data
                 {
                     if (_regex == null)
                     {
-                        string escapedPattern = Pattern.Replace(@"\", @"\\");
+                        string escapedPattern = Pattern.Replace(@"\", @"\\", StringComparison.Ordinal);
                         _regex = new Regex(escapedPattern, RegexOptions.IgnoreCase);
                     }
                     isMatch = _regex.IsMatch(value);
@@ -69,5 +78,6 @@ namespace TE.FileWatcher.Configuration.Data
 
             return isMatch;
         }
+#pragma warning restore CA1031
     }
 }

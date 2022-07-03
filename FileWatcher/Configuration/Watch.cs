@@ -1,15 +1,16 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Globalization;
 using System.Timers;
 using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// The watch element in the XML file.
     /// </summary>
-    public class Watch
+    public class Watch : IDisposable
     {
         // The file system watcher object
         private FileSystemWatcher? _fsWatcher;
@@ -29,6 +30,9 @@ namespace TE.FileWatcher.Configuration
         // The queue that will contain the changes
         private ConcurrentQueue<ChangeInfo>? _queue;
 
+        // Flag indicating the class is disposed
+        private bool _disposed;
+
         /// <summary>
         /// Gets or sets the path of the watch.
         /// </summary>
@@ -45,31 +49,31 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the filters.
         /// </summary>
         [XmlElement("filters")]
-        public Filters.Filters? Filters { get; set; }
+        public Filters? Filters { get; set; }
 
         /// <summary>
         /// Gets or sets the exclusions.
         /// </summary>
         [XmlElement("exclusions")]
-        public Exclusions.Exclusions? Exclusions { get; set; }
+        public Exclusions? Exclusions { get; set; }
 
         /// <summary>
         /// Gets or sets the notifications for the watch.
         /// </summary>
         [XmlElement("notifications")]
-        public Notifications.Notifications? Notifications { get; set; }
+        public Notifications? Notifications { get; set; }
 
         /// <summary>
         /// Gets or sets the actions for the watch.
         /// </summary>
         [XmlElement("actions")]
-        public Actions.Actions? Actions { get; set; }
+        public Actions? Actions { get; set; }
 
         /// <summary>
         /// Gets or sets the commands for the watch.
         /// </summary>
         [XmlElement("commands")]
-        public Commands.Commands? Commands { get; set; }
+        public Commands? Commands { get; set; }
 
         /// <summary>
         /// Gets the flag indicating the watch is running.
@@ -145,6 +149,49 @@ namespace TE.FileWatcher.Configuration
             _fsWatcher = null;
 
             return !IsRunning;
+        }
+
+        /// <summary>
+        /// Releases all resources used by the class.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Release all resources used by the class.
+        /// </summary>
+        /// <param name="disposing">
+        /// Indicates the whether the class is disposing.
+        /// </param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (_timer != null)
+                {
+                    _timer.Dispose();
+                }
+
+                if(_worker != null)
+                {
+                    _worker.Dispose();
+                }
+
+                if (_fsWatcher != null)
+                {
+                    _fsWatcher.Dispose();
+                }
+            }
+
+            _disposed = true;
         }
 
         /// <summary>
@@ -352,7 +399,7 @@ namespace TE.FileWatcher.Configuration
 
                 // Check if the change is related to the same file as the last
                 // change that was captured
-                if (_lastChange != null && _lastChange.FullPath.Equals(change.FullPath))
+                if (_lastChange != null && _lastChange.FullPath.Equals(change.FullPath, StringComparison.OrdinalIgnoreCase))
                 {
                     // If the last change was a copy, then this change is
                     // associated with that change as a copy raises multiple

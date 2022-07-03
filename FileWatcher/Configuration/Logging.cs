@@ -1,6 +1,6 @@
 ﻿using System.Security;
 using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -12,21 +12,21 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// The default log size.
         /// </summary>
-        public const int DEFAULT_LOG_SIZE = 5;
+        public const int DEFAULTLOGSIZE = 5;
 
         /// <summary>
         /// The default log number.
         /// </summary>
-        public const int DEFAULT_LOG_NUMBER = 10;
+        public const int DEFAULTLOGNUMBER = 10;
 
         // The log path
         private string? _logPath;
 
         // The size of the log file
-        private int _logSize = DEFAULT_LOG_SIZE;
+        private int _logSize = DEFAULTLOGSIZE;
 
         // The number of log files to retain
-        private int _logNumber = DEFAULT_LOG_NUMBER;
+        private int _logNumber = DEFAULTLOGNUMBER;
 
         /// <summary>
         /// Gets or sets the path of the log file.
@@ -40,7 +40,7 @@ namespace TE.FileWatcher.Configuration
             }
             set
             {
-                _logPath = !string.IsNullOrWhiteSpace(value) ?  value : Path.Combine(Path.GetTempPath(), Logger.DEFAULT_LOG_NAME);
+                _logPath = !string.IsNullOrWhiteSpace(value) ?  value : Path.Combine(Path.GetTempPath(), Logger.DEFAULTLOGNAME);
             }
         }
 
@@ -57,7 +57,7 @@ namespace TE.FileWatcher.Configuration
             }
             set
             {
-                _logSize = value > 0 ? value : DEFAULT_LOG_SIZE;
+                _logSize = value > 0 ? value : DEFAULTLOGSIZE;
             }
         }
 
@@ -73,7 +73,7 @@ namespace TE.FileWatcher.Configuration
             }
             set
             {
-                _logNumber = value > 0 ? value : DEFAULT_LOG_NUMBER;
+                _logNumber = value > 0 ? value : DEFAULTLOGNUMBER;
             }
         }
 
@@ -91,9 +91,9 @@ namespace TE.FileWatcher.Configuration
         /// </exception>
         public Logging() 
         {
-            LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULT_LOG_NAME);
-            Size = DEFAULT_LOG_SIZE;
-            Number = DEFAULT_LOG_NUMBER;
+            LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULTLOGNAME);
+            Size = DEFAULTLOGSIZE;
+            Number = DEFAULTLOGNUMBER;
         }
     }
 }

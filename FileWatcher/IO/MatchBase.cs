@@ -1,7 +1,7 @@
 ﻿using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 
-namespace TE.FileWatcher.Configuration.Data
+namespace TE.FileWatcher.IO
 {
     /// <summary>
     /// A base class containing the properties and methods for filtering the
@@ -16,7 +16,7 @@ namespace TE.FileWatcher.Configuration.Data
         private protected HashSet<string>? _paths;
 
         // Sets the flag indicating the ignore lists have been populated
-        private protected bool _initialized = false;
+        private protected bool _initialized;
 
         // The path associated with the watch
         private protected string? _watchPath;
@@ -101,6 +101,7 @@ namespace TE.FileWatcher.Configuration.Data
         /// <returns>
         /// True if the file change is a match, otherwise false.
         /// </returns>
+#pragma warning disable CA1031
         private protected bool AttributeMatch(string path)
         {
             if (Attributes == null || Attributes.Attribute.Count <= 0)
@@ -138,6 +139,7 @@ namespace TE.FileWatcher.Configuration.Data
             }
             return hasAttribute;
         }
+#pragma warning restore CA1031
 
         /// <summary>
         /// Returns the flag indicating whether the current file changed is
@@ -236,7 +238,7 @@ namespace TE.FileWatcher.Configuration.Data
             bool isMatch = false;
             foreach (string aPath in _paths)
             {
-                if (path.Contains(aPath))
+                if (path.Contains(aPath, StringComparison.OrdinalIgnoreCase))
                 {
                     Logger.WriteLine($"{FilterTypeName}: The path '{path}' contains the path '{aPath}'.");
                     isMatch = true;

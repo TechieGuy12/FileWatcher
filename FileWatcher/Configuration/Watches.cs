@@ -1,5 +1,6 @@
-﻿using System.Xml.Serialization;
-using TE.FileWatcher.Logging;
+﻿using System.Collections.ObjectModel;
+using System.Xml.Serialization;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -19,7 +20,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the watches list.
         /// </summary>
         [XmlElement("watch")]
-        public List<Watch>? WatchList { get; set; }
+        public Collection<Watch>? WatchList { get; set; }
 
         /// <summary>
         /// Starts the watches.

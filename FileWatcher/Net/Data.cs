@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Notifications
+namespace TE.FileWatcher.Net
 {
     /// <summary>
     /// Contains the data used to send the request.

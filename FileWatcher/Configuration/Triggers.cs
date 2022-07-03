@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.ObjectModel;
+using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -42,7 +43,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets a list of notification triggers.
         /// </summary>
         [XmlElement("trigger")]
-        public List<TriggerType>? TriggerList { get; set; }
+        public Collection<TriggerType>? TriggerList { get; set; }
 
         /// <summary>
         /// Gets the current combined triggers using the list from the

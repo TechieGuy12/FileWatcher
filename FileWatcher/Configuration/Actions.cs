@@ -1,7 +1,11 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.ObjectModel;
+using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Actions
+namespace TE.FileWatcher.Configuration
 {
+    /// <summary>
+    /// Contains information about all actions for a watch.
+    /// </summary>
     [XmlRoot("actions")]
     public class Actions
     {
@@ -9,7 +13,7 @@ namespace TE.FileWatcher.Configuration.Actions
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("action")]
-        public List<Action>? ActionList { get; set; }
+        public Collection<Action>? ActionList { get; set; }
 
         /// <summary>
         /// Runs all the actions for the watch.
@@ -31,7 +35,7 @@ namespace TE.FileWatcher.Configuration.Actions
             {
                 return;
             }
-            
+
             foreach (Action action in ActionList)
             {
                 action.Run(watchPath, fullPath, trigger);

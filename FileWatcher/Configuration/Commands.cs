@@ -1,6 +1,7 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.ObjectModel;
+using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Commands
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// The commands to run when a change is detected.
@@ -12,7 +13,7 @@ namespace TE.FileWatcher.Configuration.Commands
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("command")]
-        public List<Command>? CommandList { get; set; }
+        public Collection<Command>? CommandList { get; set; }
 
         /// <summary>
         /// Runs all the commands for the watch.

@@ -1,4 +1,4 @@
-﻿namespace TE.FileWatcher.Configuration.Data
+﻿namespace TE.FileWatcher.IO
 {
     /// <summary>
     /// The files node in the XML file.

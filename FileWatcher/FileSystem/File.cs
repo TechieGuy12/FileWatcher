@@ -1,4 +1,4 @@
-﻿using IO = System.IO;
+﻿using DotNetIO = System.IO;
 using System.Security.Cryptography;
 
 namespace TE.FileWatcher.FileSystem
@@ -6,6 +6,7 @@ namespace TE.FileWatcher.FileSystem
     /// <summary>
     /// A wrapper class to manage the File actions.
     /// </summary>
+
     public static class File
     {
         // The number of times to retry a file action
@@ -27,25 +28,23 @@ namespace TE.FileWatcher.FileSystem
         {
             try
             {
-                using var hashAlgorithm = SHA256.Create();
-                if (hashAlgorithm == null)
+                using (var hashAlgorithm = SHA256.Create())
                 {
-                    return null;
-                }
-
-                using (var stream =
-                    new FileStream(
-                        fullPath,
-                        FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.None,
-                        MEGABYTE))
-                {
-                    var hash = hashAlgorithm.ComputeHash(stream);
-                    return BitConverter.ToString(hash).Replace("-", "");
+                    using (var stream =
+                        new FileStream(
+                            fullPath,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.None,
+                            MEGABYTE))
+                    {
+                        var hash = hashAlgorithm.ComputeHash(stream);
+                        return BitConverter.ToString(hash).Replace("-", "", StringComparison.OrdinalIgnoreCase);
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
+                when (ex is ArgumentException || ex is ArgumentNullException || ex is ObjectDisposedException || ex is System.Reflection.TargetInvocationException)
             {
                 return null;
             }
@@ -79,7 +78,7 @@ namespace TE.FileWatcher.FileSystem
                 return false;
             }
 
-            return (sourceHash.Equals(destinationHash));
+            return (sourceHash.Equals(destinationHash, StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -90,10 +89,10 @@ namespace TE.FileWatcher.FileSystem
         /// </param>
         private static void WaitForFile(string path)
         {
-            while (true)
+            while (true)                
             try
             {
-                using FileStream fileStream = IO.File.OpenRead(path);
+                using FileStream fileStream = DotNetIO.File.OpenRead(path);
                     break;
             }
             catch
@@ -138,7 +137,7 @@ namespace TE.FileWatcher.FileSystem
                 throw new ArgumentNullException(nameof(destination));
             }
 
-            if (!IO.File.Exists(source))
+            if (!DotNetIO.File.Exists(source))
             {
                 return;
             }
@@ -156,8 +155,8 @@ namespace TE.FileWatcher.FileSystem
                 int attempts = 0;
                 bool fileCopied = false;
                 while ((attempts <= RETRIES) && !fileCopied)
-                {                    
-                    IO.File.Copy(source, destination, true);
+                {
+                    DotNetIO.File.Copy(source, destination, true);
                     WaitForFile(destination);
 
                     fileCopied = verify != true || Verify(source, destination);                  
@@ -196,14 +195,14 @@ namespace TE.FileWatcher.FileSystem
         /// </exception>
         public static DateTime? GetCreatedDate(string path)
         {
-            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !DotNetIO.File.Exists(path))
             {
                 return null;
             }
 
             try
             {
-                return IO.File.GetCreationTime(path);
+                return DotNetIO.File.GetCreationTime(path);
             }
             catch (Exception ex)
             {
@@ -222,7 +221,7 @@ namespace TE.FileWatcher.FileSystem
         /// </returns>
         public static string? GetExtension(string path)
         {
-            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !DotNetIO.File.Exists(path))
             {
                 return null;
             }
@@ -244,14 +243,14 @@ namespace TE.FileWatcher.FileSystem
         /// </exception>
         public static DateTime? GetModifiedDate(string path)
         {
-            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !DotNetIO.File.Exists(path))
             {
                 return null;
             }
 
             try
             {
-                return IO.File.GetLastWriteTime(path);
+                return DotNetIO.File.GetLastWriteTime(path);
             }
             catch (Exception ex)
             {
@@ -270,7 +269,7 @@ namespace TE.FileWatcher.FileSystem
         /// </returns>
         public static string? GetName(string path, bool includeExtension)
         {
-            if (string.IsNullOrWhiteSpace(path) || !IO.File.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !DotNetIO.File.Exists(path))
             {
                 return null;
             }
@@ -294,7 +293,7 @@ namespace TE.FileWatcher.FileSystem
                 return false;
             }
 
-            if (IO.File.Exists(path))
+            if (DotNetIO.File.Exists(path))
             {
                 WaitForFile(path);
                 return true;
@@ -371,7 +370,7 @@ namespace TE.FileWatcher.FileSystem
                 throw new ArgumentNullException(nameof(source));
             }
 
-            if (!IO.File.Exists(source))
+            if (!DotNetIO.File.Exists(source))
             {
                 return;
             }
@@ -382,8 +381,8 @@ namespace TE.FileWatcher.FileSystem
                 bool fileDeleted = false;
                 while ((attempts <= RETRIES) && !fileDeleted)
                 {
-                    IO.File.Delete(source);
-                    fileDeleted = !IO.File.Exists(source);
+                    DotNetIO.File.Delete(source);
+                    fileDeleted = !DotNetIO.File.Exists(source);
 
                     if (!fileDeleted)
                     {
@@ -427,7 +426,7 @@ namespace TE.FileWatcher.FileSystem
 
             try
             {
-                IO.File.SetCreationTime(destination, (DateTime)sourceTime);
+                DotNetIO.File.SetCreationTime(destination, (DateTime)sourceTime);
             }
             catch
             {
@@ -466,7 +465,7 @@ namespace TE.FileWatcher.FileSystem
 
             try
             {
-                IO.File.SetLastWriteTime(destination, (DateTime)sourceTime);
+                DotNetIO.File.SetLastWriteTime(destination, (DateTime)sourceTime);
             }
             catch
             {

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
@@ -10,7 +11,7 @@ namespace TE.FileWatcher.Configuration
     public class XmlFile : IConfigurationFile
     {
         // The default configuration file name
-        public const string DEFAULT_CONFIG_FILE = "config.xml";
+        public const string DEFAULTCONFIGFILE = "config.xml";
 
         // Path to the configuration file
         private readonly string? _fullPath;
@@ -29,7 +30,7 @@ namespace TE.FileWatcher.Configuration
         /// If the <paramref name="path"/> parameter is <c>null</c>, then the
         /// current folder path is used instead.
         /// If the <paramref name="name"/> parameter is <c>null</c>, then the
-        /// value of <see cref="DEFAULT_CONFIG_FILE"/>.
+        /// value of <see cref="DEFAULTCONFIGFILE"/>.
         /// </remarks>
         public XmlFile(string path, string name)
         {
@@ -54,6 +55,7 @@ namespace TE.FileWatcher.Configuration
                     path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule?.FileName);
                 }
                 catch (Exception ex)
+                    when (ex is ArgumentException || ex is PathTooLongException)
                 {
                     Console.WriteLine($"The folder name is null or empty. Couldn't get the current location. Reason: {ex.Message}");
                     return null;
@@ -93,7 +95,7 @@ namespace TE.FileWatcher.Configuration
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = DEFAULT_CONFIG_FILE;
+                name = DEFAULTCONFIGFILE;
             }
 
             try
@@ -111,6 +113,7 @@ namespace TE.FileWatcher.Configuration
                 }
             }
             catch (Exception ex)
+                when (ex is ArgumentException || ex is ArgumentNullException)
             {
                 Console.WriteLine($"Could not get the path to the configuration file. Reason: {ex.Message}");
                 return null;
@@ -141,13 +144,22 @@ namespace TE.FileWatcher.Configuration
 
             try
             {
-                XmlSerializer serializer = new(typeof(Watches));
-                using FileStream fs = new(_fullPath, FileMode.Open);
-                return (Watches?)serializer.Deserialize(fs);
+                XmlSerializer serializer = new XmlSerializer(typeof(Watches));
+                using (FileStream fs = new FileStream(_fullPath, FileMode.Open))
+                {
+                    using (XmlReader reader = XmlReader.Create(fs))
+                    {
+                        return (Watches?)serializer.Deserialize(reader);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Addtional reason: {ex.InnerException.Message}");
+                }
                 return null;
             }
         }

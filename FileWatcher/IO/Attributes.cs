@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Configuration.Data
+namespace TE.FileWatcher.IO
 {
     /// <summary>
     /// The Attributes node in the XML file.
