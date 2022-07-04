@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Net
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// Contains the headers information.

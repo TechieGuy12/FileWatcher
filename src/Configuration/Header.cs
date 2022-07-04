@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace TE.FileWatcher.Net
+namespace TE.FileWatcher.Configuration
 {
     public class Header
     {

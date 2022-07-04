@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Text;
+using TE.FileWatcher.Configuration;
 
 namespace TE.FileWatcher.Net
 {

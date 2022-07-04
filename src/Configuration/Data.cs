@@ -1,6 +1,7 @@
 ﻿using System.Xml.Serialization;
+using TE.FileWatcher.Net;
 
-namespace TE.FileWatcher.Net
+namespace TE.FileWatcher.Configuration
 {
     /// <summary>
     /// Contains the data used to send the request.
@@ -34,7 +35,7 @@ namespace TE.FileWatcher.Net
             }
             set
             {
-                _mimeType = (value == Request.JSON_NAME || value == Request.XML_NAME) ? value : Request.JSON_NAME;
+                _mimeType = value == Request.JSON_NAME || value == Request.XML_NAME ? value : Request.JSON_NAME;
             }
         }
 
