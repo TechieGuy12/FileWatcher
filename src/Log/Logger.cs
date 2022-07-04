@@ -66,8 +66,6 @@ namespace TE.FileWatcher.Log
         /// <exception cref="InvalidOperationException">
         /// Thrown when the logger could not be initialized.
         /// </exception>
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-#pragma warning disable CA1810 // Initialize reference type static fields inline
         static Logger()
         {
             LogPath = Path.GetTempPath();
@@ -75,13 +73,11 @@ namespace TE.FileWatcher.Log
             LogSize = Configuration.Logging.DEFAULTLOGSIZE;
             LogNumber = Configuration.Logging.DEFAULTLOGNUMBER;
 
-            SetFullPath(LogPath, LogName);
+            LogFullPath = SetFullPath(LogPath, LogName);
 
             queue = new ConcurrentQueue<Message>();
             locker = new object();
         }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-#pragma warning restore CA1810 // Initialize reference type static fields inline
 
         /// <summary>
         /// Sets the logger options.
@@ -148,7 +144,7 @@ namespace TE.FileWatcher.Log
         /// <exception cref="IOException">
         /// Thrown when either the folder or log file name are not valid.
         /// </exception>
-        private static void SetFullPath(string logPath, string logName)
+        private static string SetFullPath(string logPath, string logName)
         {
             if (string.IsNullOrWhiteSpace(logPath))
             {
@@ -161,7 +157,7 @@ namespace TE.FileWatcher.Log
             }
             
             string fullPath = Path.Combine(logPath, logName);
-            SetFullPath(fullPath);
+            return SetFullPath(fullPath);
         }
 
         /// <summary>
@@ -177,7 +173,7 @@ namespace TE.FileWatcher.Log
         /// <exception cref="IOException">
         /// Thrown when either the folder or log file name are not valid.
         /// </exception>
-        private static void SetFullPath(string fullPath)
+        private static string SetFullPath(string fullPath)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
@@ -209,13 +205,13 @@ namespace TE.FileWatcher.Log
                 // Store the path, name and the full path if all the checks pass
                 LogPath = path;
                 LogName = name;
-                LogFullPath = Path.Combine(path, name);
+                return Path.Combine(path, name);
             }
             else
             {
                 LogPath = string.Empty;
                 LogName = name;
-                LogFullPath = string.Empty;
+                return String.Empty;
             }
         }
 
@@ -229,7 +225,6 @@ namespace TE.FileWatcher.Log
         /// <returns>
         /// True if the folder is valid and exists, otherwise false.
         /// </returns>
-#pragma warning disable CA1031
         private static bool IsFolderValid(string folder)
         {
             if (string.IsNullOrWhiteSpace(folder))
@@ -260,7 +255,6 @@ namespace TE.FileWatcher.Log
                 }
             }
         }
-#pragma warning restore CA1031
 
         /// <summary>
         /// Checks if the file name is valid.
@@ -291,7 +285,6 @@ namespace TE.FileWatcher.Log
         /// Rolls over the current log file if the size matches the specfied
         /// max size for the log file.
         /// </summary>
-#pragma warning disable CA1031
         private static void RolloverLog()
         {
             // Check to ensure the log file exists before trying to get the
@@ -343,12 +336,10 @@ namespace TE.FileWatcher.Log
                 Console.WriteLine($"{ DateTime.Now:yyyy - MM - dd HH: mm: ss} Could not rollover the log file. Reason: {ex.Message}");
             }
         }
-#pragma warning restore CA1031
 
         /// <summary>
         /// Writes a line from the queue to the log file.
         /// </summary>
-#pragma warning disable CA1031
         private static void WriteToLog()
         {
             while (queue.TryDequeue(out Message? message))
@@ -369,6 +360,5 @@ namespace TE.FileWatcher.Log
                 }
             }
         }
-#pragma warning restore CA1031
     }
 }
