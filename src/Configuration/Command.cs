@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
@@ -97,7 +98,8 @@ namespace TE.FileWatcher.Configuration
 
             ProcessStartInfo startInfo = new()
             {
-                FileName = commandPath
+                FileName = commandPath,
+                RedirectStandardOutput = true
             };
 
             if (arguments != null)
@@ -176,7 +178,9 @@ namespace TE.FileWatcher.Configuration
                         _process.StartInfo.UseShellExecute = false;
                         _process.EnableRaisingEvents = true;
                         _process.Exited += OnProcessExit;
+                        _process.OutputDataReceived += OnOutputDataReceived;                        
                         _isProcessRunning = _process.Start();
+                        _process.BeginOutputReadLine();
                     }
                     else
                     {
@@ -290,6 +294,23 @@ namespace TE.FileWatcher.Configuration
 
             // Execute the next process in the queue
             Execute();
+        }
+
+        /// <summary>
+        /// Write the output of the command to the log file.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The event arguments.
+        /// </param>
+        private void OnOutputDataReceived(object? sender, DataReceivedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                Logger.WriteLine($"{e.Data}");
+            }            
         }
     }
 }
