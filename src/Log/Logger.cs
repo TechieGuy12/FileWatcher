@@ -94,7 +94,7 @@ namespace TE.FileWatcher.Log
 
             if (!string.IsNullOrWhiteSpace(logOptions.LogPath))
             {
-                SetFullPath(logOptions.LogPath);
+                LogFullPath = SetFullPath(logOptions.LogPath);
             }
 
             LogSize = logOptions.Size;
