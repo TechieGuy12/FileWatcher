@@ -108,16 +108,16 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            if (!TEFS.File.IsValid(source))
-            {
-                Logger.WriteLine(
-                    $"The file '{source}' could not be {GetActionString()} because the path was not valid, the file doesn't exists, or it was in use.",
-                    LogLevel.ERROR);
-                return;
-            }
-
             try
             {
+                if (!TEFS.File.IsValid(source))
+                {
+                    Logger.WriteLine(
+                        $"The file '{source}' could not be {GetActionString()} because the path was not valid, the file doesn't exists, or it was in use.",
+                        LogLevel.ERROR);
+                    return;
+                }
+
                 switch (Type)
                 {
                     case ActionType.Copy:
