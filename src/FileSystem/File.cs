@@ -87,13 +87,54 @@ namespace TE.FileWatcher.FileSystem
         /// <param name="path">
         /// Path to the file.
         /// </param>
+        /// <exception cref="ArgumentException">
+        /// <c>path</c> is a zero-length string, contains only white space, or
+        /// contains one or more invalid characters.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <c>path</c> is null.
+        /// </exception>
+        /// <exception cref="PathTooLongException">
+        /// The specified path, file name, or both exceed the system-defined
+        /// maximum length.
+        /// </exception>
+        /// <exception cref="DirectoryNotFoundException">
+        /// The specified path is invalid, (for example, it is on an unmapped
+        /// drive).
+        /// </exception>
+        /// <exception cref="UnauthorizedAccessException">
+        /// <c>path</c> specified a directory, or, the caller does not have the
+        /// required permission.
+        /// </exception>
+        /// <exception cref="FileNotFoundException">
+        /// The file specified in <c>path</c> was not found.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <c>path</c> is an invalid format.
+        /// </exception>
         private static void WaitForFile(string path)
-        {
+        {            
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+            
+            if (!DotNetIO.File.Exists(path))
+            {
+                throw new FileNotFoundException(
+                    $"The file '{path}' was not found.", path);
+            }
+            
             while (true)                
             try
-            {
+            {                
                 using FileStream fileStream = DotNetIO.File.OpenRead(path);
                     break;
+            }
+            catch (Exception ex)
+                when (ex is FileNotFoundException || ex is DirectoryNotFoundException || ex is PathTooLongException || ex is NotSupportedException || ex is UnauthorizedAccessException)
+            {
+                throw;
             }
             catch
             {
@@ -286,6 +327,9 @@ namespace TE.FileWatcher.FileSystem
         /// <returns>
         /// <c>true</c> if the file is valid, otherwise <c>false</c>.
         /// </returns>
+        /// <exception cref="FileWatcherException">
+        /// Thrown when the file could not be validated.
+        /// </exception>
         public static bool IsValid(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -295,8 +339,15 @@ namespace TE.FileWatcher.FileSystem
 
             if (DotNetIO.File.Exists(path))
             {
-                WaitForFile(path);
-                return true;
+                try
+                {
+                    WaitForFile(path);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    throw new FileWatcherException($"The file '{path}' is not valid. Reason: {ex.Message}");
+                }
             }
             else
             {
