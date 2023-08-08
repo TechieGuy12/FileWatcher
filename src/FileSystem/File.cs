@@ -124,21 +124,24 @@ namespace TE.FileWatcher.FileSystem
                 throw new FileNotFoundException(
                     $"The file '{path}' was not found.", path);
             }
-            
-            while (true)                
-            try
-            {                
-                using FileStream fileStream = DotNetIO.File.OpenRead(path);
-                    break;
-            }
-            catch (Exception ex)
-                when (ex is FileNotFoundException || ex is DirectoryNotFoundException || ex is PathTooLongException || ex is NotSupportedException || ex is UnauthorizedAccessException)
+
+            int maxChecks = 600;
+            bool isFileLocked = true;
+            int checkCounter = 0;
+            while (isFileLocked && (checkCounter <= maxChecks))
             {
-                throw;
-            }
-            catch
-            {
-                Thread.Sleep(1000);
+                try
+                {
+                    using (FileStream fileStream = DotNetIO.File.OpenRead(path))
+                    {
+                        isFileLocked = false;
+                    }
+                }
+                catch (IOException)
+                {
+                    checkCounter++;
+                    Thread.Sleep(1000);
+                }
             }
         }
 
