@@ -18,27 +18,19 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Runs all the actions for the watch.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
+        /// <param name="change">
+        /// Information about the change.
         /// </param>
-        /// <param name="fullPath">
-        /// The full path to the changed file or folder.
-        /// </param>
-        public void Run(TriggerType trigger, string watchPath, string fullPath)
+        public void Run(TriggerType trigger, ChangeInfo change)
         {
             if (ActionList == null || ActionList.Count <= 0)
             {
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
-            {
-                return;
-            }
-
             foreach (Action action in ActionList)
             {
-                action.Run(watchPath, fullPath, trigger);
+                action.Run(change, trigger);
             }
         }
     }

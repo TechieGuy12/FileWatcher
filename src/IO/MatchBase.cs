@@ -1,4 +1,5 @@
 ﻿using System.Xml.Serialization;
+using TE.FileWatcher.Configuration;
 using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.IO
@@ -345,11 +346,8 @@ namespace TE.FileWatcher.IO
         /// <param name="watchPath">
         /// The path being watched.
         /// </param>
-        /// <param name="name">
-        /// The name of the changed file or folder.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path to the changed file or folder.
+        /// <param name="change">
+        /// Information about the change.
         /// </param>
         /// <returns>
         /// <c>true</c> of a match is found, otherwise <c>false</c>.
@@ -357,37 +355,37 @@ namespace TE.FileWatcher.IO
         /// <exception cref="FileWatcherException">
         /// Thrown when there is a problem with the path.
         /// </exception>
-        private protected bool IsMatchFound(string watchPath, string name, string fullPath)
+        private protected bool IsMatchFound(ChangeInfo change)
         {
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            if (change == null || string.IsNullOrWhiteSpace(change.WatchPath))
             {
                 return false;
             }
 
             if (!_initialized)
             {
-                Initialize(watchPath);
+                Initialize(change.WatchPath);
             }
 
             bool isMatch = false;
             if (Files != null && Files.Name.Count > 0)
             {
-                isMatch |= FileMatch(name);
+                isMatch |= FileMatch(change.Name);
             }
 
             if (Folders != null && Folders.Name.Count > 0)
             {
-                isMatch |= FolderMatch(fullPath);
+                isMatch |= FolderMatch(change.FullPath);
             }
 
             if (Attributes != null && Attributes.Attribute.Count > 0)
             {
-                isMatch |= AttributeMatch(fullPath);
+                isMatch |= AttributeMatch(change.FullPath);
             }
 
             if (Paths != null && Paths.Path.Count > 0)
             {
-                isMatch |= PathMatch(fullPath);
+                isMatch |= PathMatch(change.FullPath);
             }
 
             return isMatch;

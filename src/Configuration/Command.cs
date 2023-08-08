@@ -36,12 +36,6 @@ namespace TE.FileWatcher.Configuration
         public string? Path { get; set; }
 
         /// <summary>
-        /// Gets or sets the triggers of the action.
-        /// </summary>
-        [XmlElement("triggers")]
-        public Triggers Triggers { get; set; } = new Triggers();
-
-        /// <summary>
         /// Queues the command process to be run.
         /// </summary>
         /// <param name="watchPath">
@@ -53,28 +47,28 @@ namespace TE.FileWatcher.Configuration
         /// <param name="trigger">
         /// The trigger for the command.
         /// </param>
-        public override void Run(string watchPath, string fullPath, TriggerType trigger)
+        public new void Run(ChangeInfo change, TriggerType trigger)
         {
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            try
             {
+                base.Run(change, trigger);
+            }
+            catch (ArgumentNullException e)
+            {
+                Logger.WriteLine(e.Message);
                 return;
             }
-
-            if (Triggers == null || Triggers.TriggerList == null)
+            catch (InvalidOperationException e)
             {
-                return;
-            }
-
-            if (Triggers.TriggerList.Count <= 0 || !Triggers.Current.HasFlag(trigger))
-            {
+                Logger.WriteLine(e.Message);
                 return;
             }
 
             Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
             Thread.Sleep(WaitBefore);
 
-            string? commandPath = GetCommand(watchPath, fullPath);
-            string? arguments = GetArguments(watchPath, fullPath);
+            string? commandPath = GetCommand();
+            string? arguments = GetArguments();
 
             if (string.IsNullOrWhiteSpace(commandPath))
             {
@@ -91,10 +85,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            if (_processInfo == null)
-            {
-                _processInfo = new ConcurrentQueue<ProcessStartInfo>();
-            }
+            _processInfo ??= new ConcurrentQueue<ProcessStartInfo>();
 
             ProcessStartInfo startInfo = new()
             {
@@ -137,10 +128,7 @@ namespace TE.FileWatcher.Configuration
 
             if (disposing)
             {
-                if (_process != null)
-                {
-                    _process.Dispose();
-                }
+                _process?.Dispose();
             }
 
             _disposed = true;
@@ -216,26 +204,20 @@ namespace TE.FileWatcher.Configuration
         /// Gets the arguments value by replacing any placeholders with the
         /// actual string values.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the changed file.
-        /// </param>
         /// <returns>
         /// The command path string value.
         /// </returns>
-        private string? GetArguments(string watchPath, string fullPath)
+        private string? GetArguments()
         {
             if (string.IsNullOrWhiteSpace(Arguments))
             {
                 return null;
             }
 
-            string? arguments = ReplacePlaceholders(Arguments, watchPath, fullPath);
+            string? arguments = ReplacePlaceholders(Arguments);
             if (!string.IsNullOrWhiteSpace(arguments))
             {
-                arguments = ReplaceFormatPlaceholders(arguments, watchPath, fullPath);
+                arguments = ReplaceFormatPlaceholders(arguments);
             }
 
             return arguments;
@@ -245,26 +227,20 @@ namespace TE.FileWatcher.Configuration
         /// Gets the command path value by replacing any placeholders with the
         /// actual string values.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the changed file.
-        /// </param>
         /// <returns>
         /// The command path string value.
         /// </returns>
-        private string? GetCommand(string watchPath, string fullPath)
+        private string? GetCommand()
         {
             if (string.IsNullOrWhiteSpace(Path))
             {
                 return null;
             }
 
-            string? path = ReplacePlaceholders(Path, watchPath, fullPath);
+            string? path = ReplacePlaceholders(Path);
             if (!string.IsNullOrWhiteSpace(path))
             {
-                path = ReplaceFormatPlaceholders(path, watchPath, fullPath);
+                path = ReplaceFormatPlaceholders(path);
             }
 
             return path;

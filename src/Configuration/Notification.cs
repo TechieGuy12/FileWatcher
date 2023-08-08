@@ -10,14 +10,8 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public class Notification : PlaceholderBase
     {
-        // The message to send with the request.
+        // The message to send with the request
         private readonly StringBuilder _message;
-
-        // The full path of the changed file/folder
-        private string? _fullPath;
-
-        // The watch path
-        private string? _watchPath;
 
         /// <summary>
         /// Gets or sets the URL of the request.
@@ -104,10 +98,10 @@ namespace TE.FileWatcher.Configuration
         /// <param name="watchPath">
         /// The watch path.
         /// </param>
-        /// <param name="fullPath">
-        /// The full path of the changed file/folder.
+        /// <param name="change">
+        /// Information about the change.
         /// </param>
-        internal void QueueRequest(string message, TriggerType trigger, string watchPath, string fullPath)
+        internal void QueueRequest(string message, TriggerType trigger, ChangeInfo change)
         {
             if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
             {
@@ -119,8 +113,7 @@ namespace TE.FileWatcher.Configuration
                 _message.Append(CleanMessage(message) + @"\n");
             }
 
-            _fullPath = fullPath;
-            _watchPath = watchPath;
+            Change = change;
         }
 
         /// <summary>
@@ -240,20 +233,28 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Gets the URI value of the string URL.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when either the watch path or the change information was not provided.
+        /// </exception>
         /// <exception cref="UriFormatException">
         /// Thrown if the URL is not in a valid format.
         /// </exception>
         private Uri GetUri()
         {
+            if (Change == null)
+            {
+                throw new InvalidOperationException("The change information cannot be null.");
+            }
+
             if (string.IsNullOrWhiteSpace(Url))
             {
                 throw new UriFormatException();
             }
 
-            string? url = ReplacePlaceholders(Url, _watchPath, _fullPath);
+            string? url = ReplacePlaceholders(Url);
             if (!string.IsNullOrWhiteSpace(url))
             {
-                url = ReplaceFormatPlaceholders(url, _watchPath, _fullPath);
+                url = ReplaceFormatPlaceholders(url);
             }
 
             if (string.IsNullOrWhiteSpace(url))

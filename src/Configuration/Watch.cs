@@ -175,20 +175,9 @@ namespace TE.FileWatcher.Configuration
 
             if (disposing)
             {
-                if (_timer != null)
-                {
-                    _timer.Dispose();
-                }
-
-                if(_worker != null)
-                {
-                    _worker.Dispose();
-                }
-
-                if (_fsWatcher != null)
-                {
-                    _fsWatcher.Dispose();
-                }
+                _timer?.Dispose();
+                _worker?.Dispose();
+                _fsWatcher?.Dispose();
             }
 
             _disposed = true;
@@ -301,7 +290,7 @@ namespace TE.FileWatcher.Configuration
                         {
                             // If the file or folder is not a match, then don't take
                             // any further actions
-                            if (!Filters.IsMatch(Path, change.Name, change.FullPath))
+                            if (!Filters.IsMatch(change))
                             {
                                 continue;
                             }
@@ -311,7 +300,7 @@ namespace TE.FileWatcher.Configuration
                         {
                             // If the file or folder is in the exclude list, then don't
                             // take any further actions
-                            if (Exclusions.Exclude(Path, change.Name, change.FullPath))
+                            if (Exclusions.Exclude(change))
                             {
                                 continue;
                             }
@@ -323,7 +312,7 @@ namespace TE.FileWatcher.Configuration
                             string? messageType = GetMessageTypeString(change.Trigger);
                             if (!string.IsNullOrWhiteSpace(messageType))
                             {
-                                Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}", Path, change.FullPath);
+                                Notifications.Send(change.Trigger, change, $"{messageType}: {change.FullPath}");
                             }
                         }
 
@@ -333,14 +322,11 @@ namespace TE.FileWatcher.Configuration
                             // longer exists so no action can be taken on the file
                             if (change.Trigger != TriggerType.Delete)
                             {
-                                Actions.Run(change.Trigger, Path, change.FullPath);
+                                Actions.Run(change.Trigger, change);
                             }
                         }
 
-                        if (Commands != null)
-                        {
-                            Commands.Run(change.Trigger, Path, change.FullPath);
-                        }
+                        Commands?.Run(change.Trigger, change);
                     }
                 }
             }
@@ -366,7 +352,36 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private ChangeInfo? GetChange(TriggerType trigger, string? name, string fullPath)
         {
-            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
+            return GetChange(trigger, name, fullPath, null, null);
+        }
+
+        /// <summary>
+        /// Gets the <see cref="ChangeInfo"/> object associated with the change.
+        /// This method will mark related changes as invalid - such as multiple
+        /// changes related to a file copy - to avoid any duplicate work being
+        /// done on a file or folder.
+        /// </summary>
+        /// <param name="trigger">
+        /// The type of change.
+        /// </param>
+        /// <param name="name">
+        /// The name of the file or folder.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the file or folder.
+        /// </param>
+        /// <param name="oldName">
+        /// The old name of the file or folder.
+        /// </param>
+        /// <param name="oldPath">
+        /// The old path of the file or folder.
+        /// </param>
+        /// <returns>
+        /// The <see cref="ChangeInfo"/> object of the change, otherwise <c>null</c>.
+        /// </returns>
+        private ChangeInfo? GetChange(TriggerType trigger, string? name, string fullPath, string? oldName, string? oldPath)
+        {
+            if (string.IsNullOrWhiteSpace(Path) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
             {
                 return null;
             }
@@ -385,7 +400,7 @@ namespace TE.FileWatcher.Configuration
                 bool isValid = true;
 
                 // The current information on the change
-                ChangeInfo change = new(trigger, name, fullPath);
+                ChangeInfo change = new(trigger, Path, name, fullPath, oldName, oldPath);
 
                 // The last write time of the file
                 DateTime writeTime = default;
@@ -515,7 +530,7 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
-
+            
 
             ChangeInfo? change = GetChange(TriggerType.Change, e.Name, e.FullPath);
             if (change != null)
@@ -609,8 +624,8 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
-
-            ChangeInfo? change = GetChange(TriggerType.Rename, e.Name, e.FullPath);
+            
+            ChangeInfo? change = GetChange(TriggerType.Rename, e.Name, e.FullPath, e.OldName, e.OldFullPath);
             if (change != null)
             {
                 ProcessChange(change);

@@ -14,7 +14,13 @@ namespace TE.FileWatcher.Configuration
     /// machine and includes placeholders in the data that need to be replaced.
     /// </summary>
     public abstract class RunnableBase : PlaceholderBase
-    {        
+    {
+        /// <summary>
+        /// Gets or sets the triggers of the action.
+        /// </summary>
+        [XmlElement("triggers")]
+        public Triggers Triggers { get; set; } = new Triggers();
+
         /// <summary>
         /// Gets or sets the number of milliseconds to wait before running.
         /// </summary>
@@ -24,15 +30,25 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// The abstract method to Run.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path to the changed file or folder.
+        /// <param name="change">
+        /// Information about the change.
         /// </param>
         /// <param name="trigger">
         /// The trigger for the action.
         /// </param>
-        public abstract void Run(string watchPath, string fullPath, TriggerType trigger);       
+        public void Run(ChangeInfo change, TriggerType trigger)
+        {
+            if (Triggers == null || Triggers.TriggerList == null)
+            {
+                throw new InvalidOperationException("The list of triggers was not provided.");
+            }
+
+            if (Triggers.TriggerList.Count <= 0 || !Triggers.Current.HasFlag(trigger))
+            {
+                throw new InvalidOperationException("No triggers were defined.");
+            }
+
+            Change = change ?? throw new ArgumentNullException(nameof(change));
+        }
     }
 }

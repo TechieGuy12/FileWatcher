@@ -10,25 +10,27 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Returns the flag indicating if the change is a match.
         /// </summary>
-        /// <param name="watchPath">
-        /// The path associated with the watch.
-        /// </param>
-        /// <param name="name">
-        /// The name of the file or folder.
-        /// </param>
-        /// <<param name="fullPath">
-        /// The full path to the changed file or folder.
+        /// <param name="change">
+        /// Information about the change.
         /// </param>
         /// <returns>
         /// True if the change is to be ignored, otherwise false.
         /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the <c>change</c> parameter is null.
+        /// </exception>
         /// <exception cref="FileWatcherException">
         /// Thrown when there is a problem with the path.
         /// </exception>
-        public bool IsMatch(string watchPath, string name, string fullPath)
+        public bool IsMatch(ChangeInfo change)
         {
+            if (change == null)
+            {
+                throw new ArgumentNullException(nameof(change));
+            }
+
             FilterTypeName = "Filter";
-            return IsMatchFound(watchPath, name, fullPath);
+            return IsMatchFound(change);
         }
     }
 }

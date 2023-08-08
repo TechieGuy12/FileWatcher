@@ -42,12 +42,6 @@ namespace TE.FileWatcher.Configuration
         public string Source { get; set; } = PLACEHOLDERFULLPATH;
 
         /// <summary>
-        /// Gets or sets the triggers of the action.
-        /// </summary>
-        [XmlElement("triggers")]
-        public Triggers Triggers { get; set; } = new Triggers();
-
-        /// <summary>
         /// Gets or sets the destination of the action.
         /// </summary>
         [XmlElement("destination")]
@@ -77,34 +71,37 @@ namespace TE.FileWatcher.Configuration
         /// <param name="trigger">
         /// The trigger for the action.
         /// </param>
-        public override void Run(string watchPath, string fullPath, TriggerType trigger)
+        public new void Run(ChangeInfo change, TriggerType trigger)
         {
-            if (string.IsNullOrWhiteSpace(watchPath) || string.IsNullOrWhiteSpace(fullPath))
+            try
             {
+                base.Run(change, trigger);
+            }
+            catch (ArgumentNullException e)
+            {
+                Logger.WriteLine(e.Message);
                 return;
             }
-
-            if (Triggers == null || Triggers.TriggerList == null)
+            catch (InvalidOperationException e)
             {
-                return;
-            }
-
-            if (Triggers.TriggerList.Count <= 0 || !Triggers.Current.HasFlag(trigger))
-            {
+                Logger.WriteLine(e.Message);
                 return;
             }
 
             Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
             Thread.Sleep(WaitBefore);
             
-            string? source = GetSource(watchPath, fullPath);
-            string? destination = GetDestination(watchPath, fullPath);
+            string? source = GetSource();
+            string? destination = GetDestination();
 
             if (string.IsNullOrWhiteSpace(source))
             {
-                Logger.WriteLine(
-                    $"The source file could not be determined. Watch path: {watchPath}, changed: {fullPath}.",
-                    LogLevel.ERROR);
+                if (Change != null)
+                {
+                    Logger.WriteLine(
+                        $"The source file could not be determined. Watch path: {Change.WatchPath}, changed: {Change.FullPath}.",
+                        LogLevel.ERROR);
+                }
                 return;
             }
 
@@ -188,26 +185,20 @@ namespace TE.FileWatcher.Configuration
         /// Gets the destination value by replacing any placeholders with the
         /// actual string values.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the changed file.
-        /// </param>
         /// <returns>
         /// The destination string value.
         /// </returns>
-        private string? GetDestination(string watchPath, string fullPath)
+        private string? GetDestination()
         {
             if (string.IsNullOrWhiteSpace(Destination))
             {
                 return null;
             }
 
-            string? destination = ReplacePlaceholders(Destination, watchPath, fullPath);
+            string? destination = ReplacePlaceholders(Destination);
             if (!string.IsNullOrWhiteSpace(destination))
             {
-                destination = ReplaceFormatPlaceholders(destination, watchPath, fullPath);
+                destination = ReplaceFormatPlaceholders(destination);
             }
             return destination;
         }
@@ -216,26 +207,20 @@ namespace TE.FileWatcher.Configuration
         /// Gets the source value by replacing any placeholders with the actual
         /// string values.
         /// </summary>
-        /// <param name="watchPath">
-        /// The watch path.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the changed file.
-        /// </param>
         /// <returns>
         /// The source string value.
         /// </returns>
-        private string? GetSource(string watchPath, string fullPath)
+        private string? GetSource()
         {
             if (string.IsNullOrWhiteSpace(Source))
             {
                 return null;
             }
 
-            string? source = ReplacePlaceholders(Source, watchPath, fullPath);
+            string? source = ReplacePlaceholders(Source);
             if (!string.IsNullOrWhiteSpace(source))
             {
-                source = ReplaceFormatPlaceholders(source, watchPath, fullPath);
+                source = ReplaceFormatPlaceholders(source);
             }
 
             return source;
