@@ -235,7 +235,7 @@ namespace TE.FileWatcher.Configuration
             string? arguments = ReplacePlaceholders(Arguments, watchPath, fullPath);
             if (!string.IsNullOrWhiteSpace(arguments))
             {
-                arguments = ReplaceDatePlaceholders(arguments, watchPath, fullPath);
+                arguments = ReplaceFormatPlaceholders(arguments, watchPath, fullPath);
             }
 
             return arguments;
@@ -264,7 +264,7 @@ namespace TE.FileWatcher.Configuration
             string? path = ReplacePlaceholders(Path, watchPath, fullPath);
             if (!string.IsNullOrWhiteSpace(path))
             {
-                path = ReplaceDatePlaceholders(path, watchPath, fullPath);
+                path = ReplaceFormatPlaceholders(path, watchPath, fullPath);
             }
 
             return path;

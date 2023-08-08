@@ -96,7 +96,7 @@ namespace TE.FileWatcher.Configuration
 
             Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
             Thread.Sleep(WaitBefore);
-
+            
             string? source = GetSource(watchPath, fullPath);
             string? destination = GetDestination(watchPath, fullPath);
 
@@ -207,7 +207,7 @@ namespace TE.FileWatcher.Configuration
             string? destination = ReplacePlaceholders(Destination, watchPath, fullPath);
             if (!string.IsNullOrWhiteSpace(destination))
             {
-                destination = ReplaceDatePlaceholders(destination, watchPath, fullPath);
+                destination = ReplaceFormatPlaceholders(destination, watchPath, fullPath);
             }
             return destination;
         }
@@ -235,7 +235,7 @@ namespace TE.FileWatcher.Configuration
             string? source = ReplacePlaceholders(Source, watchPath, fullPath);
             if (!string.IsNullOrWhiteSpace(source))
             {
-                source = ReplaceDatePlaceholders(source, watchPath, fullPath);
+                source = ReplaceFormatPlaceholders(source, watchPath, fullPath);
             }
 
             return source;

@@ -323,7 +323,7 @@ namespace TE.FileWatcher.Configuration
                             string? messageType = GetMessageTypeString(change.Trigger);
                             if (!string.IsNullOrWhiteSpace(messageType))
                             {
-                                Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}");
+                                Notifications.Send(change.Trigger, $"{messageType}: {change.FullPath}", Path, change.FullPath);
                             }
                         }
 

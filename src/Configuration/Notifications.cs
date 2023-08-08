@@ -156,7 +156,13 @@ namespace TE.FileWatcher.Configuration
         /// <param name="message">
         /// The message to include in the request.
         /// </param>
-        public void Send(TriggerType trigger, string message)
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the changed file/folder.
+        /// </param>
+        public void Send(TriggerType trigger, string message, string watchPath, string fullPath)
         {
             if (NotificationList == null || NotificationList.Count <= 0)
             {
@@ -165,7 +171,7 @@ namespace TE.FileWatcher.Configuration
 
             foreach (Notification notification in NotificationList)
             {
-                notification.QueueRequest(message, trigger);
+                notification.QueueRequest(message, trigger, watchPath, fullPath);
             }
         }
     }

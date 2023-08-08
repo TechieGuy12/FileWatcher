@@ -8,10 +8,16 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// A notification that will be triggered.
     /// </summary>
-    public class Notification
+    public class Notification : PlaceholderBase
     {
         // The message to send with the request.
         private readonly StringBuilder _message;
+
+        // The full path of the changed file/folder
+        private string? _fullPath;
+
+        // The watch path
+        private string? _watchPath;
 
         /// <summary>
         /// Gets or sets the URL of the request.
@@ -38,7 +44,7 @@ namespace TE.FileWatcher.Configuration
                     return HttpMethod.Post;
                 }
 
-                return MethodString.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
+                return MethodString.ToLower(CultureInfo.CurrentCulture) switch
                 {
                     "get" => HttpMethod.Get,
                     "delete" => HttpMethod.Delete,
@@ -95,7 +101,13 @@ namespace TE.FileWatcher.Configuration
         /// <param name="trigger">
         /// The trigger for the request.
         /// </param>
-        internal void QueueRequest(string message, TriggerType trigger)
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path of the changed file/folder.
+        /// </param>
+        internal void QueueRequest(string message, TriggerType trigger, string watchPath, string fullPath)
         {
             if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
             {
@@ -106,6 +118,9 @@ namespace TE.FileWatcher.Configuration
             {
                 _message.Append(CleanMessage(message) + @"\n");
             }
+
+            _fullPath = fullPath;
+            _watchPath = watchPath;
         }
 
         /// <summary>
@@ -127,12 +142,13 @@ namespace TE.FileWatcher.Configuration
 
             if (GetUri() == null)
             {
-                throw new NullReferenceException("The URL is null or empty.");
+                throw new InvalidOperationException("The URL is null or empty.");
             }
 
             if (Data == null)
             {
-                throw new InvalidOperationException("Data for the request was not provided.");
+                //throw new InvalidOperationException("Data for the request was not provided.");
+                Data = new Data();
             }
 
             string content = string.Empty;
@@ -234,7 +250,18 @@ namespace TE.FileWatcher.Configuration
                 throw new UriFormatException();
             }
 
-            Uri uri = new(Url);
+            string? url = ReplacePlaceholders(Url, _watchPath, _fullPath);
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                url = ReplaceFormatPlaceholders(url, _watchPath, _fullPath);
+            }
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new UriFormatException($"The notification URL: {url} is not valid.");
+            }
+
+            Uri uri = new(url);
             return uri;
         }
     }
