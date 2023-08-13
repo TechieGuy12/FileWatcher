@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
@@ -6,7 +7,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// Contains the headers information.
     /// </summary>
-    public class Headers
+    public class Headers : PlaceholderBase
     {
         /// <summary>
         /// Get or sets the list of headers to add to a request.
@@ -38,7 +39,17 @@ namespace TE.FileWatcher.Configuration
             {
                 if (!string.IsNullOrWhiteSpace(header.Name))
                 {
-                    request.Headers.Add(header.Name, header.Value);
+                    string? value = header.Value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        value = ReplacePlaceholders(value);
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            value = ReplaceFormatPlaceholders(value);
+                        }
+                    }
+                    Log.Logger.WriteLine($"DEBUG: Header Name: {header.Name} Value: {value}");
+                    request.Headers.Add(header.Name, value);
                 }
             }
         }
