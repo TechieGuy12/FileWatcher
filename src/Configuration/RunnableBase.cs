@@ -43,9 +43,15 @@ namespace TE.FileWatcher.Configuration
                 throw new InvalidOperationException("The list of triggers was not provided.");
             }
 
-            if (Triggers.TriggerList.Count <= 0 || !Triggers.Current.HasFlag(trigger))
+            if (Triggers.TriggerList.Count <= 0)
             {
                 throw new InvalidOperationException("No triggers were defined.");
+            }
+
+            if (!Triggers.Current.HasFlag(trigger))
+            {
+                throw new FileWatcherTriggerNotMatchException(
+                    "The trigger doesn't match the list of triggers for this watch.");
             }
 
             Change = change ?? throw new ArgumentNullException(nameof(change));

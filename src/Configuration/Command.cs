@@ -63,6 +63,10 @@ namespace TE.FileWatcher.Configuration
                 Logger.WriteLine(e.Message);
                 return;
             }
+            catch (FileWatcherTriggerNotMatchException)
+            {
+                return;
+            }
 
             Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
             Thread.Sleep(WaitBefore);
