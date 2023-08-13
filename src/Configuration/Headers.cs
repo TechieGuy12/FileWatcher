@@ -48,7 +48,7 @@ namespace TE.FileWatcher.Configuration
                             value = ReplaceFormatPlaceholders(value);
                         }
                     }
-                    Log.Logger.WriteLine($"DEBUG: Header Name: {header.Name} Value: {value}");
+
                     request.Headers.Add(header.Name, value);
                 }
             }
