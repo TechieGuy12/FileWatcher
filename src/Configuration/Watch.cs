@@ -30,6 +30,10 @@ namespace TE.FileWatcher.Configuration
         // The queue that will contain the changes
         private ConcurrentQueue<ChangeInfo>? _queue;
 
+        // Flag to indicate to ignore the next change as a Create trigger will
+        // generate two Change triggers
+        private bool _ignoreNextChange = false;
+
         // Flag indicating the class is disposed
         private bool _disposed;
 
@@ -420,9 +424,13 @@ namespace TE.FileWatcher.Configuration
                     // associated with that change as a copy raises multiple
                     // change events for a file - a copy, and several change
                     // events - so mark this change event as invalid
-                    if (_lastChange.Trigger == TriggerType.Create)
+                    if (_lastChange.Trigger == TriggerType.Create || _ignoreNextChange)
                     {
                         isValid = false;
+
+                        // Set the flag to ignore a second Change Trigger only
+                        // if the previous change was a Create
+                        _ignoreNextChange = (_lastChange.Trigger == TriggerType.Create);
                     }
 
                     // Check if both the last change was a change, and the
@@ -530,14 +538,12 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
-            
 
             ChangeInfo? change = GetChange(TriggerType.Change, e.Name, e.FullPath);
             if (change != null)
             {
                 ProcessChange(change);
             }
-
         }
 
         /// <summary>
@@ -556,7 +562,8 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            ChangeInfo? change = GetChange(TriggerType.Create, e.Name, e.FullPath);
+            ChangeInfo? change = GetChange(TriggerType.Create, e.Name, e.FullPath);       
+
             if (change != null)
             {
                 ProcessChange(change);
@@ -624,7 +631,7 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
-            
+
             ChangeInfo? change = GetChange(TriggerType.Rename, e.Name, e.FullPath, e.OldName, e.OldFullPath);
             if (change != null)
             {
