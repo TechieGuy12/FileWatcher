@@ -358,7 +358,7 @@ namespace TE.FileWatcher.Logging
                     lock (locker)
                     {
                         RolloverLog();
-                        using StreamWriter writer = new(LogFullPath, true);
+                        using StreamWriter writer = new(LogFullPath, true, System.Text.Encoding.UTF8);
                         writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
                     }
                 }
