@@ -1,0 +1,8 @@
+﻿<Project Sdk="WixToolset.Sdk/4.0.0">
+  <ItemGroup>
+    <None Include="config.xml.sample" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileWatcher\FileWatcher.csproj" />
+  </ItemGroup>
+</Project>
