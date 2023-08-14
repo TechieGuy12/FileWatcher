@@ -31,7 +31,7 @@ namespace TE.FileWatcher.Configuration
         /// If the <paramref name="name"/> parameter is <c>null</c>, then the
         /// value of <see cref="DEFAULT_CONFIG_FILE"/>.
         /// </remarks>
-        public XmlFile(string path, string name)
+        public XmlFile(string? path, string? name)
         {
             _fullPath = GetFullPath(path, name);
         }
@@ -83,7 +83,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The full path to the configuration file, otherwise <c>null</c>.
         /// </returns>
-        private static string? GetFullPath(string path, string name)
+        private static string? GetFullPath(string? path, string? name)
         {
             string? folderPath = GetFolderPath(path);
             if (folderPath == null)
