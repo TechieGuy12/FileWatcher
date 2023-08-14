@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>    
     <RootNamespace>TE.FileWatcher</RootNamespace>
     <AssemblyName>fw</AssemblyName>
-    <Version>1.4.0</Version>
+    <Version>1.4.90</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
@@ -23,9 +23,9 @@
     <PackageTags>filesystem file-monitoring folder-monitoring</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageId>TE.FileWatcher</PackageId>   
+    <PackageId>TE.FileWatcher</PackageId>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
@@ -34,12 +34,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	</None>
     <None Update="Templates\config-template.xml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
