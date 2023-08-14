@@ -35,7 +35,7 @@
         /// <summary>
         /// Gets the watch path of the file/folder.
         /// </summary>
-        public string? WatchPath { get; private set; }
+        public string WatchPath { get; private set; }
 
         /// <summary>
         /// Initializes an instance of the <see cref="ChangeInfo"/>.

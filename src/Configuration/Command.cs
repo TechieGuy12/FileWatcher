@@ -218,13 +218,11 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            string? arguments = ReplacePlaceholders(Arguments);
-            if (!string.IsNullOrWhiteSpace(arguments))
-            {
-                arguments = ReplaceFormatPlaceholders(arguments);
-            }
-
-            return arguments;
+            return Placeholder.ReplacePlaceholders(
+                Arguments,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
         }
 
         /// <summary>
@@ -241,13 +239,11 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            string? path = ReplacePlaceholders(Path);
-            if (!string.IsNullOrWhiteSpace(path))
-            {
-                path = ReplaceFormatPlaceholders(path);
-            }
-
-            return path;
+            return Placeholder.ReplacePlaceholders(
+                Path,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
         }
 
         /// <summary>

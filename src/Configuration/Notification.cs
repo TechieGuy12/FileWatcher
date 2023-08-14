@@ -8,7 +8,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// A notification that will be triggered.
     /// </summary>
-    public class Notification : PlaceholderBase
+    public class Notification : ItemBase
     {
         // The message to send with the request
         private readonly StringBuilder _message;
@@ -251,11 +251,11 @@ namespace TE.FileWatcher.Configuration
                 throw new UriFormatException();
             }
 
-            string? url = ReplacePlaceholders(Url);
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                url = ReplaceFormatPlaceholders(url);
-            }
+            string? url = Placeholder.ReplacePlaceholders(
+                Url,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
 
             if (string.IsNullOrWhiteSpace(url))
             {

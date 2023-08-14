@@ -13,7 +13,7 @@ namespace TE.FileWatcher.Configuration
     /// A base abstract class for the classes which require execution on the
     /// machine and includes placeholders in the data that need to be replaced.
     /// </summary>
-    public abstract class RunnableBase : PlaceholderBase
+    public abstract class RunnableBase : ItemBase
     {
         /// <summary>
         /// Gets or sets the triggers of the action.

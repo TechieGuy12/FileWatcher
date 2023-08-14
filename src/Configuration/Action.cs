@@ -39,7 +39,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the source of the action.
         /// </summary>
         [XmlElement("source")]
-        public string Source { get; set; } = PLACEHOLDERFULLPATH;
+        public string Source { get; set; } = Placeholder.PLACEHOLDERFULLPATH;
 
         /// <summary>
         /// Gets or sets the destination of the action.
@@ -199,12 +199,11 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            string? destination = ReplacePlaceholders(Destination);
-            if (!string.IsNullOrWhiteSpace(destination))
-            {
-                destination = ReplaceFormatPlaceholders(destination);
-            }
-            return destination;
+            return Placeholder.ReplacePlaceholders(
+                Destination,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
         }
 
         /// <summary>
@@ -221,13 +220,11 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            string? source = ReplacePlaceholders(Source);
-            if (!string.IsNullOrWhiteSpace(source))
-            {
-                source = ReplaceFormatPlaceholders(source);
-            }
-
-            return source;
+            return Placeholder.ReplacePlaceholders(
+                Source,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
         }
     }
 }

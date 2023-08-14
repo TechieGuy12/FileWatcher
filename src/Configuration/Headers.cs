@@ -7,7 +7,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// Contains the headers information.
     /// </summary>
-    public class Headers : PlaceholderBase
+    public class Headers : ItemBase
     {
         /// <summary>
         /// Get or sets the list of headers to add to a request.
@@ -42,11 +42,11 @@ namespace TE.FileWatcher.Configuration
                     string? value = header.Value;
                     if (!string.IsNullOrWhiteSpace(value))
                     {
-                        value = ReplacePlaceholders(value);
-                        if (!string.IsNullOrWhiteSpace(value))
-                        {
-                            value = ReplaceFormatPlaceholders(value);
-                        }
+                        value = Placeholder.ReplacePlaceholders(
+                            value, 
+                            Change.WatchPath,
+                            Change.FullPath,
+                            Change.OldPath);
                     }
 
                     request.Headers.Add(header.Name, value);
