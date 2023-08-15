@@ -32,7 +32,7 @@ namespace TE.FileWatcher.Configuration
         /// If the <paramref name="name"/> parameter is <c>null</c>, then the
         /// value of <see cref="DEFAULTCONFIGFILE"/>.
         /// </remarks>
-        public XmlFile(string path, string name)
+        public XmlFile(string? path, string? name)
         {
             _fullPath = GetFullPath(path, name);
         }
@@ -57,7 +57,7 @@ namespace TE.FileWatcher.Configuration
                 catch (Exception ex)
                     when (ex is ArgumentException || ex is PathTooLongException)
                 {
-                    Console.WriteLine($"The folder name is null or empty. Couldn't get the current location. Reason: {ex.Message}");
+                    Console.Error.WriteLine($"The folder name is null or empty. Couldn't get the current location. Reason: {ex.Message}");
                     return null;
                 }
             }
@@ -68,7 +68,7 @@ namespace TE.FileWatcher.Configuration
             }
             else
             {
-                Console.WriteLine("The folder does not exist.");
+                Console.Error.WriteLine("The folder does not exist.");
                 return null;
             }
         }
@@ -85,7 +85,7 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The full path to the configuration file, otherwise <c>null</c>.
         /// </returns>
-        private static string? GetFullPath(string path, string name)
+        private static string? GetFullPath(string? path, string? name)
         {
             string? folderPath = GetFolderPath(path);
             if (folderPath == null)
@@ -108,14 +108,14 @@ namespace TE.FileWatcher.Configuration
                 }
                 else
                 {
-                    Console.WriteLine($"The configuration file '{fullPath}' was not found.");
+                    Console.Error.WriteLine($"The configuration file '{fullPath}' was not found.");
                     return null;
                 }
             }
             catch (Exception ex)
                 when (ex is ArgumentException || ex is ArgumentNullException)
             {
-                Console.WriteLine($"Could not get the path to the configuration file. Reason: {ex.Message}");
+                Console.Error.WriteLine($"Could not get the path to the configuration file. Reason: {ex.Message}");
                 return null;
             }
         }
@@ -132,13 +132,13 @@ namespace TE.FileWatcher.Configuration
         {
             if (string.IsNullOrWhiteSpace(_fullPath))
             {
-                Console.WriteLine("The configuration file path was null or empty.");
+                Console.Error.WriteLine("The configuration file path was null or empty.");
                 return null;
             }
 
             if (!File.Exists(_fullPath))
             {
-                Console.WriteLine($"The configuration file path '{_fullPath}' does not exist.");
+                Console.Error.WriteLine($"The configuration file path '{_fullPath}' does not exist.");
                 return null;
             }
 
@@ -155,11 +155,7 @@ namespace TE.FileWatcher.Configuration
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Addtional reason: {ex.InnerException.Message}");
-                }
+                Console.Error.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
                 return null;
             }
         }

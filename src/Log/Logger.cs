@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 
-namespace TE.FileWatcher.Log
+namespace TE.FileWatcher.Logging
 {
     /// <summary>
     /// The log level of a log message.
@@ -22,11 +23,11 @@ namespace TE.FileWatcher.Log
         /// <summary>
         /// The default log file name.
         /// </summary>
-        public const string DEFAULTLOGNAME = "fw.log";
+        public const string DEFAULT_LOG_NAME = "fw.log";
 
         // A megabyte - for the purists, this is actually a mebibyte, but let's
         // not split hairs as this is just a log file size after all
-        private const int MEGABYTE = 1024 * 1024;
+        private const int MEGABYTE = 1048576;
 
         // The queue of log messages
         private static readonly ConcurrentQueue<Message> queue;
@@ -59,24 +60,33 @@ namespace TE.FileWatcher.Log
 
         // The object used for the lock
         private static readonly object locker = new();
-
+       
         /// <summary>
         /// Initializes an instance of the <see cref="Logger"/> class.
         /// </summary>
         /// <exception cref="InvalidOperationException">
         /// Thrown when the logger could not be initialized.
         /// </exception>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static Logger()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             LogPath = Path.GetTempPath();
-            LogName = DEFAULTLOGNAME;
-            LogSize = Configuration.Logging.DEFAULTLOGSIZE;
-            LogNumber = Configuration.Logging.DEFAULTLOGNUMBER;
+            LogName = DEFAULT_LOG_NAME;
+            LogSize = Configuration.Logging.DEFAULT_LOG_SIZE;
+            LogNumber = Configuration.Logging.DEFAULT_LOG_NUMBER;
 
-            LogFullPath = SetFullPath(LogPath, LogName);
+            try
+            {
+                SetFullPath(LogPath, LogName);
+            }
+            catch (Exception ex)
+                when (ex is ArgumentException || ex is ArgumentNullException || ex is IOException)
+            {
+                throw new InvalidOperationException($"The logger could not be initialized. Reason: {ex.Message}");
+            }
 
             queue = new ConcurrentQueue<Message>();
-            locker = new object();
         }
 
         /// <summary>
@@ -94,7 +104,7 @@ namespace TE.FileWatcher.Log
 
             if (!string.IsNullOrWhiteSpace(logOptions.LogPath))
             {
-                LogFullPath = SetFullPath(logOptions.LogPath);
+                SetFullPath(logOptions.LogPath);
             }
 
             LogSize = logOptions.Size;
@@ -144,20 +154,20 @@ namespace TE.FileWatcher.Log
         /// <exception cref="IOException">
         /// Thrown when either the folder or log file name are not valid.
         /// </exception>
-        private static string SetFullPath(string logPath, string logName)
+        private static void SetFullPath(string logPath, string logName)
         {
             if (string.IsNullOrWhiteSpace(logPath))
             {
-                logPath = Path.GetTempPath();
+                throw new ArgumentNullException(nameof(logPath));
             }
 
             if (string.IsNullOrWhiteSpace(logName))
             {
-                logName = DEFAULTLOGNAME;
+                throw new ArgumentNullException(nameof(logName));
             }
             
             string fullPath = Path.Combine(logPath, logName);
-            return SetFullPath(fullPath);
+            SetFullPath(fullPath);
         }
 
         /// <summary>
@@ -173,11 +183,11 @@ namespace TE.FileWatcher.Log
         /// <exception cref="IOException">
         /// Thrown when either the folder or log file name are not valid.
         /// </exception>
-        private static string SetFullPath(string fullPath)
+        private static void SetFullPath(string fullPath)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
-                fullPath = Path.Combine(Path.GetTempPath(), DEFAULTLOGNAME);
+                throw new ArgumentNullException(nameof(fullPath));
             }
 
             // Separate the path and log name so each can be check to ensure
@@ -205,13 +215,13 @@ namespace TE.FileWatcher.Log
                 // Store the path, name and the full path if all the checks pass
                 LogPath = path;
                 LogName = name;
-                return Path.Combine(path, name);
+                LogFullPath = Path.Combine(path, name);
             }
             else
             {
                 LogPath = string.Empty;
                 LogName = name;
-                return String.Empty;
+                LogFullPath = string.Empty;
             }
         }
 
@@ -349,10 +359,8 @@ namespace TE.FileWatcher.Log
                     lock (locker)
                     {
                         RolloverLog();
-                        using (StreamWriter writer = new(LogFullPath, true))
-                        {
-                            writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
-                        }
+                        using StreamWriter writer = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new(LogFullPath, true, System.Text.Encoding.UTF8) : new(LogFullPath, true);
+                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
                     }
                 }
                 catch (Exception ex)

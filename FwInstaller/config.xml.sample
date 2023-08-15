@@ -1,0 +1,290 @@
+<watches>
+    <logging>
+        <!--
+            The full path to the log file.
+
+            Default: %TEMP%\fw.log
+        -->
+        <path>c:\temp\fw.log</path>
+        <!--
+            The maximum size (in MB) of the log file before it is backed up and a
+            new log file is created. Cannot be left blank.
+
+            Default: 5
+        -->
+        <size>5</size>
+        <!--
+            The number of log files to keep. Once this number is reached, old log
+            files are deleted. Cannot be left blank.
+
+            Default: 10
+        -->
+        <number>10</number>
+    </logging>
+    <!-- A folder watch-->
+	<watch>
+        <!-- 
+            Path of the folder to watch. File and folder exclusions are relative
+            to the value specified in this element.
+        -->
+        <path>c:\temp\test</path>
+        <!--
+            The amount of seconds to wait for the path to exist before
+            establishing the watch. This timeout can be used with paths that
+            are on external hard drives that may not be connected for a time
+            when FileWatcher is started.
+        -->
+        <timeout>1</timeout>
+        <filters>
+            <!-- 
+                Filters matching file name. The full name of a file,
+                regardless of which folder it is included in, is matched.
+             -->
+            <files>
+                <name></name>
+            </files>
+            <!-- 
+                Filters matching folder names. The folder names are relative
+                to the path element. For example, if path is C:\Temp and a name
+                is TestFolder, then the folder C:\Temp\TestFolder is matched.
+            -->
+            <folders>
+                <name></name>
+            </folders>
+            <!-- 
+                Filters matching folder/file attributes. The filters are
+                matched if a file contains any of the attributes specified.
+
+                Valid values:
+                    Archive
+                    Compressed
+                    Encrypted
+                    Hidden
+                    ReadOnly
+                    System
+            -->
+            <attributes>
+                <attribute></attribute>
+            </attributes>
+            <!-- 
+                Filters matching full paths. Similar to the folder names,
+                paths are relative to the path element and allow for exact file
+                path matching - for example, to include C:\Temp\TestFolder\thumbs.db,
+                specify TestFolder\thumbs.db.
+            -->
+            <paths>
+                <path></path>
+            </paths>
+        </filters>        
+        <exclusions>
+            <!-- 
+                Exclusions matching file name. The full name of a file,
+                regardless of which folder it is included in, is excluded.
+             -->
+            <files>
+                <name>ExcludeThis</name>
+            </files>
+            <!-- 
+                Exclusions matching folder names. The folder names are relative
+                to the path element. For example, if path is C:\Temp and a name
+                is TestFolder, then the folder C:\Temp\TestFolder is excluded.
+            -->
+            <folders>
+                <name>ExcludeThis</name>
+            </folders>
+            <!-- 
+                Exclusions matching folder/file attributes. The exclusions are
+                matched if a file contains any of the attributes specified.
+
+                Valid values:
+                    Archive
+                    Compressed
+                    Encrypted
+                    Hidden
+                    ReadOnly
+                    System
+            -->
+            <attributes>
+                <attribute></attribute>
+            </attributes>
+            <!-- 
+                Exclusions matching full paths. Similar to the folder names,
+                paths are relative to the path element and allow for exact file
+                path matching - for example, to exclude C:\Temp\TestFolder\thumbs.db,
+                specify TestFolder\thumbs.db.
+            -->
+            <paths>
+                <path>ExcludeThis</path>
+            </paths>
+        </exclusions>
+        <notifications>
+            <!-- 
+                Time, in milliseconds, to wait between he notification send request.
+                If no value is specified, then 60000 (1 minute) will be used. Any
+                value lower than 30000 (30 seconds) will be set to 30000.
+            -->
+            <waittime>30000</waittime>
+            <notification>
+                <url></url>
+                <!--
+                    What method will be used to send the notification.
+
+                    Values:
+                        DELETE
+                        GET
+                        POST (default)
+                        PUT
+                -->        
+                <method></method>
+                <!--
+                    What events will trigger the notificaton.
+
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger></trigger>
+                </triggers>
+                <data>
+                    <headers>
+                        <header>
+                            <name></name>
+                            <value></value>
+                        </header>
+                    </headers>
+                    <!--
+                        Placeholders:
+                            [message] - messsage of the change
+                    -->
+                    <body></body>
+                    <!--
+                        The type of request.
+
+                        Values:
+                            JSON (default)
+                            XML
+                    -->
+                    <type></type>            
+                </data>
+            </notification>
+        </notifications>
+        <!--
+            Perform actions when a change is detected.
+        -->
+        <actions>
+            <action>
+                <!--
+                    What events will trigger the action.
+
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger>Change</trigger>
+                </triggers>            
+                <!--
+                    The type of action to perform.
+
+                    Values:
+                        Copy
+                        Move
+                        Delete
+                -->
+                <type>Copy</type>
+                <!--
+                    The source path of the action. 
+
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->
+                <source>[exactpath]</source>
+                <!--
+                    The destination path of the action.
+                    This value does not apply to the Delete action.
+
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                        [createddate:format]
+                        [modifieddate:format]
+                        [currentdate:format]
+                -->
+                <destination>c:\temp\dest\[file]</destination>
+                <!--
+                    Verifies the file after a copy or move.
+
+                    Values:
+                        true
+                        false (default)
+                -->
+              <verify>false</verify>
+              <!--
+                Keeps the creation and modified timestamps of the source file and applies
+                them to the destination file.
+                Values:
+                    true
+                    false (default)                    
+              -->
+              <keepTimestamps>true</keepTimestamps>
+            </action>
+        </actions>
+        <!--
+            Run commands when a change is detected.
+        -->
+        <commands>
+            <command>
+                <!--
+                    What events will trigger the command.
+
+                    Values:
+                        Change
+                        Create
+                        Delete
+                        Rename
+                -->
+                <triggers>
+                    <trigger></trigger>
+                </triggers>            
+                <!--
+                    The path of the command to run.
+
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->            
+                <path></path>
+                <!--
+                    The arguments of the command to run.
+                    
+                    Placeholders:                    
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->                   
+                <arguments></arguments>
+            </command>
+        </commands>    
+    </watch>
+</watches>

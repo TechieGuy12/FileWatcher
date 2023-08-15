@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Define the variables in "$(var.*) expressions" -->
+<?define Name = "FileWatcher Service" ?>
+<?define Manufacturer = "Kåre Smith" ?>
+<?define Version = "1.0.0.0" ?>
+<?define UpgradeCode = "B3D46D88-3D2A-4648-B760-AB1E8C89742C" ?>
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="$(Name)"
+             Manufacturer="$(Manufacturer)"
+             Version="$(Version)"
+             UpgradeCode="$(var.UpgradeCode)"
+             Compressed="true"
+		>
+		<MediaTemplate EmbedCab="yes"/>
+
+		<!-- Allow upgrades and prevent downgrades -->
+		<MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+		<StandardDirectory Id="ProgramFiles6432Folder">
+				<!-- Create a folder inside program files -->
+				<Directory Id="ROOTDIRECTORY" Name="$(var.Manufacturer)">
+
+					<!-- Create a folder within the parent folder given the name -->
+					<Directory Id="INSTALLFOLDER" Name="$(Name)"  />
+				</Directory>
+		</StandardDirectory>
+
+		<!-- The files inside this DirectoryRef are linked to
+             the fw directory via INSTALLFOLDER -->
+		<DirectoryRef Id="INSTALLFOLDER">
+
+			<!-- Create a single component which is the fw.exe file -->
+			<Component Id="ServiceExecutable" Bitness="always64">
+
+				<!-- Copies the fw.exe file using the
+                     project reference preprocessor variables -->
+				<File Id="fw.exe"
+                      Source="$(var.FileWatcher.TargetDir)publish\fw.exe"
+                      KeyPath="true" />
+
+				<File Id="appsettings.json"
+                      Source="$(var.FileWatcher.TargetDir)publish\appsettings.json"
+                      KeyPath="false" />
+
+				<File Id="config.xml"
+					Source="config.xml.sample"
+					KeyPath="false" />
+
+
+				<!-- Remove all files from the INSTALLFOLDER on uninstall -->
+				<RemoveFile Id="ALLFILES" Name="*.*" On="both" />
+
+				<!-- Tell WiX to install the Service -->
+				<ServiceInstall Id="ServiceInstaller"
+                                Type="ownProcess"
+                                Name="$(Name)"
+                                DisplayName="$(Name)"
+                                Description="Monitors files and folders for changes"
+                                Start="auto"
+                                ErrorControl="normal" />
+
+				<!-- Tell WiX to start the Service  Start="install" -->
+				<ServiceControl Id="StartService"
+                                Stop="both"
+                                Remove="uninstall"
+                                Name="$(Name)"
+                                Wait="true" />
+			</Component>
+		</DirectoryRef>
+
+		<!-- Tell WiX to install the files -->
+		<Feature Id="Service" Title="$(Name) Setup" Level="1">
+			<ComponentRef Id="ServiceExecutable" />
+		</Feature>
+
+	</Package>
+</Wix>

@@ -1,0 +1,11 @@
+﻿<Project Sdk="WixToolset.Sdk/4.0.0">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>..\FileWatcher\bin\Release\net6.0\publish\win-x64</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="config.xml.sample" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileWatcher\FileWatcher.csproj" />
+  </ItemGroup>
+</Project>
