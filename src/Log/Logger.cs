@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
-namespace TE.FileWatcher.Logging
+namespace TE.FileWatcher.Log
 {
     /// <summary>
     /// The log level of a log message.
@@ -23,7 +23,7 @@ namespace TE.FileWatcher.Logging
         /// <summary>
         /// The default log file name.
         /// </summary>
-        public const string DEFAULT_LOG_NAME = "fw.log";
+        public const string DEFAULTLOGNAME = "fw.log";
 
         // A megabyte - for the purists, this is actually a mebibyte, but let's
         // not split hairs as this is just a log file size after all
@@ -67,18 +67,16 @@ namespace TE.FileWatcher.Logging
         /// <exception cref="InvalidOperationException">
         /// Thrown when the logger could not be initialized.
         /// </exception>
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static Logger()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             LogPath = Path.GetTempPath();
-            LogName = DEFAULT_LOG_NAME;
-            LogSize = Configuration.Logging.DEFAULT_LOG_SIZE;
-            LogNumber = Configuration.Logging.DEFAULT_LOG_NUMBER;
-
+            LogName = DEFAULTLOGNAME;
+            LogSize = Configuration.Logging.DEFAULTLOGSIZE;
+            LogNumber = Configuration.Logging.DEFAULTLOGNUMBER;
+            
             try
             {
-                SetFullPath(LogPath, LogName);
+                LogFullPath = Path.Combine(LogPath, LogName);
             }
             catch (Exception ex)
                 when (ex is ArgumentException || ex is ArgumentNullException || ex is IOException)
@@ -136,38 +134,6 @@ namespace TE.FileWatcher.Logging
         {
             queue.Enqueue(new Message(message, level));
             WriteToLog();
-        }
-
-        /// <summary>
-        /// Sets the full path of the logging file using the <paramref name="logPath"/>
-        /// and the <paramref name="logName"/> arguments.
-        /// </summary>
-        /// <param name="logPath">
-        /// The path to the log file.
-        /// </param>
-        /// <param name="logName">
-        /// The name of the log file.
-        /// </param>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown when an argument is null or empty.
-        /// </exception>
-        /// <exception cref="IOException">
-        /// Thrown when either the folder or log file name are not valid.
-        /// </exception>
-        private static void SetFullPath(string logPath, string logName)
-        {
-            if (string.IsNullOrWhiteSpace(logPath))
-            {
-                throw new ArgumentNullException(nameof(logPath));
-            }
-
-            if (string.IsNullOrWhiteSpace(logName))
-            {
-                throw new ArgumentNullException(nameof(logName));
-            }
-            
-            string fullPath = Path.Combine(logPath, logName);
-            SetFullPath(fullPath);
         }
 
         /// <summary>

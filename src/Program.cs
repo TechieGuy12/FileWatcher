@@ -2,7 +2,7 @@
 using System.CommandLine.Invocation;
 using System.Diagnostics.CodeAnalysis;
 using TE.FileWatcher.Configuration;
-using TE.FileWatcher.Logging;
+using TE.FileWatcher.Log;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Extensions.DependencyInjection;
