@@ -11,8 +11,6 @@ namespace TE.FileWatcher.IO
         /// Gets or sets a list of paths.
         /// </summary>
         [XmlElement("path")]
-#pragma warning disable CA2227
         public HashSet<string> Path { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-#pragma warning restore CA2227
     }
 }

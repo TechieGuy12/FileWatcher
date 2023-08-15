@@ -33,7 +33,6 @@ namespace TE.FileWatcher.IO
         /// <exception cref="ArgumentNullException">
         /// The <paramref name="value"/> parameter is null or empty.
         /// </exception>
-#pragma warning disable CA1031
         public bool IsMatch(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -78,6 +77,5 @@ namespace TE.FileWatcher.IO
 
             return isMatch;
         }
-#pragma warning restore CA1031
     }
 }

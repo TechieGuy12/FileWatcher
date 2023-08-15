@@ -102,7 +102,6 @@ namespace TE.FileWatcher.IO
         /// <returns>
         /// True if the file change is a match, otherwise false.
         /// </returns>
-#pragma warning disable CA1031
         private protected bool AttributeMatch(string path)
         {
             if (Attributes == null || Attributes.Attribute.Count <= 0)
@@ -140,7 +139,6 @@ namespace TE.FileWatcher.IO
             }
             return hasAttribute;
         }
-#pragma warning restore CA1031
 
         /// <summary>
         /// Returns the flag indicating whether the current file changed is
