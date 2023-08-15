@@ -194,7 +194,7 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private string? GetDestination()
         {
-            if (string.IsNullOrWhiteSpace(Destination))
+            if (string.IsNullOrWhiteSpace(Destination) || Change == null)
             {
                 return null;
             }
@@ -215,7 +215,7 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private string? GetSource()
         {
-            if (string.IsNullOrWhiteSpace(Source))
+            if (string.IsNullOrWhiteSpace(Source) || Change == null)
             {
                 return null;
             }

@@ -213,7 +213,7 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private string? GetArguments()
         {
-            if (string.IsNullOrWhiteSpace(Arguments))
+            if (string.IsNullOrWhiteSpace(Arguments) || Change == null)
             {
                 return null;
             }
@@ -234,7 +234,7 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private string? GetCommand()
         {
-            if (string.IsNullOrWhiteSpace(Path))
+            if (string.IsNullOrWhiteSpace(Path) || Change == null)
             {
                 return null;
             }

@@ -49,12 +49,6 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the triggers of the request.
-        /// </summary>
-        [XmlElement("triggers")]
-        public Triggers? Triggers { get; set; }
-
-        /// <summary>
         /// Gets or sets the data to send for the request.
         /// </summary>
         [XmlElement("data")]
@@ -138,11 +132,8 @@ namespace TE.FileWatcher.Configuration
                 throw new InvalidOperationException("The URL is null or empty.");
             }
 
-            if (Data == null)
-            {
-                //throw new InvalidOperationException("Data for the request was not provided.");
-                Data = new Data();
-            }
+            //throw new InvalidOperationException("Data for the request was not provided.");
+            Data ??= new Data();
 
             string content = string.Empty;
             if (Data.Body != null)

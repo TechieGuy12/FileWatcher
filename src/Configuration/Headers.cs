@@ -13,9 +13,7 @@ namespace TE.FileWatcher.Configuration
         /// Get or sets the list of headers to add to a request.
         /// </summary>
         [XmlElement("header")]
-#pragma warning disable CA2227 // Collection properties should be read only
         public Collection<Header>? HeaderList { get; set; }
-#pragma warning restore CA2227 // Collection properties should be read only
 
         /// <summary>
         /// Sets the headers for a request.
@@ -25,7 +23,7 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public void Set(HttpRequestMessage request)
         {
-            if (request == null)
+            if (request == null || Change == null)
             {
                 return;
             }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -11,6 +12,13 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Gets or sets the change information.
         /// </summary>
-        protected static ChangeInfo Change { get; set; }
+        [XmlIgnore]
+        protected static ChangeInfo? Change { get; set; }
+
+        /// <summary>
+        /// Gets or sets the triggers of the action.
+        /// </summary>
+        [XmlElement("triggers")]
+        public Triggers Triggers { get; set; } = new Triggers();
     }
 }

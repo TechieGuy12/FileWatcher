@@ -16,12 +16,6 @@ namespace TE.FileWatcher.Configuration
     public abstract class RunnableBase : ItemBase
     {
         /// <summary>
-        /// Gets or sets the triggers of the action.
-        /// </summary>
-        [XmlElement("triggers")]
-        public Triggers Triggers { get; set; } = new Triggers();
-
-        /// <summary>
         /// Gets or sets the number of milliseconds to wait before running.
         /// </summary>
         [XmlElement("waitbefore")]
