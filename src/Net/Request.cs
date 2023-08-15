@@ -84,10 +84,7 @@ namespace TE.FileWatcher.Net
 
             using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
             {
-                if (headers != null)
-                {
-                    headers.Set(request);
-                }
+                headers?.Set(request);
 
                 if (body != null)
                 {

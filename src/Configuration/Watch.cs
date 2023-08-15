@@ -273,11 +273,8 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
-
-            if (_queue == null)
-            {
-                _queue = new ConcurrentQueue<ChangeInfo>();
-            }
+            
+            _queue ??= new ConcurrentQueue<ChangeInfo>();
 
             if (_queue.IsEmpty)
             {

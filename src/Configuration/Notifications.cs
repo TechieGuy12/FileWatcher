@@ -70,10 +70,7 @@ namespace TE.FileWatcher.Configuration
 
             if (disposing)
             {
-                if (_timer != null)
-                {
-                    _timer.Dispose();
-                }
+                _timer?.Dispose();                
             }
 
             _disposed = true;
