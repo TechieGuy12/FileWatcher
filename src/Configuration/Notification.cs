@@ -135,10 +135,19 @@ namespace TE.FileWatcher.Configuration
             //throw new InvalidOperationException("Data for the request was not provided.");
             Data ??= new Data();
 
-            string content = string.Empty;
+            string? content = string.Empty;
             if (Data.Body != null)
             {
                 content = Data.Body.Replace("[message]", _message.ToString(), StringComparison.OrdinalIgnoreCase);
+
+                if (Change != null)
+                {
+                    content = Placeholder.ReplacePlaceholders(
+                        content,
+                        Change.WatchPath,
+                        Change.FullPath,
+                        Change.OldPath);
+                }
             }
 
             Response response =
