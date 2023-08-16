@@ -46,6 +46,9 @@ namespace TE.FileWatcher.IO
         [XmlElement("attributes")]
         public Attributes? Attributes { get; set; }
 
+        [XmlElement("log", DataType = "boolean")]
+        public bool Log { get; set; } = true;
+
         /// <summary>
         /// Gets or sets the type of filter used for logging.
         /// </summary>
@@ -127,7 +130,10 @@ namespace TE.FileWatcher.IO
                 {
                     if (fileAttributes.HasFlag(attribute))
                     {
-                        Logger.WriteLine($"{FilterTypeName}: The path '{path}' has the attribute '{attribute}'.");
+                        if (Log)
+                        {
+                            Logger.WriteLine($"{FilterTypeName}: The path '{path}' has the attribute '{attribute}'.");
+                        }
                         hasAttribute = true;
                         break;
                     }
@@ -168,7 +174,10 @@ namespace TE.FileWatcher.IO
                 isMatch = fileName.IsMatch(name);
                 if (isMatch)
                 {
-                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is a match for file {name}.");
+                    if (Log)
+                    {   
+                        Logger.WriteLine($"{FilterTypeName}: The match pattern '{fileName.Pattern}' is a match for file {name}.");
+                    }
                     break;
                 }
             }
@@ -204,7 +213,10 @@ namespace TE.FileWatcher.IO
                 isMatch = folder.IsMatch(path);
                 if (isMatch)
                 {
-                    Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
+                    if (Log)
+                    {
+                        Logger.WriteLine($"{FilterTypeName}: The match pattern '{folder.Pattern}' is a match for folder '{path}'.");
+                    }
                     break;
                 }
             }
@@ -239,7 +251,10 @@ namespace TE.FileWatcher.IO
             {
                 if (path.Contains(aPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    Logger.WriteLine($"{FilterTypeName}: The path '{path}' contains the path '{aPath}'.");
+                    if (Log)
+                    {
+                        Logger.WriteLine($"{FilterTypeName}: The path '{path}' contains the path '{aPath}'.");
+                    }
                     isMatch = true;
                     break;
                 }
