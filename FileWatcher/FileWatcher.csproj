@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>    
     <RootNamespace>TE.FileWatcher</RootNamespace>
     <AssemblyName>fw</AssemblyName>
-    <Version>1.4.90</Version>
+    <Version>1.4.91</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>

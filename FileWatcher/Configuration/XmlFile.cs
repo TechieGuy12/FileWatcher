@@ -142,7 +142,7 @@ namespace TE.FileWatcher.Configuration
             try
             {
                 XmlSerializer serializer = new(typeof(Watches));
-                using FileStream fs = new(_fullPath, FileMode.Open);
+                using FileStream fs = new(_fullPath, FileMode.Open, FileAccess.Read);
                 return (Watches?)serializer.Deserialize(fs);
             }
             catch (Exception ex)
