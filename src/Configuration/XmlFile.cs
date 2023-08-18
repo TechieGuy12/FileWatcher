@@ -144,14 +144,9 @@ namespace TE.FileWatcher.Configuration
 
             try
             {
-                XmlSerializer serializer = new XmlSerializer(typeof(Watches));
-                using (FileStream fs = new FileStream(_fullPath, FileMode.Open))
-                {
-                    using (XmlReader reader = XmlReader.Create(fs))
-                    {
-                        return (Watches?)serializer.Deserialize(reader);
-                    }
-                }
+                XmlSerializer serializer = new(typeof(Watches));
+                using FileStream fs = new(_fullPath, FileMode.Open, FileAccess.Read);
+                return (Watches?)serializer.Deserialize(fs);
             }
             catch (Exception ex)
             {

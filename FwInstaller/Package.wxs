@@ -3,7 +3,7 @@
 <!-- Define the variables in "$(var.*) expressions" -->
 <?define Name = "FileWatcher Service" ?>
 <?define Manufacturer = "Kåre Smith" ?>
-<?define Version = "1.0.0.0" ?>
+<?define Version = "1.0.0.1" ?>
 <?define UpgradeCode = "B3D46D88-3D2A-4648-B760-AB1E8C89742C" ?>
 
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
