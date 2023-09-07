@@ -131,8 +131,7 @@ namespace TE.FileWatcher.Configuration
             {
                 throw new InvalidOperationException("The URL is null or empty.");
             }
-
-            //throw new InvalidOperationException("Data for the request was not provided.");
+            
             Data ??= new Data();
 
             string? content = string.Empty;
