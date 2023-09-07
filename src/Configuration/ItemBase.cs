@@ -19,7 +19,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the change information.
         /// </summary>
         [XmlIgnore]
-        protected ChangeInfo? Change { get; set; }
+        public ChangeInfo? Change { get; set; }
 
         /// <summary>
         /// Gets or sets the triggers of the action.

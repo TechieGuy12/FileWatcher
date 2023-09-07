@@ -133,6 +133,10 @@ namespace TE.FileWatcher.Configuration
             }
             
             Data ??= new Data();
+            if (Data.Headers != null)
+            {
+                Data.Headers.Change = Change;
+            }
 
             string? content = string.Empty;
             if (Data.Body != null)
