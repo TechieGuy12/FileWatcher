@@ -107,7 +107,8 @@ namespace TE.FileWatcher.Net
                                 return new Response(
                                     requestResponse.StatusCode,
                                     requestResponse.ReasonPhrase,
-                                    resultContent);
+                                    resultContent,
+                                    uri.OriginalString);
                             }
                         }
                     }
@@ -116,7 +117,8 @@ namespace TE.FileWatcher.Net
                         return new Response(
                             System.Net.HttpStatusCode.InternalServerError,
                             "Request could not be sent. Reason: The HTTP client service could not be initialized.",
-                            null); ;
+                            null,
+                            uri.OriginalString); ;
                     }
                 }
                 catch (Exception ex)
@@ -125,7 +127,8 @@ namespace TE.FileWatcher.Net
                     return new Response(
                         System.Net.HttpStatusCode.InternalServerError,
                         $"Request could not be sent. Reason: {ex.Message}",
-                        null);
+                        null,
+                        uri.OriginalString);
                 }                
             }            
         }

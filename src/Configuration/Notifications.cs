@@ -112,7 +112,6 @@ namespace TE.FileWatcher.Configuration
 
                 try
                 {
-                    Logger.WriteLine($"Sending the request to {notification.Url}.");
                     Response? response =
                         await notification.SendAsync().ConfigureAwait(false);
                     
@@ -121,7 +120,7 @@ namespace TE.FileWatcher.Configuration
                         continue;
                     }
 
-                    Logger.WriteLine($"Response: {response.StatusCode}. Content: {response.Content}");
+                    Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
                     
                 }
                 catch (AggregateException aex)

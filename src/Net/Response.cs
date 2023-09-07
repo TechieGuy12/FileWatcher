@@ -23,6 +23,11 @@ namespace TE.FileWatcher.Net
         internal string? Content { get; private set; }
 
         /// <summary>
+        /// Gets the URL for the response.
+        /// </summary>
+        internal string? Url { get; private set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Response"/> class
         /// when provided with the status code, reason phrase and the
         /// content.
@@ -36,11 +41,12 @@ namespace TE.FileWatcher.Net
         /// <param name="content">
         /// The content from the request.
         /// </param>
-        internal Response(HttpStatusCode statusCode, string? reasonPhrase, string? content)
+        internal Response(HttpStatusCode statusCode, string? reasonPhrase, string? content, string? url)
         {
             StatusCode = statusCode;
             ReasonPhrase = reasonPhrase;
             Content = content;
+            Url = url;
         }
     }
 }
