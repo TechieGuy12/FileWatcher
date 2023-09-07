@@ -9,11 +9,17 @@ namespace TE.FileWatcher.Configuration
 {
     public abstract class ItemBase
     {
+
+        /// <summary>
+        /// The object used to replace placeholders in strings.
+        /// </summary>
+        protected Placeholder Placeholder { get; } = new Placeholder();
+
         /// <summary>
         /// Gets or sets the change information.
         /// </summary>
         [XmlIgnore]
-        protected static ChangeInfo? Change { get; set; }
+        protected ChangeInfo? Change { get; set; }
 
         /// <summary>
         /// Gets or sets the triggers of the action.

@@ -7,7 +7,7 @@ using System;
 
 namespace TE.FileWatcher
 {
-    internal static class Placeholder
+    public sealed class Placeholder
     {
         // The exact path placeholder
         internal const string PLACEHOLDEREXACTPATH = "[exactpath]";
@@ -86,7 +86,7 @@ namespace TE.FileWatcher
         /// The value with the placeholders replaced with the actual strings,
         /// otherwise <c>null</c>.
         /// </returns>
-        internal static string? ReplacePlaceholders(string value, string watchPath, string fullPath, string? oldPath)
+        internal string? ReplacePlaceholders(string value, string watchPath, string fullPath, string? oldPath)
         {
             string? changedValue = ReplaceFileFolderPlaceholders(value, watchPath, fullPath, oldPath);
             if (!string.IsNullOrWhiteSpace(changedValue))
@@ -110,7 +110,7 @@ namespace TE.FileWatcher
         /// <exception cref="FileWatcherException">
         /// Thrown when the date could not be determined.
         /// </exception>
-        private static DateTime? GetDate(string dateType, string fullPath)
+        private DateTime? GetDate(string dateType, string fullPath)
         {
 
             // Determine the type of date type, and then get
@@ -139,7 +139,7 @@ namespace TE.FileWatcher
         /// <exception cref="FileWatcherException">
         /// Thrown when the date string value can not be created.
         /// </exception>
-        private static string? GetDateString(DateTime date, string format)
+        private string? GetDateString(DateTime date, string format)
         {
             if (string.IsNullOrEmpty(format))
             {
@@ -191,7 +191,7 @@ namespace TE.FileWatcher
         /// <returns>
         /// The date string value.
         /// </returns>
-        private static string GetDateValue(string placeholder, string value, string type, string format, string fullPath)
+        private string GetDateValue(string placeholder, string value, string type, string format, string fullPath)
         {
             // Get the date for the specified date type
             DateTime? date = GetDate(type, fullPath);
@@ -225,7 +225,7 @@ namespace TE.FileWatcher
         /// <returns>
         /// The value of the environment variable.
         /// </returns>
-        private static string GetEnvironmentVariableValue(string placeholder, string value, string envName)
+        private string GetEnvironmentVariableValue(string placeholder, string value, string envName)
         {
 
             string? envValue = Environment.GetEnvironmentVariable(envName);
@@ -243,7 +243,7 @@ namespace TE.FileWatcher
         /// <returns>
         /// The relative path.
         /// </returns>
-        private static string GetRelativeFullPath(string fullPath, string watchPath)
+        private string GetRelativeFullPath(string fullPath, string watchPath)
         {
             if (string.IsNullOrWhiteSpace(watchPath))
             {
@@ -272,7 +272,7 @@ namespace TE.FileWatcher
         /// <returns>
         /// The relative path without the file name, otherwise <c>null</c>.
         /// </returns>
-        private static string? GetRelativePath(string path, string watchPath)
+        private string? GetRelativePath(string path, string watchPath)
         {
             string? relativeFullPath = Path.GetDirectoryName(path);
             if (relativeFullPath == null)
@@ -297,7 +297,7 @@ namespace TE.FileWatcher
         /// The URL string.
         /// </param>
         /// <returns></returns>
-        private static string GetUrlEncodedValue(string placeholder, string value, string url)
+        private string GetUrlEncodedValue(string placeholder, string value, string url)
         {
             string? encodedValue = HttpUtility.UrlEncode(url);
             if (encodedValue != null)
@@ -328,7 +328,7 @@ namespace TE.FileWatcher
         /// The value with the placeholders replaced with the actual strings,
         /// otherwise <c>null</c>.
         /// </returns>
-        private static string? ReplaceFileFolderPlaceholders(string value, string watchPath, string fullPath, string? oldPath)
+        private string? ReplaceFileFolderPlaceholders(string value, string watchPath, string fullPath, string? oldPath)
         {
             if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(fullPath))
             {
@@ -386,7 +386,7 @@ namespace TE.FileWatcher
         /// The value with the placeholders replaced with the actual strings,
         /// otherwise <c>null</c>.
         /// </returns>
-        private static string? ReplaceFormatPlaceholders(string value, string fullPath)
+        private string? ReplaceFormatPlaceholders(string value, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
