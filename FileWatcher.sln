@@ -2,7 +2,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileWatcher", "FileWatcher\FileWatcher.csproj", "{F46457BB-E373-462E-8E5A-8EE669A4B57A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileWatcher", "src\FileWatcher.csproj", "{F46457BB-E373-462E-8E5A-8EE669A4B57A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{571453A7-4850-4D19-8F22-F419C63F45CE}"
+	ProjectSection(SolutionItems) = preProject
+		templates\config-template.xml = templates\config-template.xml
+	EndProjectSection
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "FwInstaller", "FwInstaller\FwInstaller.wixproj", "{7ABA5E77-930C-490D-A73B-556589F70F6E}"
 EndProject
