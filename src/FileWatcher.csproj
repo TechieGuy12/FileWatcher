@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>    
     <RootNamespace>TE.FileWatcher</RootNamespace>
     <AssemblyName>fw</AssemblyName>
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
@@ -18,8 +18,8 @@
     <Description>Monitor folders and files on the local system for changes.</Description>
     <Copyright>©2023</Copyright>
     <RepositoryUrl>https://github.com/TechieGuy12/FileWatcher</RepositoryUrl>
-    <AssemblyVersion>1.5.0.0</AssemblyVersion>
-    <FileVersion>1.5.0.3</FileVersion>
+    <AssemblyVersion>1.5.1.0</AssemblyVersion>
+    <FileVersion>1.5.1.0</FileVersion>
     <PackageTags>filesystem file-monitoring folder-monitoring</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
