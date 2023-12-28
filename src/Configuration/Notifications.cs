@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
@@ -13,7 +14,7 @@ namespace TE.FileWatcher.Configuration
     public class Notifications : IDisposable
     {
         // The default wait time
-        private const int DEFAULT_WAIT_TIME = 60000;
+        private const int DEFAULT_WAIT_TIME = 30000;
 
         // The minimum wait time
         private const int MIN_WAIT_TIME = 30000;
@@ -24,11 +25,13 @@ namespace TE.FileWatcher.Configuration
         // Flag indicating the class is disposed
         private bool _disposed;
 
+        private int currentWaitTime;
+
         /// <summary>
         /// Gets or sets the wait time between notification requests.
         /// </summary>
         [XmlElement("waittime")]
-        public int WaitTime { get; set; } = DEFAULT_WAIT_TIME;
+        public int? WaitTime { get; set; }
 
         /// <summary>
         /// Gets or sets the notifications list.
@@ -41,9 +44,10 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public Notifications()
         {
-            _timer = new System.Timers.Timer(WaitTime);
-            _timer.Elapsed += OnElapsed;
-            _timer.Start();
+            currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME;
+
+            _timer = new System.Timers.Timer(currentWaitTime);
+            _timer.Elapsed += OnElapsed;            
         }
 
         /// <summary>
@@ -94,13 +98,6 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            // Ensure the wait time is not less than the minimum wait time
-            if (WaitTime < MIN_WAIT_TIME)
-            {
-                Logger.WriteLine($"The wait time {WaitTime} is below the minimum of {MIN_WAIT_TIME}. Setting wait time to {MIN_WAIT_TIME}.");
-                WaitTime = MIN_WAIT_TIME;
-            }
-
             foreach (Notification notification in NotificationList)
             {
                 // If the notification doesn't have a message to send, then
@@ -141,6 +138,11 @@ namespace TE.FileWatcher.Configuration
                         LogLevel.ERROR);
                 }
             }
+
+            if (NotificationList.Count <= 0)
+            {
+                _timer.Stop();
+            }
         }
 
         /// <summary>
@@ -170,6 +172,18 @@ namespace TE.FileWatcher.Configuration
             foreach (Notification notification in NotificationList)
             {
                 notification.QueueRequest(message, trigger, change);
+            }
+
+            if (!_timer.Enabled)
+            {
+                currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME;              
+                if (currentWaitTime < MIN_WAIT_TIME)
+                {
+                    currentWaitTime = MIN_WAIT_TIME;
+                }
+
+                _timer.Interval = currentWaitTime;
+                _timer.Start();
             }
         }
     }
