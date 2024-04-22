@@ -30,10 +30,16 @@ namespace TE.FileWatcher.Configuration
         public string? Arguments { get; set; }
 
         /// <summary>
-        /// Gets or sets the full path to the file to executed.
+        /// Gets or sets the full path to the file to be executed.
         /// </summary>
         [XmlElement("path")]
         public string? Path { get; set; }
+
+        /// <summary>
+        /// Gets or sets the working directory for the command.
+        /// </summary>
+        [XmlElement("workingDirectory")]
+        public string? WorkingDirectory { get; set; }
 
         /// <summary>
         /// Queues the command process to be run.
@@ -73,6 +79,7 @@ namespace TE.FileWatcher.Configuration
 
             string? commandPath = GetCommand();
             string? arguments = GetArguments();
+            string? workingDirectory = GetWorkingDirectory();
 
             if (string.IsNullOrWhiteSpace(commandPath))
             {
@@ -100,6 +107,11 @@ namespace TE.FileWatcher.Configuration
             if (arguments != null)
             {
                 startInfo.Arguments = arguments;
+            }
+
+            if (workingDirectory != null)
+            {
+                startInfo.WorkingDirectory = workingDirectory;
             }
 
             _processInfo.Enqueue(startInfo);
@@ -241,6 +253,27 @@ namespace TE.FileWatcher.Configuration
 
             return Placeholder.ReplacePlaceholders(
                 Path,
+                Change.WatchPath,
+                Change.FullPath,
+                Change.OldPath);
+        }
+
+        /// <summary>
+        /// Gets the working directory path value by replacing any placeholders
+        /// with the actual string values.
+        /// </summary>
+        /// <returns>
+        /// The working directory path string value.
+        /// </returns>
+        private string? GetWorkingDirectory()
+        {
+            if (string.IsNullOrWhiteSpace(WorkingDirectory) || Change == null)
+            {
+                return null;
+            }
+
+            return Placeholder.ReplacePlaceholders(
+                WorkingDirectory,
                 Change.WatchPath,
                 Change.FullPath,
                 Change.OldPath);

@@ -284,6 +284,18 @@
                         [extension] - the file extension
                 -->                   
                 <arguments></arguments>
+                <!--
+                    The working directory of the command to run.
+                    
+                    Placeholders:
+                        [exactpath] - full path of the changed file
+                        [fullpath] - full path of the changed file without the path of the watch
+                        [path] - the path of the changed file without the path of the watch and the file
+                        [file] - the name of the file with the extension
+                        [filename] - name of the file without the extension
+                        [extension] - the file extension
+                -->
+                <workingDirectory></workingDirectory>
             </command>
         </commands>    
     </watch>
