@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text;
 using System.Xml.Serialization;
+using TE.FileWatcher.Log;
 using TE.FileWatcher.Net;
 
 namespace TE.FileWatcher.Configuration
@@ -8,7 +9,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// A notification that will be triggered.
     /// </summary>
-    public class Notification : ItemBase
+    public class Notification : RunnableBase
     {
         // The message to send with the request
         private readonly StringBuilder _message;
@@ -71,6 +72,12 @@ namespace TE.FileWatcher.Configuration
                 return _message.Length > 0;
             }
         }
+
+        [XmlIgnore]
+        /// <summary>
+        /// Gets or sets the message associated with the notification.
+        /// </summary>
+        public string? Message { get; set; }
 
         /// <summary>
         /// Initializes an instance of the <see cref="Notification"/>class.
@@ -267,6 +274,88 @@ namespace TE.FileWatcher.Configuration
 
             Uri uri = new(url);
             return uri;
+        }
+
+        /// <summary>
+        /// Runs the action.
+        /// </summary>
+        /// <param name="watchPath">
+        /// The watch path.
+        /// </param>
+        /// <param name="fullPath">
+        /// The full path to the changed file or folder.
+        /// </param>
+        /// <param name="trigger">
+        /// The trigger for the action.
+        /// </param>
+        public new void Run(ChangeInfo change, TriggerType trigger)
+        {
+            try
+            {
+                base.Run(change, trigger);
+            }
+            catch (ArgumentNullException e)
+            {
+                Logger.WriteLine(e.Message);
+                return;
+            }
+            catch (InvalidOperationException e)
+            {
+                Logger.WriteLine(e.Message);
+                return;
+            }
+            catch (FileWatcherTriggerNotMatchException)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(Message))
+            {
+                Logger.WriteLine("Notification was specified, but no message was provided.");
+                return;
+            }
+
+            if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
+            {
+                return;
+            }
+
+            if (Triggers.Current.HasFlag(trigger))
+            {
+                _message.Append(CleanMessage(Message) + @"\n");
+            }
+
+            Change = change;
+
+            try
+            {
+                // This is a console app and for the step functionality to work,
+                // sending a notification will need to be sychronous so the next
+                // line will block execution and return when completed
+                Response? response = SendAsync().Result;
+                if (response != null)
+                {
+                    Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
+                }
+
+            }
+            catch (AggregateException aex)
+            {
+                foreach (Exception ex in aex.Flatten().InnerExceptions)
+                {
+                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                    Logger.WriteLine(
+                        $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
+                        LogLevel.ERROR);
+                }
+            }
+            catch (NullReferenceException ex)
+            {
+                Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                Logger.WriteLine(
+                    $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
+                    LogLevel.ERROR);
+            }
         }
     }
 }
