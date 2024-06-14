@@ -53,7 +53,7 @@ namespace TE.FileWatcher.Configuration
         /// <param name="trigger">
         /// The trigger for the command.
         /// </param>
-        public new void Run(ChangeInfo change, TriggerType trigger)
+        public override void Run(ChangeInfo change, TriggerType trigger)
         {
             try
             {

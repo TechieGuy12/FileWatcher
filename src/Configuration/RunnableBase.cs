@@ -13,7 +13,7 @@ namespace TE.FileWatcher.Configuration
     /// A base abstract class for the classes which require execution on the
     /// machine and includes placeholders in the data that need to be replaced.
     /// </summary>
-    public abstract class RunnableBase : ItemBase
+    public abstract class RunnableBase : ItemBase, IRunnable
     {
         /// <summary>
         /// Gets or sets the number of milliseconds to wait before running.
@@ -30,22 +30,27 @@ namespace TE.FileWatcher.Configuration
         /// <param name="trigger">
         /// The trigger for the action.
         /// </param>
-        public void Run(ChangeInfo change, TriggerType trigger)
+        public virtual void Run(ChangeInfo change, TriggerType trigger)
         {
-            if (Triggers == null || Triggers.TriggerList == null)
+            // If the trigger is not a step trigger, then make sure it matches
+            // the correct trigger before running the job
+            if (trigger != TriggerType.Step)
             {
-                throw new InvalidOperationException("The list of triggers was not provided.");
-            }
+                if (Triggers == null || Triggers.TriggerList == null)
+                {
+                    throw new InvalidOperationException("The list of triggers was not provided.");
+                }
 
-            if (Triggers.TriggerList.Count <= 0)
-            {
-                throw new InvalidOperationException("No triggers were defined.");
-            }
+                if (Triggers.TriggerList.Count <= 0)
+                {
+                    throw new InvalidOperationException("No triggers were defined.");
+                }
 
-            if (!Triggers.Current.HasFlag(trigger))
-            {
-                throw new FileWatcherTriggerNotMatchException(
-                    "The trigger doesn't match the list of triggers for this watch.");
+                if (!Triggers.Current.HasFlag(trigger))
+                {
+                    throw new FileWatcherTriggerNotMatchException(
+                        "The trigger doesn't match the list of triggers for this watch.");
+                }
             }
 
             Change = change ?? throw new ArgumentNullException(nameof(change));

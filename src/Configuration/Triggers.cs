@@ -29,7 +29,11 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Rename notification.
         /// </summary>
-        Rename = 8
+        Rename = 8,
+        /// <summary>
+        /// A step is being executed.
+        /// </summary>
+        Step = 16
     }
     /// <summary>
     /// The triggers that will indicate a notification is to be sent.

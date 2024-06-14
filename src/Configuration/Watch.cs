@@ -80,6 +80,12 @@ namespace TE.FileWatcher.Configuration
         public Commands? Commands { get; set; }
 
         /// <summary>
+        /// Gets or sets the workflows for the watch.
+        /// </summary>
+        [XmlElement("workflows")]
+        public Workflows? Workflows { get; set; }
+
+        /// <summary>
         /// Gets the flag indicating the watch is running.
         /// </summary>
         [XmlIgnore]
@@ -305,6 +311,11 @@ namespace TE.FileWatcher.Configuration
                             {
                                 continue;
                             }
+                        }
+
+                        if (Workflows != null)
+                        {
+                            Workflows.Run(change, change.Trigger);
                         }
 
                         if (Notifications != null)
