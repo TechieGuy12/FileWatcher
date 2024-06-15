@@ -73,18 +73,43 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
-        [XmlIgnore]
-        /// <summary>
-        /// Gets or sets the message associated with the notification.
-        /// </summary>
-        public string? Message { get; set; }
-
         /// <summary>
         /// Initializes an instance of the <see cref="Notification"/>class.
         /// </summary>
         public Notification()
         {
             _message = new StringBuilder();
+        }
+
+        /// <summary>
+        /// Gets the string value for the message type.
+        /// </summary>
+        /// <param name="trigger">
+        /// The notification trigger.
+        /// </param>
+        /// <returns>
+        /// The string value for the message type, otherwise <c>null</c>.
+        /// </returns>
+        private static string GetMessageString(ChangeInfo change, TriggerType trigger)
+        {
+            string? messageType = null;
+            switch (trigger)
+            {
+                case TriggerType.Create:
+                    messageType = "Created";
+                    break;
+                case TriggerType.Change:
+                    messageType = "Changed";
+                    break;
+                case TriggerType.Delete:
+                    messageType = "Deleted";
+                    break;
+                case TriggerType.Rename:
+                    messageType = "Renamed";
+                    break;
+            }
+
+            return CleanMessage($"{messageType}: {change.FullPath}\n");
         }
 
         /// <summary>
@@ -102,7 +127,7 @@ namespace TE.FileWatcher.Configuration
         /// <param name="change">
         /// Information about the change.
         /// </param>
-        internal void QueueRequest(string message, TriggerType trigger, ChangeInfo change)
+        internal void QueueRequest(TriggerType trigger, ChangeInfo change)
         {
             if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
             {
@@ -110,11 +135,10 @@ namespace TE.FileWatcher.Configuration
             }
 
             if (Triggers.Current.HasFlag(trigger))
-            {
-                _message.Append(CleanMessage(message) + @"\n");
-            }
-
-            Change = change;
+            {                
+                Change = change;
+                _message.Append(GetMessageString(Change, trigger));
+            }            
         }
 
         /// <summary>
@@ -309,24 +333,9 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(Message))
-            {
-                Logger.WriteLine("Notification was specified, but no message was provided.");
-                return;
-            }
-
-            if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
-            {
-                return;
-            }
-
-            if (Triggers.Current.HasFlag(trigger))
-            {
-                _message.Append(CleanMessage(Message) + @"\n");
-            }
-
             Change = change;
-
+            _message.Append(GetMessageString(Change, trigger));
+            
             try
             {
                 // This is a console app and for the step functionality to work,

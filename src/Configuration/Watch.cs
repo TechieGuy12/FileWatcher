@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Timers;
 using System.Xml.Serialization;
@@ -10,7 +11,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// The watch element in the XML file.
     /// </summary>
-    public class Watch : IDisposable
+    public class Watch : HasNeedsBase, IDisposable
     {
         // The file system watcher object
         private FileSystemWatcher? _fsWatcher;
@@ -38,9 +39,15 @@ namespace TE.FileWatcher.Configuration
         private bool _disposed;
 
         /// <summary>
+        /// Gets or sets the id of the watch.
+        /// </summary>
+        [XmlElement(ElementName = "id", IsNullable = true)]
+        public string? Id { get; set; }
+
+        /// <summary>
         /// Gets or sets the path of the watch.
         /// </summary>
-        [XmlElement("path")]
+        [XmlElement("path", IsNullable = false)]
         public string? Path { get; set; }
 
         /// <summary>
@@ -89,7 +96,7 @@ namespace TE.FileWatcher.Configuration
         /// Gets the flag indicating the watch is running.
         /// </summary>
         [XmlIgnore]
-        public bool IsRunning
+        public bool IsActive
         {
             get
             {
@@ -126,7 +133,7 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Starts the watch.
         /// </summary>
-        public bool Start()
+        public bool Start(Collection<Watch> watches)
         {
             if (_fsWatcher != null || _timer != null)
             {
@@ -138,14 +145,16 @@ namespace TE.FileWatcher.Configuration
                 CreateFileSystemWatcher();
                 CreateQueue();
                 CreateBackgroundWorker();
-                CreateTimer(); 
+                CreateTimer();
+                GetNeedWatch(watches);
+                Initialize();
             }
             else
             {
                 Logger.WriteLine($"The path '{Path}' does not exists, so the watch was not created.");
             }
 
-            return IsRunning;
+            return IsActive;
         }
 
         /// <summary>
@@ -158,7 +167,7 @@ namespace TE.FileWatcher.Configuration
             _timer = null;
             _fsWatcher = null;
 
-            return !IsRunning;
+            return !IsActive;
         }
 
         /// <summary>
@@ -278,8 +287,8 @@ namespace TE.FileWatcher.Configuration
             if (string.IsNullOrWhiteSpace(Path))
             {
                 return;
-            }
-            
+            }            
+
             _queue ??= new ConcurrentQueue<ChangeInfo>();
 
             if (_queue.IsEmpty)
@@ -289,6 +298,11 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
+                if (!CanRun)
+                {
+                    break;
+                }
+
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
                     if (change != null)
@@ -313,35 +327,20 @@ namespace TE.FileWatcher.Configuration
                             }
                         }
 
-                        if (Workflows != null)
-                        {
-                            Workflows.Run(change, change.Trigger);
-                        }
+                        OnStarted(new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
+                        Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
 
-                        if (Notifications != null)
-                        {
-                            // Send the notifications
-                            string? messageType = GetMessageTypeString(change.Trigger);
-                            if (!string.IsNullOrWhiteSpace(messageType))
-                            {
-                                Notifications.Send(change.Trigger, change, $"{messageType}: {change.FullPath}");
-                            }
-                        }
-
-                        if (Actions != null)
-                        {
-                            // Only run the actions if a file wasn't deleted, as the file no
-                            // longer exists so no action can be taken on the file
-                            if (change.Trigger != TriggerType.Delete)
-                            {
-                                Actions.Run(change.Trigger, change);
-                            }
-                        }
-
+                        Workflows?.Run(change, change.Trigger);
+                        Notifications?.Send(change.Trigger, change);
+                        Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
                     }
                 }
             }
+
+            Logger.WriteLine($"{Id} completed.");
+            OnCompleted(new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
+            Reset();
         }
 
         /// <summary>
@@ -466,37 +465,6 @@ namespace TE.FileWatcher.Configuration
             {
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Gets the string value for the message type.
-        /// </summary>
-        /// <param name="trigger">
-        /// The notification trigger.
-        /// </param>
-        /// <returns>
-        /// The string value for the message type, otherwise <c>null</c>.
-        /// </returns>
-        private static string? GetMessageTypeString(TriggerType trigger)
-        {
-            string? messageType = null;
-            switch (trigger)
-            {
-                case TriggerType.Create:
-                    messageType = "Created";
-                    break;
-                case TriggerType.Change:
-                    messageType = "Changed";
-                    break;
-                case TriggerType.Delete:
-                    messageType = "Deleted";
-                    break;
-                case TriggerType.Rename:
-                    messageType = "Renamed";
-                    break;
-            }
-
-            return messageType;
         }
 
         /// <summary>
@@ -705,5 +673,23 @@ namespace TE.FileWatcher.Configuration
 
             return Directory.Exists(Path);
         }
+
+
+        private void GetNeedWatch(Collection<Watch> watches)
+        {
+            if (string.IsNullOrEmpty(Id) || watches == null || watches.Count <= 0)
+            {
+                return;
+            }
+
+            foreach (Watch watch in watches)
+            {
+                if (watch.Id == Id)
+                {
+                    watch.Completed += OnNeedsCompleted;
+                }
+            }
+        }
+
     }
 }

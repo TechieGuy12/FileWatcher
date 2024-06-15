@@ -142,17 +142,17 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            try
-            {
+            //try
+            //{
                 XmlSerializer serializer = new(typeof(Watches));
                 using FileStream fs = new(_fullPath, FileMode.Open, FileAccess.Read);
                 return (Watches?)serializer.Deserialize(fs);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");
-                return null;
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.Error.WriteLine($"The configuration file could not be read. Reason: {ex.Message}");             
+            //    return null;
+            //}
         }
     }
 }

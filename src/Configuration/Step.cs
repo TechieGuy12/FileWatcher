@@ -12,40 +12,8 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// Contains all the information for a workflow step.
     /// </summary>
-    public class Step : IRunnable
+    public class Step : HasNeedsBase, IRunnable
     {
-        /// <summary>
-        /// The delegate for the step completion event.
-        /// </summary>
-        /// <param name="sender">
-        /// The object that invoked the event.
-        /// </param>
-        /// <param name="e">
-        /// The step event arguments.
-        /// </param>
-        public delegate void StepCompletedEventHandler(object? sender, StepEventArgs e);
-
-        /// <summary>
-        /// The delegate for the step started event.
-        /// </summary>
-        /// <param name="sender">
-        /// The object that invoked the event.
-        /// </param>
-        /// <param name="e">
-        /// The step event arguments.
-        /// </param>
-        public delegate void StepStartedEventHandler(object? sender, StepEventArgs e);
-
-        /// <summary>
-        /// The event for the completion of the step.
-        /// </summary>
-        public event StepCompletedEventHandler? StepCompleted;
-
-        /// <summary>
-        /// The event for the start of the step.
-        /// </summary>
-        public event StepStartedEventHandler? StepStarted;
-
         /// <summary>
         /// Gets or sets the id of the step.
         /// </summary>
@@ -72,108 +40,30 @@ namespace TE.FileWatcher.Configuration
         public Notification? Notification { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of steps that need to be completed before this
-        /// step is run.
-        /// </summary>
-        [XmlArray(ElementName = "needs", IsNullable = true)]
-        [XmlArrayItem(ElementName = "need", IsNullable = true)]
-        public string[]? Needs { get; set; }
-
-        /// <summary>
-        /// The number of pre-requisite jobs that have completed.
-        /// </summary>
-        private int needsJobsCompleted;
-
-        /// <summary>
-        /// Gets the flag indicating the step has completed running.
-        /// </summary>
-        public bool HasCompleted { get; private set; }
-
-        /// <summary>
         /// Initializes an instance of the <see cref="Step"/> class.
         /// </summary>
         public Step()
         {
             Id = string.Empty;
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            HasCompleted = false;
-            needsJobsCompleted = 0;
-        }
-
-        /// <summary>
-        /// Invoke the step completed event.
-        /// </summary>
-        /// <param name="e">
-        /// The step completed arguments.
-        /// </param>
-        protected virtual void OnCompleted(StepEventArgs e)
-        {
-            HasCompleted = true;
-            StepCompleted?.Invoke(this, e);            
-        }
-
-        /// <summary>
-        /// Invoke the step completed event.
-        /// </summary>
-        /// <param name="e">
-        /// The step completed arguments.
-        /// </param>
-        protected virtual void OnStarted(StepEventArgs e)
-        {
-            StepStarted?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Resets the step for the next workflow run.
-        /// </summary>
-        public void Reset()
-        {
-            Initialize();
         }
 
         public void Run(ChangeInfo change, TriggerType trigger)
         {
             Logger.WriteLine($"Running step: {Id}");
-            OnStarted(new StepEventArgs(true, Id, $"{Id} step started."));
+            OnStarted(new TaskEventArgs(true, Id, $"{Id} step started."));
+            IsRunning = true;
 
-            if (Action != null)
-            {
-                Action.Run(change, trigger);
-            }
+            Action?.Run(change, trigger);             
+            Command?.Run(change, trigger);
+            Notification?.Run(change, trigger);
 
-            if (Command != null)
-            {                
-                Command.Run(change, trigger);
-            }
-
-            if (Notification != null)
-            {
-                Notification.Run(change, trigger);
-            }
-
-            OnCompleted(new StepEventArgs(true, Id, $"{Id} step completed."));
-        }
-
-        public void OnNeedsStepCompleted(object? sender, StepEventArgs e)
-        {
-            if (Needs != null && needsJobsCompleted == Needs.Length)
-            {
-                Logger.WriteLine($"{e.Id} has finished running.");
-                needsJobsCompleted = 0;
-            }
-            else
-            {
-                needsJobsCompleted++;
-            }
+            IsRunning = false;
+            OnCompleted(new TaskEventArgs(true, Id, $"{Id} step completed."));            
         }
 
         public void ConnectToNeededStep(Step neededStep)
         {
-            neededStep.StepCompleted += OnNeedsStepCompleted;
+            neededStep.Completed += OnNeedsCompleted;
         }
     }
 }

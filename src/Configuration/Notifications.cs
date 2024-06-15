@@ -154,10 +154,7 @@ namespace TE.FileWatcher.Configuration
         /// <param name="change">
         /// Information about the change.
         /// </param>
-        /// <param name="message">
-        /// The message to include in the request.
-        /// </param>
-        public void Send(TriggerType trigger, ChangeInfo change, string message)
+        public void Send(TriggerType trigger, ChangeInfo change)
         {
             if (change == null)
             {
@@ -171,7 +168,7 @@ namespace TE.FileWatcher.Configuration
 
             foreach (Notification notification in NotificationList)
             {
-                notification.QueueRequest(message, trigger, change);
+                notification.QueueRequest(trigger, change);
             }
 
             if (!_timer.Enabled)

@@ -37,7 +37,7 @@ namespace TE.FileWatcher.Configuration
             {
                 try
                 {
-                    Task.Run(() => watch.Start());
+                    Task.Run(() => watch.Start(WatchList));
                 }
                 catch (Exception ex)
                 {

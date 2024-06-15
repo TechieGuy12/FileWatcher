@@ -9,7 +9,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// Contains the event arguments when a job has completed execution.
     /// </summary>
-    public class StepEventArgs : EventArgs
+    public class TaskEventArgs : EventArgs
     {
         /// <summary>
         /// Gets or sets the result of the job execution. True if the job
@@ -25,11 +25,11 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Gets or sets the id of the job that was just executed.
         /// </summary>
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
 
         /// <summary>
-        /// Initialize the <see cref="StepEventArgs"/> when provided with the
+        /// Initialize the <see cref="TaskEventArgs"/> when provided with the
         /// execution result, the name and the result message.
         /// </summary>
         /// <param name="result">
@@ -41,11 +41,11 @@ namespace TE.FileWatcher.Configuration
         /// <param name="message">
         /// The message associated with the result.
         /// </param>
-        public StepEventArgs(bool result, string name, string message)
+        public TaskEventArgs(bool result, string? id, string message)
         {
             Result = result;
             Message = message;
-            Name = name;
+            Id = id;
         }
     }
 }

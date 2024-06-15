@@ -21,6 +21,11 @@ namespace TE.FileWatcher.Configuration
         /// </exception>
         public bool Exclude(ChangeInfo change)
         {
+            if (change == null)
+            {
+                throw new ArgumentNullException(nameof(change));
+            }
+
             FilterTypeName = "Exclude";
             return IsMatchFound(change);
         }

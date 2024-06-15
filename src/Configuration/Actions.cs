@@ -23,6 +23,11 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public void Run(TriggerType trigger, ChangeInfo change)
         {
+            if (trigger == TriggerType.Delete)
+            {
+                return;
+            }
+
             if (ActionList == null || ActionList.Count <= 0)
             {
                 return;

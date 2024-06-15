@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
+using System.Diagnostics.Eventing.Reader;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -14,6 +15,10 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("steps")]
     public class Steps : IRunnable
     {
+        private ChangeInfo? _change;
+
+        private TriggerType _trigger;
+
         /// <summary>
         /// Gets or sets the collection of steps to execute.
         /// </summary>
@@ -27,6 +32,11 @@ namespace TE.FileWatcher.Configuration
 
         private Step? GetNeedStep(string id)
         {
+            if (StepList == null || StepList.Count <= 0)
+            {
+                return null;
+            }
+
             foreach (Step step in StepList)
             {
                 if (step.Id == id)
@@ -74,11 +84,41 @@ namespace TE.FileWatcher.Configuration
             {
                 Initialize();
             }
-           
+
+            _change = change;
+            _trigger = trigger;
+
             foreach (Step step in StepList)
             {
-                step.Run(change, trigger);
+                if (!step.HasCompleted)
+                {
+                    step.Completed += OnStepCompleted;
+
+                    if (!step.IsInitialized)
+                    {
+                        step.Initialize();
+                    }
+
+                    if (step.CanRun && !step.IsRunning)
+                    {
+                        Task.Run(() => { step.Run(_change, _trigger); });
+                    }
+                }
+                else
+                {
+                    step.Reset();
+                }
             }
+        }
+
+        public void OnStepCompleted(object? sender, TaskEventArgs e)
+        {
+            if (_change == null)
+            {
+                return;
+            }
+
+            Run(_change, _trigger);
         }
     }
 }
