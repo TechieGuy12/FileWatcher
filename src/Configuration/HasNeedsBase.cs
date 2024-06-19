@@ -75,6 +75,9 @@ namespace TE.FileWatcher.Configuration
         [XmlIgnore]
         public bool IsRunning { get; protected set; }
 
+        /// <summary>
+        /// Initializes the task.
+        /// </summary>
         public void Initialize()
         {
             HasCompleted = false;
@@ -92,6 +95,13 @@ namespace TE.FileWatcher.Configuration
 
         public abstract void Run(ChangeInfo change, TriggerType trigger);
  
+        /// <summary>
+        /// Sets up the needed task for this object.
+        /// </summary>
+        /// <param name="Need">
+        /// The needed task that is required to be completed before this task
+        /// can be run.
+        /// </param>
         public void SetNeed(HasNeedsBase Need)
         {
             _needs ??= new List<HasNeedsBase>();
@@ -102,6 +112,9 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Invoke the task completed event.
         /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
         /// <param name="e">
         /// The step completed arguments.
         /// </param>
@@ -116,6 +129,9 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Invoke the task completed event.
         /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
         /// <param name="e">
         /// The step completed arguments.
         /// </param>
@@ -126,9 +142,15 @@ namespace TE.FileWatcher.Configuration
             Logger.WriteLine($"{e.Id} has started.");
         }
 
-        public virtual void OnNeedsCompleted(object? sender, TaskEventArgs e)
-        {
-
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// The needs completed argument.
+        /// </param>
+        public virtual void OnNeedsCompleted(object? sender, TaskEventArgs e) { }
     }
 }
