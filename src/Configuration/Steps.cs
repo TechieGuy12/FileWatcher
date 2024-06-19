@@ -85,11 +85,11 @@ namespace TE.FileWatcher.Configuration
                 if (!step.IsInitialized)
                 {
                     Logger.WriteLine($"Initialize step {step.Id} - start.");
-                    step.Initialize();
-                    step.Completed += OnCompleted;
+                    step.Initialize();                    
                     Logger.WriteLine($"Initialize step {step.Id} - done.");
                 }
-                    
+
+                step.Completed += OnCompleted;
                 Task.Run(() => { step.Run(_change, _trigger); });
             }
         }
@@ -115,7 +115,7 @@ namespace TE.FileWatcher.Configuration
                 {
                     step.Reset();
                 }
-
+                
                 Completed?.Invoke(this, new TaskEventArgs(true, null, "All steps completed."));
             }
         }
