@@ -403,15 +403,15 @@ namespace TE.FileWatcher.Configuration
                             }
                         }
 
-                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
+                        
                         OnStarted(this, new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
                         Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
-
                         Workflows?.Run(change, change.Trigger);
                         Notifications?.Send(change.Trigger, change);
                         Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
                         Logger.WriteLine($"Queue: Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
+                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
                     }
                 }
             }
