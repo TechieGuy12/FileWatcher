@@ -25,9 +25,6 @@ namespace TE.FileWatcher.Configuration
         // The timer used to "reset" the FileSystemWatch object
         private System.Timers.Timer? _timer;
 
-        // The background worker that processes the file/folder changes
-        private BackgroundWorker? _worker;
-
         // The queue that will contain the changes
         private ConcurrentQueue<ChangeInfo>? _queue;
 
@@ -117,33 +114,16 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
-        private void RunWorker()
-        {
-            if (_worker == null)
-            {
-                return;
-            }
-
-            Logger.WriteLine($"Worker: Busy: {_worker.IsBusy}, CanRun: {CanRun}.");
-            if (!_worker.IsBusy && CanRun)
-            {
-                _worker.RunWorkerAsync();
-            }
-        }
-
         /// <summary>
         /// Processes the file or folder change.
         /// </summary>
+        /// <param name="change">
+        /// Information about the change.
+        /// </param>
         /// <param name="trigger">
         /// The type of change.
         /// </param>
-        /// <param name="name">
-        /// The name of the file or folder.
-        /// </param>
-        /// <param name="fullPath">
-        /// The full path of the file or folder.
-        /// </param>
-        public void ProcessChange(ChangeInfo change)
+        public override void Run(ChangeInfo change, TriggerType trigger)
         {
             if (change == null || _queue == null)
             {
@@ -151,8 +131,7 @@ namespace TE.FileWatcher.Configuration
             }
 
             _queue.Enqueue(change);
-            //RunWorker();
-            Run2();
+            ProcessChange();
         }
 
         /// <summary>
@@ -169,7 +148,6 @@ namespace TE.FileWatcher.Configuration
             {
                 CreateFileSystemWatcher();
                 CreateQueue();
-                CreateBackgroundWorker();
                 CreateTimer();
                 SetNeedWatch(watches);                
                 Initialize();                
@@ -187,7 +165,6 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public bool Stop()
         {
-            _worker = null;
             _queue = null;
             _timer = null;
             _fsWatcher = null;
@@ -220,23 +197,10 @@ namespace TE.FileWatcher.Configuration
             if (disposing)
             {
                 _timer?.Dispose();
-                _worker?.Dispose();
                 _fsWatcher?.Dispose();
             }
 
             _disposed = true;
-        }
-
-        /// <summary>
-        /// Create the background worker to process the changes.
-        /// </summary>
-        private void CreateBackgroundWorker()
-        {
-            _worker = new BackgroundWorker
-            {
-                WorkerSupportsCancellation = false
-            };
-            //_worker.DoWork += DoWork;
         }
 
         /// <summary>
@@ -296,82 +260,7 @@ namespace TE.FileWatcher.Configuration
             _timer.Elapsed += OnElapsed;
         }
 
-        /// <summary>
-        /// Process the changes in a background worker thread.
-        /// </summary>
-        /// <param name="sender">
-        /// The object associated with this event.
-        /// </param>
-        /// <param name="e">
-        /// Arguments associated with the background worker.
-        /// </param>
-        private void DoWork(object? sender, DoWorkEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(Path))
-            {
-                return;
-            }            
-
-            _queue ??= new ConcurrentQueue<ChangeInfo>();
-
-            if (_queue.IsEmpty)
-            {
-                Thread.Sleep(100);
-            }
-
-            while (!_queue.IsEmpty)
-            {
-                //if (!CanRun || IsRunning)
-                //{
-                //    break;
-                //}
-
-                if (_queue.TryDequeue(out ChangeInfo? change))
-                {
-                    if (change != null)
-                    {
-                        if (Filters != null && Filters.IsSpecified())
-                        {
-                            // If the file or folder is not a match, then don't take
-                            // any further actions
-                            if (!Filters.IsMatch(change))
-                            {
-                                continue;
-                            }
-                        }
-
-                        if (Exclusions != null && Exclusions.IsSpecified())
-                        {
-                            // If the file or folder is in the exclude list, then don't
-                            // take any further actions
-                            if (Exclusions.Exclude(change))
-                            {
-                                continue;
-                            }
-                        }
-
-                        Run(change, change.Trigger);
-                        Logger.WriteLine($"Queue: Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
-                    }
-                }
-            }
-
-            OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
-            //Reset();
-        }
-
-        public override void Run(ChangeInfo change, TriggerType trigger)
-        {
-            OnStarted(this, new TaskEventArgs(true, IdLogString, $"Started tasks for watch: {Path}."));
-            Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
-
-            Workflows?.Run(change, trigger);
-            Notifications?.Send(trigger, change);
-            Actions?.Run(trigger, change);
-            Commands?.Run(trigger, change);
-        }
-
-        public void Run2()
+        public void ProcessChange()
         {
             if (string.IsNullOrWhiteSpace(Path))
             {
@@ -607,7 +496,7 @@ namespace TE.FileWatcher.Configuration
             ChangeInfo? change = GetChange(TriggerType.Change, e.Name, e.FullPath);
             if (change != null)
             {
-                ProcessChange(change);
+                Run(change, TriggerType.Change);
             }
         }
 
@@ -631,7 +520,7 @@ namespace TE.FileWatcher.Configuration
 
             if (change != null)
             {
-                ProcessChange(change);
+                Run(change, TriggerType.Create);
             }
         }
 
@@ -654,7 +543,7 @@ namespace TE.FileWatcher.Configuration
             ChangeInfo? change = GetChange(TriggerType.Delete, e.Name, e.FullPath);
             if (change != null)
             {
-                ProcessChange(change);
+                Run(change, TriggerType.Delete);
             }
         }
 
@@ -700,7 +589,7 @@ namespace TE.FileWatcher.Configuration
             ChangeInfo? change = GetChange(TriggerType.Rename, e.Name, e.FullPath, e.OldName, e.OldFullPath);
             if (change != null)
             {
-                ProcessChange(change);
+                Run(change, TriggerType.Rename);
             }
         }
 
@@ -788,25 +677,17 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
-
-        public void OnWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            Logger.WriteLine($"Work done.", LogLevel.DEBUG);
-            RunWorker();
-        }
-
         public override void OnCompleted(object? sender, TaskEventArgs e)
         {
             base.OnCompleted(sender, e);
-            Run2();
-            //RunWorker();
+            ProcessChange();
         }
 
         public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
             Logger.WriteLine($"Needed watch {e.Id} completed. Checking if {IdLogString} can run.", LogLevel.DEBUG);
             base.OnNeedsCompleted(sender, e);
-            Run2();
+            ProcessChange();
         }   
 
     }
