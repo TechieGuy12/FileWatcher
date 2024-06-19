@@ -62,22 +62,35 @@ namespace TE.FileWatcher.Configuration
             foreach (Workflow workflow in WorkflowList)
             {                
                 workflow.Run(change, trigger);
-                workflow.Completed += OnWorkflowCompleted;
+                workflow.Completed += OnCompleted;
             }
         }
 
+        /// <summary>
+        /// Raised when the workflows have started.
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// Information about the event.
+        /// </param>
         public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
             Started?.Invoke(this, e);
         }
 
+        /// <summary>
+        /// Raised when a workflow has completed.
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// Information about the event.
+        /// </param>
         public virtual void OnCompleted(object? sender, TaskEventArgs e)
-        {
-            Completed?.Invoke(this, e);
-        }
-
-        public void OnWorkflowCompleted(object? sender, TaskEventArgs e)
-        {
+        {            
             if (WorkflowList == null || WorkflowList.Count <= 0)
             {
                 return;
@@ -96,6 +109,7 @@ namespace TE.FileWatcher.Configuration
                 }
 
                 Initialize();
+                Completed?.Invoke(this, e);
             }
         }
     }
