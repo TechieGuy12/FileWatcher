@@ -29,12 +29,24 @@ namespace TE.FileWatcher.Configuration
         [XmlIgnore]
         public bool IsInitialized { get; private set; }
 
+        /// <summary>
+        /// Initializes the workflow.
+        /// </summary>
         public void Initialize()
         {            
             HasCompleted = false;
             IsInitialized = true;
         }
 
+        /// <summary>
+        /// Runs the workflow.
+        /// </summary>
+        /// <param name="change">
+        /// Information about the change that happened.
+        /// </param>
+        /// <param name="trigger">
+        /// The trigger that caused the change.
+        /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
             try
@@ -76,6 +88,16 @@ namespace TE.FileWatcher.Configuration
             while (!Steps.HasCompleted) { }
         }
 
+        /// <summary>
+        /// Raised when all the steps associated with the workflow have
+        /// completed.
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// Information about the completed steps.
+        /// </param>
         public void OnStepsCompleted(object? sender, TaskEventArgs e)
         {
             if (Steps == null)
