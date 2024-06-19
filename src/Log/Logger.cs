@@ -8,7 +8,8 @@ namespace TE.FileWatcher.Log
     /// </summary>
     public enum LogLevel
     {
-        INFO = 0,
+        DEBUG = 0,
+        INFO,
         WARNING,
         ERROR,
         FATAL
@@ -58,6 +59,11 @@ namespace TE.FileWatcher.Log
         /// </summary>
         public static int LogNumber { get; private set; }
 
+        /// <summary>
+        /// Gets the log level.
+        /// </summary>
+        public static LogLevel LogLevel { get; private set; }
+
         // The object used for the lock
         private static readonly object locker = new();
        
@@ -73,6 +79,7 @@ namespace TE.FileWatcher.Log
             LogName = DEFAULTLOGNAME;
             LogSize = Configuration.Logging.DEFAULTLOGSIZE;
             LogNumber = Configuration.Logging.DEFAULTLOGNUMBER;
+            LogLevel = LogLevel.INFO;
             
             try
             {
@@ -107,6 +114,7 @@ namespace TE.FileWatcher.Log
 
             LogSize = logOptions.Size;
             LogNumber = logOptions.Number;
+            LogLevel = logOptions.Level;
         }
 
         /// <summary>
@@ -132,8 +140,11 @@ namespace TE.FileWatcher.Log
         /// </param>
         public static void WriteLine(string message, LogLevel level)
         {
-            queue.Enqueue(new Message(message, level));
-            WriteToLog();
+            if (LogLevel <= level)
+            {
+                queue.Enqueue(new Message(message, level));
+                WriteToLog();
+            }
         }
 
         /// <summary>

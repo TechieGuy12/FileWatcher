@@ -28,6 +28,9 @@ namespace TE.FileWatcher.Configuration
         // The number of log files to retain
         private int _logNumber = DEFAULTLOGNUMBER;
 
+        // The log level
+        private LogLevel _logLevel;
+
         /// <summary>
         /// Gets or sets the path of the log file.
         /// </summary>
@@ -78,6 +81,12 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the log levl.
+        /// </summary>
+        [XmlElement("level")]
+        public LogLevel Level { get; set; } = LogLevel.INFO;
+
+        /// <summary>
         /// Initializes an instance of the <see cref="Logging"/> class.
         /// </summary>
         /// <exception cref="ArgumentException">
@@ -94,6 +103,7 @@ namespace TE.FileWatcher.Configuration
             LogPath = Path.Combine(Path.GetTempPath(), Logger.DEFAULTLOGNAME);
             Size = DEFAULTLOGSIZE;
             Number = DEFAULTLOGNUMBER;
+            Level = LogLevel.INFO;
         }
     }
 }
