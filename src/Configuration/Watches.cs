@@ -32,7 +32,7 @@ namespace TE.FileWatcher.Configuration
                 Logger.WriteLine("No watches were specified.", LogLevel.ERROR);
                 return;
             }
-
+            Logger.WriteLine($"Log level: {Logger.LogLevel}.");
             foreach (Watch watch in WatchList)
             {
                 try

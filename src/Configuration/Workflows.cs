@@ -102,7 +102,7 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = WorkflowList.All(w => w.HasCompleted);
             if (HasCompleted)
             {
-                Logger.WriteLine("All workflows completed.");
+                Logger.WriteLine("All workflows completed.", LogLevel.DEBUG);
 
                 // Once all steps have been completed, reset the steps for the
                 // next workflow run

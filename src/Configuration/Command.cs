@@ -75,7 +75,7 @@ namespace TE.FileWatcher.Configuration
             }
 
             
-            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
+            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.", LogLevel.DEBUG);
             Thread.Sleep(WaitBefore);
 
             string? commandPath = GetCommand();

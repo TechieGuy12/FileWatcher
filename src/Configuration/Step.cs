@@ -72,7 +72,7 @@ namespace TE.FileWatcher.Configuration
                     .FirstOrDefault(w => w.Id == Needs[i]);
                 if (needStep != null)
                 {
-                    Logger.WriteLine($"{Id} reliant on {needStep.Id}.");
+                    Logger.WriteLine($"{Id} reliant on {needStep.Id}.", LogLevel.DEBUG);
                     SetNeed(needStep);
                 }
             }
@@ -92,7 +92,7 @@ namespace TE.FileWatcher.Configuration
             _change = change;
             _trigger = trigger;
 
-            Logger.WriteLine($"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger}");
+            Logger.WriteLine($"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger}", LogLevel.DEBUG);
 
             // If the step can't be run or is running currently, then don't
             // run the step
@@ -101,7 +101,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Running step: {Id}");
+            Logger.WriteLine($"Running step: {Id}", LogLevel.DEBUG);
             OnStarted(this, new TaskEventArgs(true, Id, $"{Id} step started."));
             IsRunning = true;
 

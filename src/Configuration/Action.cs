@@ -92,7 +92,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
+            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.", LogLevel.DEBUG);
             Thread.Sleep(WaitBefore);
 
             string? source = GetSource();

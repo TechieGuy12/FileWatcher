@@ -94,7 +94,7 @@ namespace TE.FileWatcher.Configuration
             _change = change;
             _trigger = trigger;
 
-            Logger.WriteLine($"Starting to run {StepList.Count} step(s).");
+            Logger.WriteLine($"Starting to run {StepList.Count} step(s).", LogLevel.DEBUG);
             foreach (Step step in StepList)
             {                                
                 if (!step.IsInitialized)

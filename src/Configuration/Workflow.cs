@@ -78,7 +78,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Running steps.");
+            Logger.WriteLine($"Running steps.", LogLevel.DEBUG);
             Steps.Initialize();
             Steps.Completed += OnStepsCompleted;
 
@@ -110,7 +110,7 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = Steps.HasCompleted;
             if (HasCompleted)
             {
-                Logger.WriteLine("All steps completed.");
+                Logger.WriteLine("All steps completed.", LogLevel.DEBUG);
                 Steps.Initialize();
                 base.OnCompleted(this, new TaskEventArgs(true, null, "All steps have completed."));
             }
