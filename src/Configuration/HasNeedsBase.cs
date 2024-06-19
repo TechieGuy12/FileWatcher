@@ -8,35 +8,8 @@ using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
-    public abstract class HasNeedsBase
+    public abstract class HasNeedsBase : IRunnable
     {
-        /// <summary>
-        /// The number of pre-requisite jobs that have completed.
-        /// </summary>
-        protected int _needsCompleted;
-
-        /// <summary>
-        /// The delegate for the copmleted event.
-        /// </summary>
-        /// <param name="sender">
-        /// The object that invoked the event.
-        /// </param>
-        /// <param name="e">
-        /// The step event arguments.
-        /// </param>
-        public delegate void CompletedEventHandler(object? sender, TaskEventArgs e);
-
-        /// <summary>
-        /// The delegate for the started event.
-        /// </summary>
-        /// <param name="sender">
-        /// The object that invoked the event.
-        /// </param>
-        /// <param name="e">
-        /// The step event arguments.
-        /// </param>
-        public delegate void StartedEventHandler(object? sender, TaskEventArgs e);
-
         /// <summary>
         /// The event for the completion of the task.
         /// </summary>
@@ -46,6 +19,11 @@ namespace TE.FileWatcher.Configuration
         /// The event for the start of the task.
         /// </summary>
         public event StartedEventHandler? Started;
+
+        /// <summary>
+        /// The list of needed tasks to be completed before this task can run.
+        /// </summary>
+        protected List<HasNeedsBase>? _needs;
 
         /// <summary>
         /// Gets or sets the list of tasks that need to be completed before this
@@ -59,7 +37,25 @@ namespace TE.FileWatcher.Configuration
         /// A flag indicating the current task can run.
         /// </summary>
         [XmlIgnore]
-        public bool CanRun { get; protected set; }
+        public bool CanRun
+        {
+            get
+            {
+                // If there are no needs, then return true to indicate the task
+                // can be run
+                if (_needs == null)
+                {
+                    return true;
+                }
+                else
+                {
+                    // Return the value if all needs have been completed to
+                    // indicate the task can be run
+                    return _needs.All(n => n.HasCompleted);
+                }
+
+            }
+        }
 
         /// <summary>
         /// Gets the flag indicating the task has completed running.
@@ -79,26 +75,10 @@ namespace TE.FileWatcher.Configuration
         [XmlIgnore]
         public bool IsRunning { get; protected set; }
 
-        private void SetCanRunStatus()
-        {
-            if (Needs == null || _needsCompleted == Needs.Length)
-            {
-                _needsCompleted = 0;
-                CanRun = true;
-            }
-            else
-            {
-                _needsCompleted++;
-                CanRun = false;
-            }
-        }
-
         public void Initialize()
         {
             HasCompleted = false;
-            _needsCompleted = 0;
             IsRunning = false;
-            SetCanRunStatus();
             IsInitialized = true;
         }
 
@@ -110,13 +90,22 @@ namespace TE.FileWatcher.Configuration
             Initialize();
         }
 
+        public abstract void Run(ChangeInfo change, TriggerType trigger);
+ 
+        public void SetNeed(HasNeedsBase Need)
+        {
+            _needs ??= new List<HasNeedsBase>();
+            _needs.Add(Need);
+            Need.Completed += OnNeedsCompleted;
+        }
+
         /// <summary>
-        /// Invoke the step completed event.
+        /// Invoke the task completed event.
         /// </summary>
         /// <param name="e">
         /// The step completed arguments.
         /// </param>
-        protected virtual void OnCompleted(TaskEventArgs e)
+        public virtual void OnCompleted(object? sender, TaskEventArgs e)
         {
             HasCompleted = true;
             Completed?.Invoke(this, e);
@@ -124,20 +113,21 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// Invoke the step completed event.
+        /// Invoke the task completed event.
         /// </summary>
         /// <param name="e">
         /// The step completed arguments.
         /// </param>
-        protected virtual void OnStarted(TaskEventArgs e)
+        public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
+            IsRunning = true;
             Started?.Invoke(this, e);
             Logger.WriteLine($"{e.Id} has started.");
         }
 
-        public void OnNeedsCompleted(object? sender, TaskEventArgs e)
+        public virtual void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
-            SetCanRunStatus();
+            
         }
     }
 }

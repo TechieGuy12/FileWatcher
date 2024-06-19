@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
 
@@ -14,6 +9,10 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public class Step : HasNeedsBase, IRunnable
     {
+        private ChangeInfo? _change;
+
+        private TriggerType _trigger = default;
+
         /// <summary>
         /// Gets or sets the id of the step.
         /// </summary>
@@ -47,23 +46,68 @@ namespace TE.FileWatcher.Configuration
             Id = string.Empty;
         }
 
-        public void Run(ChangeInfo change, TriggerType trigger)
+        public void SetNeedSteps(Collection<Step> steps)
         {
+            if (string.IsNullOrEmpty(Id) || steps == null || steps.Count <= 0)
+            {
+                return;
+            }
+
+            if (Needs == null || Needs.Length <= 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < Needs.Length; i++)
+            {
+                Step? needStep = steps
+                    .Where(w => w.Id != null)
+                    .FirstOrDefault(w => w.Id == Needs[i]);
+                if (needStep != null)
+                {
+                    Logger.WriteLine($"{Id} reliant on {needStep.Id}.");
+                    SetNeed(needStep);
+                }
+            }
+        }
+
+        public override void Run(ChangeInfo change, TriggerType trigger)
+        {
+            _change = change;
+            _trigger = trigger;
+
+            Logger.WriteLine($"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger}");
+
+            // If the step can't be run or is running currently, then don't
+            // run the step
+            if (!CanRun || IsRunning)
+            {
+                return;
+            }
+
             Logger.WriteLine($"Running step: {Id}");
-            OnStarted(new TaskEventArgs(true, Id, $"{Id} step started."));
+            OnStarted(this, new TaskEventArgs(true, Id, $"{Id} step started."));
             IsRunning = true;
 
-            Action?.Run(change, trigger);             
+            Logger.WriteLine($"Running action. Action: {Action != null}");
+            Action?.Run(change, trigger);
+            Logger.WriteLine($"Running command. Command: {Command != null}");
             Command?.Run(change, trigger);
+            Logger.WriteLine($"Running notification. Notification: {Notification != null}");
             Notification?.Run(change, trigger);
 
             IsRunning = false;
-            OnCompleted(new TaskEventArgs(true, Id, $"{Id} step completed."));            
+            OnCompleted(this, new TaskEventArgs(true, Id, $"{Id} step completed."));            
         }
 
-        public void ConnectToNeededStep(Step neededStep)
+        public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
-            neededStep.Completed += OnNeedsCompleted;
+            base.OnNeedsCompleted(sender, e);
+
+            if (_change != null)
+            {
+                Run(_change, _trigger);
+            }
         }
     }
 }

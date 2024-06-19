@@ -74,6 +74,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
+            
             Logger.WriteLine($"Waiting for {WaitBefore} milliseconds.");
             Thread.Sleep(WaitBefore);
 
@@ -174,6 +175,7 @@ namespace TE.FileWatcher.Configuration
                 {
                     if (File.Exists(startInfo.FileName))
                     {
+                        Logger.WriteLine($"Starting process {startInfo.FileName} {startInfo.Arguments}.");
                         _process = new Process
                         {
                             StartInfo = startInfo
@@ -195,6 +197,10 @@ namespace TE.FileWatcher.Configuration
                         // Execute the next process in the queue
                         Execute();
                     }
+                }
+                else
+                {
+                    OnCompleted(this, new TaskEventArgs(true, null, $"Completed all commands."));
                 }
             }
             catch (Exception ex)

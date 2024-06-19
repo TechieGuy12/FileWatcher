@@ -104,6 +104,20 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
+        private void RunWorker()
+        {
+            if (_worker == null)
+            {
+                return;
+            }
+
+            Logger.WriteLine($"Worker: Busy: {_worker.IsBusy}, CanRun: {CanRun}.");
+            if (!_worker.IsBusy && CanRun)
+            {
+                _worker.RunWorkerAsync();
+            }
+        }
+
         /// <summary>
         /// Processes the file or folder change.
         /// </summary>
@@ -118,16 +132,14 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public void ProcessChange(ChangeInfo change)
         {
-            if (change == null || _queue == null || _worker == null)
+            if (change == null || _queue == null)
             {
                 return;
             }
 
             _queue.Enqueue(change);
-            if (!_worker.IsBusy)
-            {
-                _worker.RunWorkerAsync();
-            }
+            //RunWorker();
+            Run2();
         }
 
         /// <summary>
@@ -146,8 +158,8 @@ namespace TE.FileWatcher.Configuration
                 CreateQueue();
                 CreateBackgroundWorker();
                 CreateTimer();
-                GetNeedWatch(watches);
-                Initialize();
+                SetNeedWatch(watches);                
+                Initialize();                
             }
             else
             {
@@ -211,7 +223,7 @@ namespace TE.FileWatcher.Configuration
             {
                 WorkerSupportsCancellation = false
             };
-            _worker.DoWork += DoWork;
+            //_worker.DoWork += DoWork;
         }
 
         /// <summary>
@@ -266,10 +278,8 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void CreateTimer()
         {
-            _timer = new System.Timers.Timer(600000)
-            {
-                Enabled = true
-            };
+            _timer = new System.Timers.Timer(600000);
+            _timer.Enabled = true;
             _timer.Elapsed += OnElapsed;
         }
 
@@ -298,10 +308,10 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
-                if (!CanRun)
-                {
-                    break;
-                }
+                //if (!CanRun || IsRunning)
+                //{
+                //    break;
+                //}
 
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
@@ -327,20 +337,84 @@ namespace TE.FileWatcher.Configuration
                             }
                         }
 
-                        OnStarted(new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
+                        Run(change, change.Trigger);
+                        Logger.WriteLine($"Queue: Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
+                    }
+                }
+            }
+
+            OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
+            //Reset();
+        }
+
+        public override void Run(ChangeInfo change, TriggerType trigger)
+        {
+            OnStarted(this, new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
+            Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
+
+            Workflows?.Run(change, trigger);
+            Notifications?.Send(trigger, change);
+            Actions?.Run(trigger, change);
+            Commands?.Run(trigger, change);
+        }
+
+        public void Run2()
+        {
+            if (string.IsNullOrWhiteSpace(Path))
+            {
+                return;
+            }
+
+            _queue ??= new ConcurrentQueue<ChangeInfo>();
+
+            if (_queue.IsEmpty)
+            {
+                Thread.Sleep(100);
+            }
+
+            while (!_queue.IsEmpty)
+            {
+                //if (!CanRun || IsRunning)
+                //{
+                //    break;
+                //}
+
+                if (_queue.TryDequeue(out ChangeInfo? change))
+                {
+                    if (change != null)
+                    {
+                        if (Filters != null && Filters.IsSpecified())
+                        {
+                            // If the file or folder is not a match, then don't take
+                            // any further actions
+                            if (!Filters.IsMatch(change))
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (Exclusions != null && Exclusions.IsSpecified())
+                        {
+                            // If the file or folder is in the exclude list, then don't
+                            // take any further actions
+                            if (Exclusions.Exclude(change))
+                            {
+                                continue;
+                            }
+                        }
+
+                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
+                        OnStarted(this, new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
                         Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
 
                         Workflows?.Run(change, change.Trigger);
                         Notifications?.Send(change.Trigger, change);
                         Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
+                        Logger.WriteLine($"Queue: Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
                     }
                 }
             }
-
-            Logger.WriteLine($"{Id} completed.");
-            OnCompleted(new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
-            Reset();
         }
 
         /// <summary>
@@ -674,22 +748,51 @@ namespace TE.FileWatcher.Configuration
             return Directory.Exists(Path);
         }
 
-
-        private void GetNeedWatch(Collection<Watch> watches)
+        private void SetNeedWatch(Collection<Watch> watches)
         {
             if (string.IsNullOrEmpty(Id) || watches == null || watches.Count <= 0)
             {
                 return;
             }
 
-            foreach (Watch watch in watches)
+            if (Needs == null || Needs.Length <= 0)
             {
-                if (watch.Id == Id)
+                return;
+            }
+
+            for (int i = 0; i < Needs.Length; i++)
+            {
+                Watch? needWatch = watches
+                    .Where(w => w.Id != null)
+                    .FirstOrDefault(w => w.Id == Needs[i]);
+                if (needWatch != null)
                 {
-                    watch.Completed += OnNeedsCompleted;
+                    Logger.WriteLine($"{Id} reliant on {needWatch.Id}.");
+                    SetNeed(needWatch);
                 }
             }
         }
+
+
+        public void OnWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            Logger.WriteLine($"Work done.");
+            RunWorker();
+        }
+
+        public override void OnCompleted(object? sender, TaskEventArgs e)
+        {
+            base.OnCompleted(sender, e);
+            Run2();
+            //RunWorker();
+        }
+
+        public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
+        {
+            Logger.WriteLine($"Needed watch {e.Id} completed. Checking if {Id} can run.");
+            base.OnNeedsCompleted(sender, e);
+            Run2();
+        }   
 
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using System.Diagnostics.Eventing.Reader;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -20,33 +21,32 @@ namespace TE.FileWatcher.Configuration
         private TriggerType _trigger;
 
         /// <summary>
+        /// The event for the completion of the steps.
+        /// </summary>
+        public event CompletedEventHandler? Completed;
+
+        /// <summary>
+        /// The event for the start of the steps.
+        /// </summary>
+        public event StartedEventHandler? Started;
+
+        /// <summary>
         /// Gets or sets the collection of steps to execute.
         /// </summary>
         [XmlElement("step")]
         public Collection<Step>? StepList {  get; set; }
 
         /// <summary>
-        /// A flag indicating the steps were previously initialized.
+        /// Gets the flag indicating all steps have completed running.
         /// </summary>
-        private bool isInitialized = false;
+        [XmlIgnore]
+        public bool HasCompleted { get; private set; }
 
-        private Step? GetNeedStep(string id)
-        {
-            if (StepList == null || StepList.Count <= 0)
-            {
-                return null;
-            }
-
-            foreach (Step step in StepList)
-            {
-                if (step.Id == id)
-                {
-                    return step;
-                }
-            }
-
-            return null;
-        }
+        /// <summary>
+        /// Gets the flag indicating the task has been initialized.
+        /// </summary>
+        [XmlIgnore]
+        public bool IsInitialized { get; private set; }
 
         public void Initialize()
         {
@@ -55,24 +55,15 @@ namespace TE.FileWatcher.Configuration
                 return; 
             }
 
-            foreach(Step step in StepList)
+            foreach (Step step in StepList)
             {
-                if (step.Needs != null && step.Needs.Length > 0)
-                {
-                    for (int i = 0; i < step.Needs.Length; i++)
-                    {
-                        Step? neededStep = GetNeedStep(step.Needs[i]);
-                        if (neededStep != null) 
-                        {
-                            step.ConnectToNeededStep(neededStep);
-                        }
-                    }
-                }
+                step.Initialize();
+                step.SetNeedSteps(StepList);
             }
 
-            isInitialized = true;
+            HasCompleted = false;
+            IsInitialized = true;
         }
-
         public void Run(ChangeInfo change, TriggerType trigger)
         {
             if (StepList == null || StepList.Count <= 0)
@@ -80,7 +71,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            if (!isInitialized)
+            if (!IsInitialized)
             {
                 Initialize();
             }
@@ -88,37 +79,45 @@ namespace TE.FileWatcher.Configuration
             _change = change;
             _trigger = trigger;
 
+            Logger.WriteLine($"Starting to run {StepList.Count} step(s).");
             foreach (Step step in StepList)
-            {
-                if (!step.HasCompleted)
+            {                                
+                if (!step.IsInitialized)
                 {
-                    step.Completed += OnStepCompleted;
-
-                    if (!step.IsInitialized)
-                    {
-                        step.Initialize();
-                    }
-
-                    if (step.CanRun && !step.IsRunning)
-                    {
-                        Task.Run(() => { step.Run(_change, _trigger); });
-                    }
+                    Logger.WriteLine($"Initialize step {step.Id} - start.");
+                    step.Initialize();
+                    step.Completed += OnCompleted;
+                    Logger.WriteLine($"Initialize step {step.Id} - done.");
                 }
-                else
-                {
-                    step.Reset();
-                }
+                    
+                Task.Run(() => { step.Run(_change, _trigger); });
             }
         }
 
-        public void OnStepCompleted(object? sender, TaskEventArgs e)
+        public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
-            if (_change == null)
+            Started?.Invoke(this, e);
+        }
+
+        public virtual void OnCompleted(object? sender, TaskEventArgs e)
+        {
+            if (StepList == null || StepList.Count <= 0)
             {
                 return;
             }
 
-            Run(_change, _trigger);
+            HasCompleted = StepList.All(s => s.HasCompleted);
+            if (HasCompleted)
+            {
+                // Once all steps have been completed, reset the steps for the
+                // next workflow run
+                foreach (Step step in StepList)
+                {
+                    step.Reset();
+                }
+
+                Completed?.Invoke(this, new TaskEventArgs(true, null, "All steps completed."));
+            }
         }
     }
 }

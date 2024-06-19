@@ -20,11 +20,31 @@ namespace TE.FileWatcher.Configuration
         [XmlElement("steps")]
         public Steps? Steps { get; set; }
 
+        [XmlIgnore]
+        public bool HasCompleted { get; private set; }
+
+        /// <summary>
+        /// Gets the flag indicating the task has been initialized.
+        /// </summary>
+        [XmlIgnore]
+        public bool IsInitialized { get; private set; }
+
+        public void Initialize()
+        {            
+            HasCompleted = false;
+            IsInitialized = true;
+        }
+
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
             try
             {
                 base.Run(change, trigger);
+
+                if (!IsInitialized)
+                {
+                    Initialize();
+                }
             }
             catch (ArgumentNullException e)
             {
@@ -46,10 +66,29 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
+            Logger.WriteLine($"Running steps.");
+            Steps.Initialize();
             // Call the steps, but change the trigger to "Step" as the trigger
             // validation takes place in this workflow and not in the subsequent
             // jobs as it does with the non-workflow configuration
+            Steps.Completed += OnStepsCompleted;
             Steps.Run(change, TriggerType.Step);
+            while (!Steps.HasCompleted) { }
+        }
+
+        public void OnStepsCompleted(object? sender, TaskEventArgs e)
+        {
+            if (Steps == null)
+            {
+                return;
+            }
+
+            HasCompleted = Steps.HasCompleted;
+            if (HasCompleted)
+            {
+                Steps.Initialize();
+                base.OnCompleted(this, new TaskEventArgs(true, null, "All steps have completed."));
+            }
         }
     }
 }

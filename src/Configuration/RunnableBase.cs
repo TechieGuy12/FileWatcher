@@ -16,6 +16,16 @@ namespace TE.FileWatcher.Configuration
     public abstract class RunnableBase : ItemBase, IRunnable
     {
         /// <summary>
+        /// The event for the completion of the task.
+        /// </summary>
+        public event CompletedEventHandler? Completed;
+
+        /// <summary>
+        /// The event for the start of the task.
+        /// </summary>
+        public event StartedEventHandler? Started;
+
+        /// <summary>
         /// Gets or sets the number of milliseconds to wait before running.
         /// </summary>
         [XmlElement("waitbefore")]
@@ -54,6 +64,16 @@ namespace TE.FileWatcher.Configuration
             }
 
             Change = change ?? throw new ArgumentNullException(nameof(change));
+        }
+
+        public virtual void OnStarted(object? sender, TaskEventArgs e)
+        {
+            Started?.Invoke(this, e);
+        }
+
+        public virtual void OnCompleted(object? sender, TaskEventArgs e)
+        {
+            Completed?.Invoke(this, e);
         }
     }
 }
