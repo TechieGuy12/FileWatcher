@@ -80,11 +80,13 @@ namespace TE.FileWatcher.Configuration
 
             Logger.WriteLine($"Running steps.");
             Steps.Initialize();
+            Steps.Completed += OnStepsCompleted;
+
             // Call the steps, but change the trigger to "Step" as the trigger
             // validation takes place in this workflow and not in the subsequent
             // jobs as it does with the non-workflow configuration
-            Steps.Completed += OnStepsCompleted;
             Steps.Run(change, TriggerType.Step);
+
             while (!Steps.HasCompleted) { }
         }
 
