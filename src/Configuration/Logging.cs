@@ -28,9 +28,6 @@ namespace TE.FileWatcher.Configuration
         // The number of log files to retain
         private int _logNumber = DEFAULTLOGNUMBER;
 
-        // The log level
-        private LogLevel _logLevel;
-
         /// <summary>
         /// Gets or sets the path of the log file.
         /// </summary>
