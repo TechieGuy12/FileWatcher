@@ -102,7 +102,7 @@ namespace TE.FileWatcher.Configuration
         /// The needed task that is required to be completed before this task
         /// can be run.
         /// </param>
-        public void SetNeed(HasNeedsBase Need)
+        protected void SetNeed(HasNeedsBase Need)
         {
             _needs ??= new List<HasNeedsBase>();
             _needs.Add(Need);
@@ -143,7 +143,7 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// 
+        /// Invoke the task needs completed event.
         /// </summary>
         /// <param name="sender">
         /// The object that raised the event.
