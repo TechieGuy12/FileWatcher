@@ -89,11 +89,8 @@ namespace TE.FileWatcher.Configuration
             OnStarted(this, new TaskEventArgs(true, Id, $"{Id} step started."));
             IsRunning = true;
 
-            Logger.WriteLine($"Running action. Action: {Action != null}");
             Action?.Run(change, trigger);
-            Logger.WriteLine($"Running command. Command: {Command != null}");
             Command?.Run(change, trigger);
-            Logger.WriteLine($"Running notification. Notification: {Notification != null}");
             Notification?.Run(change, trigger);
 
             IsRunning = false;
