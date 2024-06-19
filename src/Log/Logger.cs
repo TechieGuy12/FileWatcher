@@ -309,7 +309,7 @@ namespace TE.FileWatcher.Log
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ DateTime.Now:yyyy - MM - dd HH: mm: ss} Could not rollover the log file. Reason: {ex.Message}");
+                Console.WriteLine($"{ DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} Could not rollover the log file. Reason: {ex.Message}");
             }
         }
 
@@ -326,13 +326,13 @@ namespace TE.FileWatcher.Log
                     {
                         RolloverLog();
                         using StreamWriter writer = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new(LogFullPath, true, System.Text.Encoding.UTF8) : new(LogFullPath, true);
-                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message.LevelString} {message.Value}");
+                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message.LevelString} {message.Value}");
                     }
                 }
                 catch (Exception ex)
                 {
                     Message error = new($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
-                    Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {error.LevelString} {error.Value}");
+                    Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {error.LevelString} {error.Value}");
                 }
             }
         }
