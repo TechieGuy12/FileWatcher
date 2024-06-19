@@ -62,6 +62,7 @@ namespace TE.FileWatcher.Configuration
             foreach (Workflow workflow in WorkflowList)
             {                
                 workflow.Run(change, trigger);
+                workflow.Completed += OnWorkflowCompleted;
             }
         }
 
@@ -85,6 +86,8 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = WorkflowList.All(w => w.HasCompleted);
             if (HasCompleted)
             {
+                Logger.WriteLine("All workflows completed.");
+
                 // Once all steps have been completed, reset the steps for the
                 // next workflow run
                 foreach (Workflow workflow in WorkflowList)
