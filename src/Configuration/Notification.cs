@@ -90,10 +90,10 @@ namespace TE.FileWatcher.Configuration
         /// <returns>
         /// The string value for the message type, otherwise <c>null</c>.
         /// </returns>
-        private static string GetMessageString(ChangeInfo change, TriggerType trigger)
+        private static string GetMessageString(ChangeInfo change)
         {
             string? messageType = null;
-            switch (trigger)
+            switch (change.Trigger)
             {
                 case TriggerType.Create:
                     messageType = "Created";
@@ -137,7 +137,7 @@ namespace TE.FileWatcher.Configuration
             if (Triggers.Current.HasFlag(trigger))
             {                
                 Change = change;
-                _message.Append(GetMessageString(Change, trigger));
+                _message.Append(GetMessageString(Change));
             }            
         }
 
@@ -334,7 +334,7 @@ namespace TE.FileWatcher.Configuration
             }
 
             Change = change;
-            _message.Append(GetMessageString(Change, trigger));
+            _message.Append(GetMessageString(Change));
             
             try
             {
