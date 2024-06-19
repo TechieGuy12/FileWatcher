@@ -366,18 +366,21 @@ namespace TE.FileWatcher.Configuration
             }
 
             _queue ??= new ConcurrentQueue<ChangeInfo>();
+            Logger.WriteLine($"Watch {Id} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
 
             if (_queue.IsEmpty)
             {
+                Initialize();
                 Thread.Sleep(100);
             }
 
             while (!_queue.IsEmpty)
             {
-                //if (!CanRun || IsRunning)
-                //{
-                //    break;
-                //}
+                Logger.WriteLine($"Watch: {Id}. CanRun: {CanRun}, IsRunning: {IsRunning}.");
+                if (!CanRun || IsRunning)
+                {
+                    break;
+                }
 
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
@@ -402,16 +405,15 @@ namespace TE.FileWatcher.Configuration
                                 continue;
                             }
                         }
-
                         
-                        OnStarted(this, new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
+                        OnStarted(this, new TaskEventArgs(true, Id, $"Starting tasks for watch {Id}: Path {Path}."));
                         Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
                         Workflows?.Run(change, change.Trigger);
                         Notifications?.Send(change.Trigger, change);
                         Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
-                        Logger.WriteLine($"Queue: Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
-                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch: {Path}."));
+                        Logger.WriteLine($"Watch {Id} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
+                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch {Id}: Path: {Path}."));
                     }
                 }
             }
