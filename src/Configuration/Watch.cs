@@ -39,6 +39,19 @@ namespace TE.FileWatcher.Configuration
         private bool _disposed;
 
         /// <summary>
+        /// Gets the ID if one is specified for the watch, otherwise, return the
+        /// watch path.
+        /// </summary>
+        [XmlIgnore]
+        private string? IdLogString
+        {
+            get
+            {
+                return Id ?? Path;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the id of the watch.
         /// </summary>
         [XmlElement(ElementName = "id", IsNullable = true)]
@@ -349,7 +362,7 @@ namespace TE.FileWatcher.Configuration
 
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
-            OnStarted(this, new TaskEventArgs(true, Id, $"Started tasks for watch: {Path}."));
+            OnStarted(this, new TaskEventArgs(true, IdLogString, $"Started tasks for watch: {Path}."));
             Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
 
             Workflows?.Run(change, trigger);
@@ -366,7 +379,7 @@ namespace TE.FileWatcher.Configuration
             }
 
             _queue ??= new ConcurrentQueue<ChangeInfo>();
-            Logger.WriteLine($"Watch {Id} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
+            Logger.WriteLine($"Watch {IdLogString} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.", LogLevel.DEBUG);
 
             if (_queue.IsEmpty)
             {
@@ -376,7 +389,7 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
-                Logger.WriteLine($"Watch: {Id}. CanRun: {CanRun}, IsRunning: {IsRunning}.");
+                Logger.WriteLine($"Watch: {IdLogString}. CanRun: {CanRun}, IsRunning: {IsRunning}.", LogLevel.DEBUG);
                 if (!CanRun || IsRunning)
                 {
                     break;
@@ -406,14 +419,14 @@ namespace TE.FileWatcher.Configuration
                             }
                         }
                         
-                        OnStarted(this, new TaskEventArgs(true, Id, $"Starting tasks for watch {Id}: Path {Path}."));
-                        Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}");
+                        OnStarted(this, new TaskEventArgs(true, IdLogString, $"Starting tasks for watch {Id}: Path {Path}."));
+                        Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}", LogLevel.DEBUG);
                         Workflows?.Run(change, change.Trigger);
                         Notifications?.Send(change.Trigger, change);
                         Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
-                        Logger.WriteLine($"Watch {Id} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.");
-                        OnCompleted(this, new TaskEventArgs(true, Id, $"Completed tasks for watch {Id}: Path: {Path}."));
+                        Logger.WriteLine($"Watch {IdLogString} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.", LogLevel.DEBUG);
+                        OnCompleted(this, new TaskEventArgs(true, IdLogString, $"Completed tasks for watch {IdLogString}: Path: {Path}."));
                     }
                 }
             }
@@ -769,7 +782,7 @@ namespace TE.FileWatcher.Configuration
                     .FirstOrDefault(w => w.Id == Needs[i]);
                 if (needWatch != null)
                 {
-                    Logger.WriteLine($"{Id} reliant on {needWatch.Id}.");
+                    Logger.WriteLine($"{IdLogString} reliant on {needWatch.Id}.", LogLevel.DEBUG);
                     SetNeed(needWatch);
                 }
             }
@@ -778,7 +791,7 @@ namespace TE.FileWatcher.Configuration
 
         public void OnWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Logger.WriteLine($"Work done.");
+            Logger.WriteLine($"Work done.", LogLevel.DEBUG);
             RunWorker();
         }
 
@@ -791,7 +804,7 @@ namespace TE.FileWatcher.Configuration
 
         public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
-            Logger.WriteLine($"Needed watch {e.Id} completed. Checking if {Id} can run.");
+            Logger.WriteLine($"Needed watch {e.Id} completed. Checking if {IdLogString} can run.", LogLevel.DEBUG);
             base.OnNeedsCompleted(sender, e);
             Run2();
         }   
