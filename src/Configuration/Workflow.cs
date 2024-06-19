@@ -86,6 +86,7 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = Steps.HasCompleted;
             if (HasCompleted)
             {
+                Logger.WriteLine("All steps completed.");
                 Steps.Initialize();
                 base.OnCompleted(this, new TaskEventArgs(true, null, "All steps have completed."));
             }
