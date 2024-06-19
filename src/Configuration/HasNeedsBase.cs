@@ -107,9 +107,10 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public virtual void OnCompleted(object? sender, TaskEventArgs e)
         {
-            HasCompleted = true;
-            Completed?.Invoke(this, e);
             Logger.WriteLine($"{e.Id} has completed.");
+            HasCompleted = true;
+            IsRunning = false;
+            Completed?.Invoke(this, e);            
         }
 
         /// <summary>
@@ -127,7 +128,7 @@ namespace TE.FileWatcher.Configuration
 
         public virtual void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
-            
+
         }
     }
 }
