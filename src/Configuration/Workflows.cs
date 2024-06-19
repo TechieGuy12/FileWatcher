@@ -35,6 +35,9 @@ namespace TE.FileWatcher.Configuration
         [XmlIgnore]
         public bool IsInitialized { get; private set; }
 
+        /// <summary>
+        /// Initializes the workflows.
+        /// </summary>
         public void Initialize()
         {
             HasCompleted = false;

@@ -48,6 +48,9 @@ namespace TE.FileWatcher.Configuration
         [XmlIgnore]
         public bool IsInitialized { get; private set; }
 
+        /// <summary>
+        /// Initializes all the steps.
+        /// </summary>
         public void Initialize()
         {
             if (StepList == null || StepList.Count == 0)
@@ -55,6 +58,8 @@ namespace TE.FileWatcher.Configuration
                 return; 
             }
 
+            // Initialize each step, and also set any required steps that are
+            // needed to be run for any step
             foreach (Step step in StepList)
             {
                 step.Initialize();
@@ -64,6 +69,16 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = false;
             IsInitialized = true;
         }
+
+        /// <summary>
+        /// Run the steps.
+        /// </summary>
+        /// <param name="change">
+        /// Information about the change.
+        /// </param>
+        /// <param name="trigger">
+        /// The trigger that caused the change.
+        /// </param>
         public void Run(ChangeInfo change, TriggerType trigger)
         {
             if (StepList == null || StepList.Count <= 0)
@@ -84,9 +99,7 @@ namespace TE.FileWatcher.Configuration
             {                                
                 if (!step.IsInitialized)
                 {
-                    Logger.WriteLine($"Initialize step {step.Id} - start.");
-                    step.Initialize();                    
-                    Logger.WriteLine($"Initialize step {step.Id} - done.");
+                    step.Initialize();
                 }
 
                 step.Completed += OnCompleted;
@@ -94,11 +107,29 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
+        /// <summary>
+        /// Raised when the steps have started.
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// Information about the event.
+        /// </param>
         public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
             Started?.Invoke(this, e);
         }
 
+        /// <summary>
+        /// Raised when a step has completed.
+        /// </summary>
+        /// <param name="sender">
+        /// The object that raised the event.
+        /// </param>
+        /// <param name="e">
+        /// Information about the event.
+        /// </param>
         public virtual void OnCompleted(object? sender, TaskEventArgs e)
         {
             if (StepList == null || StepList.Count <= 0)

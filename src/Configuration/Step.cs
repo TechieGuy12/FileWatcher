@@ -46,6 +46,13 @@ namespace TE.FileWatcher.Configuration
             Id = string.Empty;
         }
 
+        /// <summary>
+        /// Sets up the needed steps for this step.
+        /// </summary>
+        /// <param name="steps">
+        /// The needed steps that are required to be completed before this step
+        /// can be run.
+        /// </param>
         public void SetNeedSteps(Collection<Step> steps)
         {
             if (string.IsNullOrEmpty(Id) || steps == null || steps.Count <= 0)
@@ -71,6 +78,15 @@ namespace TE.FileWatcher.Configuration
             }
         }
 
+        /// <summary>
+        /// Run the step.
+        /// </summary>
+        /// <param name="change">
+        /// Information about the change.
+        /// </param>
+        /// <param name="trigger">
+        /// The trigger that caused the change.
+        /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
             _change = change;
