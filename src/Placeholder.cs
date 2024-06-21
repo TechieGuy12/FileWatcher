@@ -4,6 +4,7 @@ using TEFS = TE.FileWatcher.FileSystem;
 using System.Globalization;
 using System.Web;
 using System;
+using System.Collections.Concurrent;
 
 namespace TE.FileWatcher
 {
@@ -60,6 +61,9 @@ namespace TE.FileWatcher
         // Environment variable placeholder value
         internal const string PLACEHOLDERENVVAR = "env";
 
+        // Variable placeholder value
+        internal const string PLACEHOLDERVAR = "var";
+
         // The URL encode placeholder value
         internal const string PLACEHOLDERURLENCODE = "urlenc";
 
@@ -69,6 +73,8 @@ namespace TE.FileWatcher
 
         // The regular expression
         private static readonly Regex _regex = new Regex(PATTERN, RegexOptions.Compiled);
+
+        private ConcurrentDictionary<string, string>? _variables;
 
         /// <summary>
         /// Replaces the placeholders in a string with the actual values.
@@ -89,13 +95,15 @@ namespace TE.FileWatcher
         /// The value with the placeholders replaced with the actual strings,
         /// otherwise <c>null</c>.
         /// </returns>
-        internal string? ReplacePlaceholders(string value, string watchPath, string fullPath, string? oldPath)
+        internal string? ReplacePlaceholders(string value, string watchPath, string fullPath, string? oldPath, ConcurrentDictionary<string, string>? variables)
         {
             string? changedValue = ReplaceFileFolderPlaceholders(value, watchPath, fullPath, oldPath);
             if (!string.IsNullOrWhiteSpace(changedValue))
             {
                 changedValue = ReplaceFormatPlaceholders(changedValue, fullPath);
             }
+
+            _variables = variables;
 
             return changedValue;
         }
@@ -235,6 +243,38 @@ namespace TE.FileWatcher
             if (envValue != null)
             {
                 value = value.Replace(placeholder, envValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return value;
+        }
+
+
+        /// <summary>
+        /// Gets the environment variable value and replaces the environment
+        /// variable placeholder with the environment variable value.
+        /// </summary>
+        /// <param name="placeholder">
+        /// The placeholder in the value.
+        /// </param>
+        /// <param name="value">
+        /// The string value containing the placeholder.
+        /// </param>
+        /// <param name="name">
+        /// The name of the variable.
+        /// </param>
+        /// <returns>
+        /// The value of the variable.
+        /// </returns>
+        private string GetVariableValue(string placeholder, string value, string name)
+        {
+            if (_variables == null)
+            {
+                return value;
+            }
+
+            if (_variables.ContainsKey(name))
+            {
+                return value.Replace(placeholder, _variables[name], StringComparison.OrdinalIgnoreCase);
             }
 
             return value;
@@ -428,6 +468,9 @@ namespace TE.FileWatcher
                                     break;
                                 case PLACEHOLDERENVVAR:
                                     value = GetEnvironmentVariableValue(match.Value, value, format);
+                                    break;
+                                case PLACEHOLDERVAR:
+                                    value = GetVariableValue(match.Value, value, format);
                                     break;
                                 case PLACEHOLDERURLENCODE:
                                     value = GetUrlEncodedValue(match.Value, value, format);
