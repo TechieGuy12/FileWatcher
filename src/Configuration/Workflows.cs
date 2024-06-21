@@ -8,7 +8,7 @@ namespace TE.FileWatcher.Configuration
     /// The commands to run when a change is detected.
     /// </summary>
     [XmlRoot("workflows")]
-    public class Workflows : IRunnable
+    public class Workflows : HasVariablesBase, IRunnable
     {
         /// <summary>
         /// The event for the completion of the workflows.

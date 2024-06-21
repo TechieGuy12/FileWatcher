@@ -8,7 +8,7 @@ namespace TE.FileWatcher.Configuration
     /// The watches root node in the XML file.
     /// </summary>
     [XmlRoot("watches")]
-    public class Watches
+    public class Watches : HasVariablesBase
     {
         /// <summary>
         /// Gets or sets the logging information.
@@ -21,12 +21,6 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         [XmlElement("watch")]
         public Collection<Watch>? WatchList { get; set; }
-
-        /// <summary>
-        /// Gets or sets the variables.
-        /// </summary>
-        [XmlElement("variables")]
-        public Variables? Variables { get; set; }
 
         /// <summary>
         /// Starts the watches.
@@ -43,6 +37,7 @@ namespace TE.FileWatcher.Configuration
             {
                 try
                 {
+                    watch.AddVariables(Variables);
                     Task.Run(() => watch.Start(WatchList));
                 }
                 catch (Exception ex)

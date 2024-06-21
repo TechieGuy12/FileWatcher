@@ -7,9 +7,8 @@ using System.Xml.Serialization;
 
 namespace TE.FileWatcher.Configuration
 {
-    public abstract class ItemBase
+    public abstract class ItemBase: HasVariablesBase
     {
-
         /// <summary>
         /// The object used to replace placeholders in strings.
         /// </summary>

@@ -44,7 +44,8 @@ namespace TE.FileWatcher.Configuration
                             value, 
                             Change.WatchPath,
                             Change.FullPath,
-                            Change.OldPath);
+                            Change.OldPath,
+                            _variables);
                     }
 
                     request.Headers.Add(header.Name, value);

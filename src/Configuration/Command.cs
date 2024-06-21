@@ -240,7 +240,8 @@ namespace TE.FileWatcher.Configuration
                 Arguments,
                 Change.WatchPath,
                 Change.FullPath,
-                Change.OldPath);
+                Change.OldPath,
+                _variables);
         }
 
         /// <summary>
@@ -261,7 +262,8 @@ namespace TE.FileWatcher.Configuration
                 Path,
                 Change.WatchPath,
                 Change.FullPath,
-                Change.OldPath);
+                Change.OldPath,
+                _variables);
         }
 
         /// <summary>
@@ -282,7 +284,8 @@ namespace TE.FileWatcher.Configuration
                 WorkingDirectory,
                 Change.WatchPath,
                 Change.FullPath,
-                Change.OldPath);
+                Change.OldPath,
+                _variables);
         }
 
         /// <summary>

@@ -115,6 +115,44 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
+        /// Add the watch variable list to the dependent tasks.
+        /// </summary>
+        private void AddDependentVariables()
+        {
+            if (Notifications != null && Notifications.NotificationList != null)
+            {
+                Parallel.ForEach(Notifications.NotificationList, (notification) =>
+                {
+                    notification.AddVariables(Variables);
+                });
+            }
+
+            if (Actions != null && Actions.ActionList != null)
+            {
+                Parallel.ForEach(Actions.ActionList, (action) =>
+                {
+                    action.AddVariables(Variables);
+                });
+            }
+
+            if (Commands != null && Commands.CommandList != null)
+            {
+                Parallel.ForEach(Commands.CommandList, (command) =>
+                {
+                    command.AddVariables(Variables);
+                });
+            }
+
+            if (Workflows != null && Workflows.WorkflowList != null)
+            {
+                Parallel.ForEach(Workflows.WorkflowList, (workflow) =>
+                {
+                    workflow.AddVariables(Variables);
+                });
+            }
+        }
+
+        /// <summary>
         /// Processes the file or folder change.
         /// </summary>
         /// <param name="change">
@@ -149,8 +187,9 @@ namespace TE.FileWatcher.Configuration
                 CreateFileSystemWatcher();
                 CreateQueue();
                 CreateTimer();
-                SetNeedWatch(watches);                
-                Initialize();                
+                AddDependentVariables();
+                SetNeedWatch(watches);
+                Initialize();
             }
             else
             {

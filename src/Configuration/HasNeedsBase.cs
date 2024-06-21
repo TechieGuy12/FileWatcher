@@ -8,7 +8,7 @@ using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
-    public abstract class HasNeedsBase : IRunnable
+    public abstract class HasNeedsBase : HasVariablesBase, IRunnable
     {
         /// <summary>
         /// The event for the completion of the task.
@@ -78,7 +78,7 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Initializes the task.
         /// </summary>
-        public void Initialize()
+        public virtual void Initialize()
         {
             HasCompleted = false;
             IsRunning = false;

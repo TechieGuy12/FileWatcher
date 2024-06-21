@@ -30,10 +30,22 @@ namespace TE.FileWatcher.Configuration
         public bool IsInitialized { get; private set; }
 
         /// <summary>
+        /// Add the workflow variable list to the dependent tasks.
+        /// </summary>
+        private void AddDependentVariables()
+        {
+            if (Steps != null)
+            {
+                Steps.AddVariables(Variables);
+            }
+        }
+
+        /// <summary>
         /// Initializes the workflow.
         /// </summary>
         public void Initialize()
-        {            
+        {
+            AddDependentVariables();
             HasCompleted = false;
             IsInitialized = true;
         }

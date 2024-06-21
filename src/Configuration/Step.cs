@@ -7,7 +7,7 @@ namespace TE.FileWatcher.Configuration
     /// <summary>
     /// Contains all the information for a workflow step.
     /// </summary>
-    public class Step : HasNeedsBase, IRunnable
+    public class Step : HasNeedsBase
     {
         private ChangeInfo? _change;
 
@@ -44,6 +44,25 @@ namespace TE.FileWatcher.Configuration
         public Step()
         {
             Id = string.Empty;
+        }
+
+        /// <summary>
+        /// Add the step variable list to the dependent tasks.
+        /// </summary>
+        private void AddDependentVariables()
+        {
+            Action?.AddVariables(Variables);
+            Command?.AddVariables(Variables);
+            Notification?.AddVariables(Variables);
+        }
+
+        /// <summary>
+        /// Initializes the step.
+        /// </summary>
+        public override void Initialize()
+        {
+            AddDependentVariables();
+            base.Initialize();
         }
 
         /// <summary>

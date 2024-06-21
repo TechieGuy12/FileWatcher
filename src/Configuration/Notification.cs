@@ -166,6 +166,7 @@ namespace TE.FileWatcher.Configuration
             Data ??= new Data();
             if (Data.Headers != null)
             {
+                Data.Headers.AddVariables(Variables);
                 Data.Headers.Change = Change;
             }
 
@@ -180,7 +181,8 @@ namespace TE.FileWatcher.Configuration
                         content,
                         Change.WatchPath,
                         Change.FullPath,
-                        Change.OldPath);
+                        Change.OldPath,
+                        _variables);
                 }
             }
 
@@ -289,7 +291,8 @@ namespace TE.FileWatcher.Configuration
                 Url,
                 Change.WatchPath,
                 Change.FullPath,
-                Change.OldPath);
+                Change.OldPath,
+                _variables);
 
             if (string.IsNullOrWhiteSpace(url))
             {

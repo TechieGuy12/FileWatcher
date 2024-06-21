@@ -14,7 +14,7 @@ namespace TE.FileWatcher.Configuration
     /// Contains information about all the steps of a workflow.
     /// </summary>
     [XmlRoot("steps")]
-    public class Steps : IRunnable
+    public class Steps : HasVariablesBase, IRunnable
     {
         private ChangeInfo? _change;
 
@@ -49,6 +49,20 @@ namespace TE.FileWatcher.Configuration
         public bool IsInitialized { get; private set; }
 
         /// <summary>
+        /// Add the workflow variable list to the dependent tasks.
+        /// </summary>
+        private void AddDependentVariables()
+        {
+            if (StepList != null)
+            {
+                Parallel.ForEach(StepList, (step) =>
+                {
+                    step.AddVariables(Variables);
+                });
+            }
+        }
+
+        /// <summary>
         /// Initializes all the steps.
         /// </summary>
         public void Initialize()
@@ -57,6 +71,8 @@ namespace TE.FileWatcher.Configuration
             {
                 return; 
             }
+
+            AddDependentVariables();
 
             // Initialize each step, and also set any required steps that are
             // needed to be run for any step
