@@ -9,6 +9,9 @@ namespace TE.FileWatcher
 {
     public sealed class Placeholder
     {
+        // The watch path placeholder
+        internal const string PLACEHOLDERWATCHPATH = "[watchpath]";
+
         // The exact path placeholder
         internal const string PLACEHOLDEREXACTPATH = "[exactpath]";
 
@@ -342,6 +345,7 @@ namespace TE.FileWatcher
             string? extension = TEFS.File.GetExtension(fullPath);
 
             string replacedValue = value;
+            replacedValue = replacedValue.Replace(PLACEHOLDERWATCHPATH, watchPath, StringComparison.OrdinalIgnoreCase);
             replacedValue = replacedValue.Replace(PLACEHOLDEREXACTPATH, fullPath, StringComparison.OrdinalIgnoreCase);
             replacedValue = replacedValue.Replace(PLACEHOLDERFULLPATH, relativeFullPath, StringComparison.OrdinalIgnoreCase);
             replacedValue = replacedValue.Replace(PLACEHOLDERPATH, relativePath, StringComparison.OrdinalIgnoreCase);
