@@ -13,6 +13,6 @@ namespace TE.FileWatcher.Configuration
         /// Gets or sets the list of variables.
         /// </summary>
         [XmlElement("variable")]
-        public Collection<Action>? VariableList { get; set; }
+        public Collection<Variable>? VariableList { get; set; }
     }
 }
