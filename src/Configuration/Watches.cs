@@ -23,6 +23,12 @@ namespace TE.FileWatcher.Configuration
         public Collection<Watch>? WatchList { get; set; }
 
         /// <summary>
+        /// Gets or sets the variables.
+        /// </summary>
+        [XmlElement("variables")]
+        public Variables? Variables { get; set; }
+
+        /// <summary>
         /// Starts the watches.
         /// </summary>
         public void Start()
