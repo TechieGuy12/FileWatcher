@@ -7,13 +7,29 @@ namespace TE.FileWatcher.Configuration
     /// The commands to run when a change is detected.
     /// </summary>
     [XmlRoot("commands")]
-    public class Commands
+    public class Commands: HasVariablesBase
     {
         /// <summary>
         /// Gets or sets the list of actions to perform.
         /// </summary>
         [XmlElement("command")]
         public Collection<Command>? CommandList { get; set; }
+
+
+        /// <summary>
+        /// Add the variables list to the dependent objects.
+        /// </summary>
+        private void AddVariables()
+        {
+            if (CommandList != null)
+            {
+                Parallel.ForEach(CommandList, (command) =>
+                {
+                    command.Variables ??= new Variables();
+                    command.Variables.Add(Variables?.AllVariables);
+                });
+            }
+        }
 
         /// <summary>
         /// Runs all the commands for the watch.
@@ -27,6 +43,8 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
+
+            AddVariables();
 
             foreach (Command command in CommandList)
             {

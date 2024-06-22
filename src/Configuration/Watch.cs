@@ -1,7 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using System.ComponentModel;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Timers;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
@@ -113,42 +111,36 @@ namespace TE.FileWatcher.Configuration
                 return (_fsWatcher != null && _fsWatcher.EnableRaisingEvents);
             }
         }
-
+    
         /// <summary>
         /// Add the watch variable list to the dependent tasks.
         /// </summary>
-        private void AddDependentVariables()
+        private void AddVariables(ConcurrentDictionary<string, string>? variables)
         {
-            if (Notifications != null && Notifications.NotificationList != null)
+            Variables?.Add(variables);
+
+            if (Notifications != null)
             {
-                Parallel.ForEach(Notifications.NotificationList, (notification) =>
-                {
-                    notification.AddVariables(Variables);
-                });
+                Notifications.Variables ??= new Variables();
+                Notifications.Variables.Add(Variables?.AllVariables);
             }
 
-            if (Actions != null && Actions.ActionList != null)
+            if (Actions != null)
             {
-                Parallel.ForEach(Actions.ActionList, (action) =>
-                {
-                    action.AddVariables(Variables);
-                });
+                Actions.Variables ??= new Variables();
+                Actions.Variables.Add(Variables?.AllVariables);
             }
 
-            if (Commands != null && Commands.CommandList != null)
+            if (Commands != null)
             {
-                Parallel.ForEach(Commands.CommandList, (command) =>
-                {
-                    command.AddVariables(Variables);
-                });
+                Commands.Variables ??= new Variables();
+                Commands.Variables.Add(Variables?.AllVariables);
             }
 
-            if (Workflows != null && Workflows.WorkflowList != null)
+            if (Workflows != null)
             {
-                Parallel.ForEach(Workflows.WorkflowList, (workflow) =>
-                {
-                    workflow.AddVariables(Variables);
-                });
+                Workflows.Variables ??= new Variables();
+                Workflows.Variables.Add(Variables?.AllVariables);
             }
         }
 
@@ -175,19 +167,20 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Starts the watch.
         /// </summary>
-        public bool Start(Collection<Watch> watches)
+        public bool Start(Collection<Watch> watches, ConcurrentDictionary<string, string>? variables)
         {
             if (_fsWatcher != null || _timer != null)
             {
                 Stop();
             }
 
+            AddVariables(variables);
+
             if (PathExists())
             {
                 CreateFileSystemWatcher();
                 CreateQueue();
-                CreateTimer();
-                AddDependentVariables();
+                CreateTimer();                
                 SetNeedWatch(watches);
                 Initialize();
             }

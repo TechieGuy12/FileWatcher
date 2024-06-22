@@ -47,13 +47,27 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// Add the step variable list to the dependent tasks.
+        /// Add the variables list to the dependent objects.
         /// </summary>
-        private void AddDependentVariables()
+        private void AddVariables()
         {
-            Action?.AddVariables(Variables);
-            Command?.AddVariables(Variables);
-            Notification?.AddVariables(Variables);
+            if (Action != null)
+            {
+                Action.Variables ??= new Variables();
+                Action.Variables.Add(Variables?.AllVariables);
+            }
+
+            if (Command != null)
+            {
+                Command.Variables ??= new Variables();
+                Command.Variables.Add(Variables?.AllVariables);
+            }
+
+            if (Notification != null)
+            {
+                Notification.Variables ??= new Variables();
+                Notification.Variables.Add(Variables?.AllVariables);
+            }
         }
 
         /// <summary>
@@ -61,7 +75,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public override void Initialize()
         {
-            AddDependentVariables();
+            AddVariables();
             base.Initialize();
         }
 

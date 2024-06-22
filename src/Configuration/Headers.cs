@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
+using TE.FileWatcher.Log;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -37,6 +38,13 @@ namespace TE.FileWatcher.Configuration
             {
                 if (!string.IsNullOrWhiteSpace(header.Name))
                 {
+                    header.Name = Placeholder.ReplacePlaceholders(
+                        header.Name,
+                        Change.WatchPath,
+                        Change.FullPath,
+                        Change.OldPath,
+                        Variables?.AllVariables);
+
                     string? value = header.Value;
                     if (!string.IsNullOrWhiteSpace(value))
                     {
@@ -45,10 +53,13 @@ namespace TE.FileWatcher.Configuration
                             Change.WatchPath,
                             Change.FullPath,
                             Change.OldPath,
-                            _variables);
+                            Variables?.AllVariables);
                     }
 
-                    request.Headers.Add(header.Name, value);
+                    if (!string.IsNullOrWhiteSpace(header.Name))
+                    {
+                        request.Headers.Add(header.Name, value);
+                    }
                 }
             }
         }

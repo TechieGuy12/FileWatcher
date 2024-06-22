@@ -97,13 +97,12 @@ namespace TE.FileWatcher
         /// </returns>
         internal string? ReplacePlaceholders(string value, string watchPath, string fullPath, string? oldPath, ConcurrentDictionary<string, string>? variables)
         {
+            _variables = variables;
             string? changedValue = ReplaceFileFolderPlaceholders(value, watchPath, fullPath, oldPath);
             if (!string.IsNullOrWhiteSpace(changedValue))
             {
                 changedValue = ReplaceFormatPlaceholders(changedValue, fullPath);
-            }
-
-            _variables = variables;
+            }            
 
             return changedValue;
         }

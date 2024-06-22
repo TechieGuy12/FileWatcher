@@ -33,12 +33,17 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
             Logger.WriteLine($"Log level: {Logger.LogLevel}.");
+
+            // Call the Add method with a null argument to add all the
+            // variables for the watches element to a dictionary so it
+            // can be passed to child elements
+            Variables?.Add(null);
             foreach (Watch watch in WatchList)
             {
                 try
                 {
-                    watch.AddVariables(Variables);
-                    Task.Run(() => watch.Start(WatchList));
+                    watch.Variables ??= new Variables();
+                    Task.Run(() => watch.Start(WatchList, Variables?.AllVariables));
                 }
                 catch (Exception ex)
                 {

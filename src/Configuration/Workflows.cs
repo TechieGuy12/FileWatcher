@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
 
@@ -36,10 +37,27 @@ namespace TE.FileWatcher.Configuration
         public bool IsInitialized { get; private set; }
 
         /// <summary>
+        /// Add the variables list to the dependent objects.
+        /// </summary>
+        private void AddVariables()
+        {
+            Logger.WriteLine($"Workflows variable count: {Variables?.AllVariables?.Count}.");
+            if (WorkflowList != null)
+            {
+                Parallel.ForEach(WorkflowList, (workflow) =>
+                {
+                    workflow.Variables ??= new Variables();
+                    workflow.Variables?.Add(Variables?.AllVariables);
+                });
+            }
+        }
+
+        /// <summary>
         /// Initializes the workflows.
         /// </summary>
         public void Initialize()
         {
+            AddVariables();
             HasCompleted = false;
             IsInitialized = true;
         }

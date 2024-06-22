@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using System.Diagnostics.Eventing.Reader;
 using TE.FileWatcher.Log;
+using System.Collections.Concurrent;
 
 namespace TE.FileWatcher.Configuration
 {
@@ -49,15 +50,16 @@ namespace TE.FileWatcher.Configuration
         public bool IsInitialized { get; private set; }
 
         /// <summary>
-        /// Add the workflow variable list to the dependent tasks.
+        /// Add the variables list to the dependent objects.
         /// </summary>
-        private void AddDependentVariables()
+        private void AddVariables()
         {
             if (StepList != null)
             {
                 Parallel.ForEach(StepList, (step) =>
-                {
-                    step.AddVariables(Variables);
+                {   
+                    step.Variables ??= new Variables();
+                    step.Variables.Add(Variables?.AllVariables);
                 });
             }
         }
@@ -72,7 +74,7 @@ namespace TE.FileWatcher.Configuration
                 return; 
             }
 
-            AddDependentVariables();
+            AddVariables();
 
             // Initialize each step, and also set any required steps that are
             // needed to be run for any step

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,14 +31,15 @@ namespace TE.FileWatcher.Configuration
         public bool IsInitialized { get; private set; }
 
         /// <summary>
-        /// Add the workflow variable list to the dependent tasks.
+        /// Add the variables list to the dependent objects.
         /// </summary>
-        private void AddDependentVariables()
+        private void AddVariables()
         {
             if (Steps != null)
             {
-                Steps.AddVariables(Variables);
-            }
+                Steps.Variables ??= new Variables();
+                Steps.Variables.Add(Variables?.AllVariables);
+            }            
         }
 
         /// <summary>
@@ -45,7 +47,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public void Initialize()
         {
-            AddDependentVariables();
+            AddVariables();
             HasCompleted = false;
             IsInitialized = true;
         }

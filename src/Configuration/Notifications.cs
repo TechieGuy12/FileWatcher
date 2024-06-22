@@ -11,7 +11,7 @@ namespace TE.FileWatcher.Configuration
     /// The notifications root node in the XML file.
     /// </summary>
     [XmlRoot("notifications")]
-    public class Notifications : IDisposable
+    public class Notifications : HasVariablesBase, IDisposable
     {
         // The default wait time
         private const int DEFAULT_WAIT_TIME = 30000;
@@ -48,6 +48,21 @@ namespace TE.FileWatcher.Configuration
 
             _timer = new System.Timers.Timer(currentWaitTime);
             _timer.Elapsed += OnElapsed;            
+        }
+
+        /// <summary>
+        /// Add the variables list to the dependent objects.
+        /// </summary>
+        private void AddVariables()
+        {
+            if (NotificationList != null)
+            {
+                Parallel.ForEach(NotificationList, (notification) =>
+                {
+                    notification.Variables ??= new Variables();
+                    notification.Variables.Add(Variables?.AllVariables);
+                });
+            }
         }
 
         /// <summary>
@@ -165,6 +180,8 @@ namespace TE.FileWatcher.Configuration
             {
                 return;
             }
+
+            AddVariables();
 
             foreach (Notification notification in NotificationList)
             {
