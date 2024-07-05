@@ -63,16 +63,23 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            AllVariables ??= new ConcurrentDictionary<string, string>();
+            AllVariables ??= new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (VariableList != null)
             {
                 // Add the variables for the current object
                 foreach (Variable variable in VariableList)
                 {
+                    if (variable.Name == null || variable.Value == null)
+                    {
+                        continue;
+                    }
+
                     if (!AllVariables.TryAdd(variable.Name, variable.Value))
                     {
-                        Logger.WriteLine($"The variable '{variable.Name}' already exists.");
+                        Logger.WriteLine(
+                            $"The variable '{variable.Name}' already exists.",
+                            LogLevel.WARNING);
                     }
                 }
             }
@@ -81,10 +88,13 @@ namespace TE.FileWatcher.Configuration
             {
                 // Add the variables passed into the method
                 foreach (KeyValuePair<string, string> variable in variables)
-                {
+                { 
+
                     if (!AllVariables.TryAdd(variable.Key, variable.Value))
                     {
-                        Logger.WriteLine($"The variable '{variable.Key}' already exists.");
+                        Logger.WriteLine(
+                            $"The variable '{variable.Key}' already exists.",
+                            LogLevel.WARNING);
                     }
                 }
             }
