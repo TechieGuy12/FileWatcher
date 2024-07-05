@@ -24,10 +24,11 @@
             {
                 return Level switch
                 {
-                    LogLevel.WARNING => "WARN",
+                    LogLevel.DEBUG => "DEBUG",
+                    LogLevel.WARNING => "WARN ",
                     LogLevel.ERROR => "ERROR",
                     LogLevel.FATAL => "FATAL",
-                    _ => "INFO",
+                    _ => "INFO ",
                 };
             }
         }
