@@ -145,7 +145,8 @@ namespace TE.FileWatcher.Configuration
                             LogLevel.ERROR);
                     }
                 }
-                catch (NullReferenceException ex)
+                catch (Exception ex)
+                    when (ex is NullReferenceException || ex is InvalidOperationException || ex is UriFormatException)
                 {
                     Logger.WriteLine(ex.Message, LogLevel.ERROR);
                     Logger.WriteLine(

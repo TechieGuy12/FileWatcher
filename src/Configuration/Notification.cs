@@ -158,10 +158,7 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            if (GetUri() == null)
-            {
-                throw new InvalidOperationException("The URL is null or empty.");
-            }
+            Uri uri = GetUri();
             
             Data ??= new Data();
             if (Data.Headers != null)
@@ -190,7 +187,7 @@ namespace TE.FileWatcher.Configuration
             Response response =
                 await Request.SendAsync(
                     Method,
-                    GetUri(),
+                    uri,
                     Data.Headers,
                     content,
                     Data.MimeType).ConfigureAwait(false);
@@ -299,7 +296,7 @@ namespace TE.FileWatcher.Configuration
             {
                 throw new UriFormatException($"The notification URL: {url} is not valid.");
             }
-
+            Logger.WriteLine($"URL: {url}.");
             Uri uri = new(url);
             return uri;
         }
