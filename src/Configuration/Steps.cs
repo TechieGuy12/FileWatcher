@@ -68,20 +68,30 @@ namespace TE.FileWatcher.Configuration
         /// Initializes all the steps.
         /// </summary>
         public void Initialize()
-        {
+        {            
             if (StepList == null || StepList.Count == 0)
             {
+                Logger.WriteLine("There are no steps to run. (Steps.Initialize)", LogLevel.DEBUG);
                 return; 
             }
 
-            AddVariables();
+            // Only add the variables if the steps haven't been initialized
+            if (!IsInitialized)
+            {
+                AddVariables();
+            }
 
             // Initialize each step, and also set any required steps that are
             // needed to be run for any step
             foreach (Step step in StepList)
             {
                 step.Initialize();
-                step.SetNeedSteps(StepList);
+                if (!IsInitialized)
+                {
+                    // Only add the needed steps if the steps haven't been
+                    // initialized
+                    step.SetNeedSteps(StepList);
+                }
             }
 
             HasCompleted = false;
@@ -101,6 +111,7 @@ namespace TE.FileWatcher.Configuration
         {
             if (StepList == null || StepList.Count <= 0)
             {
+                Logger.WriteLine("There are no steps to run. (Steps.Run)", LogLevel.DEBUG);
                 return;
             }
 
@@ -112,16 +123,19 @@ namespace TE.FileWatcher.Configuration
             _change = change;
             _trigger = trigger;
 
-            Logger.WriteLine($"Starting to run {StepList.Count} step(s).", LogLevel.DEBUG);
+            OnStarted(this, new TaskEventArgs(true, null, "Steps started."));
+
+            Logger.WriteLine($"Starting to run {StepList.Count} step(s). (Steps.Run)", LogLevel.DEBUG);
             foreach (Step step in StepList)
             {                                
                 if (!step.IsInitialized)
                 {
-                    step.Initialize();
+                    step.Initialize();                    
                 }
 
                 step.Completed += OnCompleted;
-                Task.Run(() => { step.Run(_change, _trigger); });
+                step.Run(_change, _trigger);
+                step.Completed -= OnCompleted;
             }
         }
 
@@ -137,6 +151,7 @@ namespace TE.FileWatcher.Configuration
         public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
             Started?.Invoke(this, e);
+            Logger.WriteLine($"{e.Message}");
         }
 
         /// <summary>
@@ -164,7 +179,8 @@ namespace TE.FileWatcher.Configuration
                 {
                     step.Reset();
                 }
-                
+
+                Logger.WriteLine($"{e.Message}");
                 Completed?.Invoke(this, new TaskEventArgs(true, null, "All steps completed."));
             }
         }

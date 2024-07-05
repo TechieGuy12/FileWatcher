@@ -75,7 +75,11 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public override void Initialize()
         {
-            AddVariables();
+            if (!IsInitialized)
+            {
+                AddVariables();
+            }
+
             base.Initialize();
         }
 
@@ -105,7 +109,7 @@ namespace TE.FileWatcher.Configuration
                     .FirstOrDefault(w => w.Id == Needs[i]);
                 if (needStep != null)
                 {
-                    Logger.WriteLine($"{Id} reliant on {needStep.Id}.", LogLevel.DEBUG);
+                    Logger.WriteLine($"{Id}: Needs {needStep.Id}. (Step.SetNeedSteps)", LogLevel.DEBUG);
                     SetNeed(needStep);
                 }
             }
@@ -125,29 +129,40 @@ namespace TE.FileWatcher.Configuration
             _change = change;
             _trigger = trigger;
 
-            Logger.WriteLine($"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger}", LogLevel.DEBUG);
+            Logger.WriteLine(
+                $"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger} (Step.Run)",
+                LogLevel.DEBUG);
 
             // If the step can't be run or is running currently, then don't
             // run the step
             if (!CanRun || IsRunning)
             {
+                Logger.WriteLine(
+                    $"{Id}: The step cannot run at this time. (Step.Run)",
+                    LogLevel.DEBUG);
                 return;
             }
 
-            Logger.WriteLine($"Running step: {Id}", LogLevel.DEBUG);
-            OnStarted(this, new TaskEventArgs(true, Id, $"{Id} step started."));
+            OnStarted(this, new TaskEventArgs(true, Id, $"{Id}: Step started."));
             IsRunning = true;
 
+            Logger.WriteLine($"{Id}: Running the action (if any). (Step.Run)", LogLevel.DEBUG);
             Action?.Run(change, trigger);
+            Logger.WriteLine($"{Id}: Running the command (if any). (Step.Run)", LogLevel.DEBUG);
             Command?.Run(change, trigger);
+            Logger.WriteLine($"{Id}: Sending the notification (if any). (Step.Run)", LogLevel.DEBUG);
             Notification?.Run(change, trigger);
 
             IsRunning = false;
-            OnCompleted(this, new TaskEventArgs(true, Id, $"{Id} step completed."));            
+            OnCompleted(this, new TaskEventArgs(true, Id, $"{Id}: Step completed."));            
         }
 
         public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
+            Logger.WriteLine(
+                $"{Id}: Needed step {e.Id} completed. Checking if this step can run. (Step.OnNeedsCompleted)",
+                LogLevel.DEBUG);
+
             base.OnNeedsCompleted(sender, e);
 
             if (_change != null)

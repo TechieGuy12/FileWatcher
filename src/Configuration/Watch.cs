@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Timers;
 using System.Xml.Serialization;
 using TE.FileWatcher.Log;
@@ -22,6 +23,9 @@ namespace TE.FileWatcher.Configuration
 
         // The timer used to "reset" the FileSystemWatch object
         private System.Timers.Timer? _timer;
+
+        // The background worker that processes the file/folder changes
+        private BackgroundWorker? _worker;
 
         // The queue that will contain the changes
         private ConcurrentQueue<ChangeInfo>? _queue;
@@ -155,13 +159,16 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
-            if (change == null || _queue == null)
+            if (change == null || _queue == null || _worker == null)
             {
                 return;
             }
 
             _queue.Enqueue(change);
-            ProcessChange();
+            if (!_worker.IsBusy)
+            {
+                _worker.RunWorkerAsync();
+            }
         }
 
         /// <summary>
@@ -174,19 +181,25 @@ namespace TE.FileWatcher.Configuration
                 Stop();
             }
 
-            AddVariables(variables);
+            if (!IsInitialized)
+            {
+                AddVariables(variables);
+            }
 
             if (PathExists())
             {
                 CreateFileSystemWatcher();
                 CreateQueue();
+                CreateBackgroundWorker();
                 CreateTimer();                
                 SetNeedWatch(watches);
                 Initialize();
+
+                Logger.WriteLine($"{IdLogString}: Number of needs: {_needs?.Count}. (Watch.Start)", LogLevel.DEBUG);
             }
             else
             {
-                Logger.WriteLine($"The path '{Path}' does not exists, so the watch was not created.");
+                Logger.WriteLine($"{IdLogString}: The path '{Path}' does not exists, so the watch was not created.");
             }
 
             return IsActive;
@@ -197,6 +210,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public bool Stop()
         {
+            _worker = null;
             _queue = null;
             _timer = null;
             _fsWatcher = null;
@@ -229,10 +243,24 @@ namespace TE.FileWatcher.Configuration
             if (disposing)
             {
                 _timer?.Dispose();
+                _worker?.Dispose();
                 _fsWatcher?.Dispose();
             }
 
             _disposed = true;
+        }
+
+
+        /// <summary>
+        /// Create the background worker to process the changes.
+        /// </summary>
+        private void CreateBackgroundWorker()
+        {
+            _worker = new BackgroundWorker
+            {
+                WorkerSupportsCancellation = false
+            };
+            _worker.DoWork += DoWork;
         }
 
         /// <summary>
@@ -248,7 +276,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Creating watch for {Path}.");
+            Logger.WriteLine($"{IdLogString}: Creating watch. Path: {Path}.");
 
             _fsWatcher = new FileSystemWatcher(Path)
             {
@@ -271,7 +299,7 @@ namespace TE.FileWatcher.Configuration
             _fsWatcher.IncludeSubdirectories = true;
             _fsWatcher.EnableRaisingEvents = true;
 
-            Logger.WriteLine($"Watch created for {Path}.");
+            Logger.WriteLine($"{IdLogString}: Watch created.");
         }
 
         /// <summary>
@@ -292,6 +320,20 @@ namespace TE.FileWatcher.Configuration
             _timer.Elapsed += OnElapsed;
         }
 
+        /// <summary>
+        /// Process the changes in a background worker thread.
+        /// </summary>
+        /// <param name="sender">
+        /// The object associated with this event.
+        /// </param>
+        /// <param name="e">
+        /// Arguments associated with the background worker.
+        /// </param>
+        private void DoWork(object? sender, DoWorkEventArgs e)
+        {
+            ProcessChange();
+        }
+
         public void ProcessChange()
         {
             if (string.IsNullOrWhiteSpace(Path))
@@ -299,8 +341,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            _queue ??= new ConcurrentQueue<ChangeInfo>();
-            Logger.WriteLine($"Watch {IdLogString} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.", LogLevel.DEBUG);
+            _queue ??= new ConcurrentQueue<ChangeInfo>();            
 
             if (_queue.IsEmpty)
             {
@@ -308,13 +349,28 @@ namespace TE.FileWatcher.Configuration
                 Thread.Sleep(100);
             }
 
+            Logger.WriteLine(
+                $"{IdLogString}: CanRun: {CanRun}, IsRunning: {IsRunning}. (Watch.ProcessChange)",
+                LogLevel.DEBUG);
+            Logger.WriteLine(
+                $"{IdLogString}: Needs: {_needs != null}, Needs completed: {_needs?.All(n => n.HasCompleted)}. (Watch.ProcessChange)",
+                LogLevel.DEBUG);
+            if (!CanRun || IsRunning)
+            {
+                Logger.WriteLine(
+                    $"{Id}: The watch cannot run at this time. (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+                return;
+            }
+
+            if (!_queue.IsEmpty)
+            {
+                OnStarted(this, new TaskEventArgs(true, IdLogString, $"{IdLogString}: Starting tasks for watch. Path {Path}."));
+            }
+
             while (!_queue.IsEmpty)
             {
-                Logger.WriteLine($"Watch: {IdLogString}. CanRun: {CanRun}, IsRunning: {IsRunning}.", LogLevel.DEBUG);
-                if (!CanRun || IsRunning)
-                {
-                    break;
-                }
+                Logger.WriteLine($"{IdLogString}: Path: {Path} Queue Count: {_queue.Count}, Queue IsEmpty: {_queue.IsEmpty}. (Watch.ProcessChange)", LogLevel.DEBUG);                
 
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
@@ -339,18 +395,24 @@ namespace TE.FileWatcher.Configuration
                                 continue;
                             }
                         }
-                        
-                        OnStarted(this, new TaskEventArgs(true, IdLogString, $"Starting tasks for watch {Id}: Path {Path}."));
-                        Logger.WriteLine($"Started: {change.FullPath}, {change.Trigger}", LogLevel.DEBUG);
+                                               
+                        Logger.WriteLine(
+                            $"{IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                            LogLevel.DEBUG);
+
                         Workflows?.Run(change, change.Trigger);
                         Notifications?.Send(change.Trigger, change);
                         Actions?.Run(change.Trigger, change);
                         Commands?.Run(change.Trigger, change);
-                        Logger.WriteLine($"Watch {IdLogString} Queue: Path: {Path} Count: {_queue.Count}, IsEmpty: {_queue.IsEmpty}.", LogLevel.DEBUG);
-                        OnCompleted(this, new TaskEventArgs(true, IdLogString, $"Completed tasks for watch {IdLogString}: Path: {Path}."));
+
+                        Logger.WriteLine(
+                            $"{IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                            LogLevel.DEBUG);
                     }
                 }
             }
+
+            OnCompleted(this, new TaskEventArgs(true, IdLogString, $"{IdLogString}: Tasks completed for watch."));
         }
 
         /// <summary>
@@ -639,13 +701,13 @@ namespace TE.FileWatcher.Configuration
             if (e.GetException().GetType() == typeof(InternalBufferOverflowException))
             {
                 Logger.WriteLine(
-                    $"File System Watcher internal buffer overflow.",
+                    $"{IdLogString}: File System Watcher internal buffer overflow.",
                     LogLevel.ERROR);
             }
             else
             {
                 Logger.WriteLine(
-                    $"An error occurred while watching the file system. Exception: {e.GetException().Message}",
+                    $"{IdLogString}: An error occurred while watching the file system. Exception: {e.GetException().Message}",
                     LogLevel.ERROR);
             }
 
@@ -686,8 +748,8 @@ namespace TE.FileWatcher.Configuration
 
         private void SetNeedWatch(Collection<Watch> watches)
         {
-            if (string.IsNullOrEmpty(Id) || watches == null || watches.Count <= 0)
-            {
+            if (watches == null || watches.Count <= 0)
+            {                
                 return;
             }
 
@@ -703,7 +765,7 @@ namespace TE.FileWatcher.Configuration
                     .FirstOrDefault(w => w.Id == Needs[i]);
                 if (needWatch != null)
                 {
-                    Logger.WriteLine($"{IdLogString} reliant on {needWatch.Id}.", LogLevel.DEBUG);
+                    Logger.WriteLine($"{IdLogString}: Needs {needWatch.Id}. (Watch.SetNeedWatch)", LogLevel.DEBUG);
                     SetNeed(needWatch);
                 }
             }
@@ -712,13 +774,16 @@ namespace TE.FileWatcher.Configuration
         public override void OnCompleted(object? sender, TaskEventArgs e)
         {
             base.OnCompleted(sender, e);
-            ProcessChange();
         }
 
         public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
-            Logger.WriteLine($"Needed watch {e.Id} completed. Checking if {IdLogString} can run.", LogLevel.DEBUG);
+            Logger.WriteLine(
+                $"{IdLogString}: Needed watch {e.Id} completed. Checking if this watch can run. (Watch.OnNeedsCompleted)",
+                LogLevel.DEBUG);
+
             base.OnNeedsCompleted(sender, e);
+
             ProcessChange();
         }   
 

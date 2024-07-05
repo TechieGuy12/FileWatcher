@@ -47,7 +47,11 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public void Initialize()
         {
-            AddVariables();
+            if (!IsInitialized)
+            {
+                AddVariables();
+            }
+
             HasCompleted = false;
             IsInitialized = true;
         }
@@ -92,7 +96,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Running steps.", LogLevel.DEBUG);
+            Logger.WriteLine($"Running steps. (Workflow.Run)", LogLevel.DEBUG);
             Steps.Initialize();
             Steps.Completed += OnStepsCompleted;
 
@@ -100,8 +104,7 @@ namespace TE.FileWatcher.Configuration
             // validation takes place in this workflow and not in the subsequent
             // jobs as it does with the non-workflow configuration
             Steps.Run(change, TriggerType.Step);
-
-            while (!Steps.HasCompleted) { }
+            Steps.Completed -= OnStepsCompleted;
         }
 
         /// <summary>
@@ -124,7 +127,6 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = Steps.HasCompleted;
             if (HasCompleted)
             {
-                Logger.WriteLine("All steps completed.", LogLevel.DEBUG);
                 Steps.Initialize();
                 base.OnCompleted(this, new TaskEventArgs(true, null, "All steps have completed."));
             }

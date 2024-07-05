@@ -57,7 +57,11 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public void Initialize()
         {
-            AddVariables();
+            if (!IsInitialized)
+            {
+                AddVariables();
+            }
+
             HasCompleted = false;
             IsInitialized = true;
         }
@@ -81,9 +85,10 @@ namespace TE.FileWatcher.Configuration
             }
 
             foreach (Workflow workflow in WorkflowList)
-            {                
-                workflow.Run(change, trigger);
+            {
                 workflow.Completed += OnCompleted;
+                workflow.Run(change, trigger);
+                workflow.Completed -= OnCompleted;
             }
         }
 
@@ -120,7 +125,7 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = WorkflowList.All(w => w.HasCompleted);
             if (HasCompleted)
             {
-                Logger.WriteLine("All workflows completed.", LogLevel.DEBUG);
+                Logger.WriteLine("All workflows completed. (Workflows.OnCompleted)", LogLevel.DEBUG);
 
                 // Once all steps have been completed, reset the steps for the
                 // next workflow run
