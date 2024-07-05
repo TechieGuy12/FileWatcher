@@ -68,12 +68,14 @@ namespace TE.FileWatcher.Configuration
 
         public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
-            Started?.Invoke(this, e);
+            Logger.WriteLine(e.Message);
+            Started?.Invoke(this, e);            
         }
 
         public virtual void OnCompleted(object? sender, TaskEventArgs e)
         {
-            Completed?.Invoke(this, e);
+            Logger.WriteLine(e.Message);
+            Completed?.Invoke(this, e);            
         }
     }
 }
