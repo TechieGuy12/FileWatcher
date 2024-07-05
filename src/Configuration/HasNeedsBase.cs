@@ -120,7 +120,7 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public virtual void OnCompleted(object? sender, TaskEventArgs e)
         {
-            Logger.WriteLine($"{e.Id} has completed.", LogLevel.DEBUG);
+            Logger.WriteLine($"{e.Message} (HasNeedsBase.OnCompleted)", LogLevel.DEBUG);
             HasCompleted = true;
             IsRunning = false;
             Completed?.Invoke(this, e);            
@@ -138,8 +138,9 @@ namespace TE.FileWatcher.Configuration
         public virtual void OnStarted(object? sender, TaskEventArgs e)
         {
             IsRunning = true;
+            HasCompleted = false;
             Started?.Invoke(this, e);
-            Logger.WriteLine($"{e.Id} has started.", LogLevel.DEBUG);
+            Logger.WriteLine($"{e.Message} (HasNeedsBase.OnStarted)", LogLevel.DEBUG);
         }
 
         /// <summary>
