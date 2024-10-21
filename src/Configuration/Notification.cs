@@ -183,7 +183,8 @@ namespace TE.FileWatcher.Configuration
                         Variables?.AllVariables);
                 }
             }
-
+           
+            Logger.WriteLine($"Sending request: {Method} {uri.ToString}.");
             Response response =
                 await Request.SendAsync(
                     Method,
