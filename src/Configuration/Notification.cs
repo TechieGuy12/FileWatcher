@@ -184,7 +184,7 @@ namespace TE.FileWatcher.Configuration
                 }
             }
            
-            Logger.WriteLine($"Sending request: {Method} {uri.ToString}.");
+            Logger.WriteLine($"Sending request: {Method} {uri}.");
             Response response =
                 await Request.SendAsync(
                     Method,
