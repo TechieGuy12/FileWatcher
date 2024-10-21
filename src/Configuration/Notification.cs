@@ -183,7 +183,10 @@ namespace TE.FileWatcher.Configuration
                         Variables?.AllVariables);
                 }
             }
-           
+
+            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds. (Notification.Run)", LogLevel.DEBUG);
+            Thread.Sleep(WaitBefore);
+
             Logger.WriteLine($"Sending request: {Method} {uri}.");
             Response response =
                 await Request.SendAsync(
