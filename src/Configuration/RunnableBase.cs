@@ -64,6 +64,9 @@ namespace TE.FileWatcher.Configuration
             }
 
             Change = change ?? throw new ArgumentNullException(nameof(change));
+
+            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds. (Command.Run)", LogLevel.DEBUG);
+            Thread.Sleep(WaitBefore);
         }
 
         public virtual void OnStarted(object? sender, TaskEventArgs e)

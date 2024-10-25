@@ -69,11 +69,7 @@ namespace TE.FileWatcher.Configuration
             catch (FileWatcherTriggerNotMatchException)
             {
                 return;
-            }
-
-            
-            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds. (Command.Run)", LogLevel.DEBUG);
-            Thread.Sleep(WaitBefore);
+            }          
 
             string? commandPath = GetCommand();
             string? arguments = GetArguments();

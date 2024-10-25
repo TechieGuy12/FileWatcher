@@ -92,9 +92,6 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Waiting for {WaitBefore} milliseconds. (Action.Run)", LogLevel.DEBUG);
-            Thread.Sleep(WaitBefore);
-
             string? source = GetSource();
             string? destination = GetDestination();
 
@@ -111,14 +108,6 @@ namespace TE.FileWatcher.Configuration
 
             try
             {
-                if (!TEFS.File.IsValid(source))
-                {
-                    Logger.WriteLine(
-                        $"The file '{source}' could not be {GetActionString()} because the path was not valid, the file doesn't exists, or it was in use.",
-                        LogLevel.ERROR);
-                    return;
-                }
-
                 switch (Type)
                 {
                     case ActionType.Copy:
