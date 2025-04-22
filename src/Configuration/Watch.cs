@@ -376,6 +376,10 @@ namespace TE.FileWatcher.Configuration
                 {
                     if (change != null)
                     {
+                        Logger.WriteLine(
+                            $"{IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                            LogLevel.DEBUG);
+
                         if (Filters != null && Filters.IsSpecified())
                         {
                             // If the file or folder is not a match, then don't take
@@ -395,7 +399,7 @@ namespace TE.FileWatcher.Configuration
                                 continue;
                             }
                         }
-                                               
+
                         Logger.WriteLine(
                             $"{IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
                             LogLevel.DEBUG);
@@ -409,6 +413,14 @@ namespace TE.FileWatcher.Configuration
                             $"{IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
                             LogLevel.DEBUG);
                     }
+                    else
+                    {
+                        Logger.WriteLine($"{IdLogString}: The change is null. (Watch.ProcessChange)", LogLevel.DEBUG);
+                    }
+                }
+                else
+                {
+                    Logger.WriteLine($"{IdLogString}: The change could not be removed from the queue. (Watch.ProcessChange)", LogLevel.DEBUG);
                 }
             }
 
