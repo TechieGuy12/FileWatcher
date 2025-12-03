@@ -467,11 +467,6 @@ namespace TE.FileWatcher.FileSystem
                 return;
             }
 
-            if (!IsValid(source) || !IsValid(destination))
-            {
-                return;
-            }
-
             DateTime? sourceTime = GetCreatedDate(source);
             if (sourceTime == null)
             {
@@ -502,11 +497,6 @@ namespace TE.FileWatcher.FileSystem
         private static void SetDestinationModifiedTime(string source, string destination)
         {
             if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
-            {
-                return;
-            }
-
-            if (!IsValid(source) || !IsValid(destination))
             {
                 return;
             }
