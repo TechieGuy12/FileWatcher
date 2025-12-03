@@ -326,6 +326,9 @@ namespace TE.FileWatcher.FileSystem
         /// <param name="path">
         /// The full path to the file.
         /// </param>
+        /// <param name="includeExtension">
+        /// Flag indicating whether to include the file extension in the returned name.
+        /// </param>
         /// <returns>
         /// The name of the file, otherwise <c>null</c>.
         /// </returns>
@@ -336,7 +339,7 @@ namespace TE.FileWatcher.FileSystem
                 return null;
             }
 
-            return includeExtension ? Path.GetFileNameWithoutExtension(path) : Path.GetFileName(path);
+            return includeExtension ? Path.GetFileName(path) : Path.GetFileNameWithoutExtension(path);
         }
 
         /// <summary>
