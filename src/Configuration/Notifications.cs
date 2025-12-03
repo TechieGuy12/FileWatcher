@@ -102,42 +102,63 @@ namespace TE.FileWatcher.Configuration
         /// The timer object.
         /// </param>
         /// <param name="e">
-        /// The information associated witht he elapsed time.
+        /// The information associated with the elapsed time.
         /// </param>
-        private async void OnElapsed(object? source, ElapsedEventArgs e)
+        private void OnElapsed(object? source, ElapsedEventArgs e)
         {
-            // If there are no notifications, then stop the timer
-            if (NotificationList == null || NotificationList.Count <= 0)
-            {
-                _timer.Stop();
-                return;
-            }
+            // Fire and forget pattern - don't await, but handle exceptions
+            _ = ProcessNotificationsAsync();
+        }
 
-            foreach (Notification notification in NotificationList)
+        /// <summary>
+        /// Processes all queued notifications asynchronously.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task ProcessNotificationsAsync()
+        {
+            try
             {
-                // If the notification doesn't have a message to send, then
-                // continue to the next notification
-                if (!notification.HasMessage)
+                // If there are no notifications, then stop the timer
+                if (NotificationList == null || NotificationList.Count <= 0)
                 {
-                    continue;
+                    _timer.Stop();
+                    return;
                 }
 
-                try
+                foreach (Notification notification in NotificationList)
                 {
-                    Response? response =
-                        await notification.SendAsync().ConfigureAwait(false);
-                    
-                    if (response == null)
+                    // If the notification doesn't have a message to send, then
+                    // continue to the next notification
+                    if (!notification.HasMessage)
                     {
                         continue;
                     }
 
-                    Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
-                    
-                }
-                catch (AggregateException aex)
-                {
-                    foreach (Exception ex in aex.Flatten().InnerExceptions)
+                    try
+                    {
+                        Response? response =
+                            await notification.SendAsync().ConfigureAwait(false);
+                        
+                        if (response == null)
+                        {
+                            continue;
+                        }
+
+                        Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
+                        
+                    }
+                    catch (AggregateException aex)
+                    {
+                        foreach (Exception ex in aex.Flatten().InnerExceptions)
+                        {
+                            Logger.WriteLine(ex.Message, LogLevel.ERROR);
+                            Logger.WriteLine(
+                                $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
+                                LogLevel.ERROR);
+                        }
+                    }
+                    catch (Exception ex)
+                        when (ex is NullReferenceException || ex is InvalidOperationException || ex is UriFormatException)
                     {
                         Logger.WriteLine(ex.Message, LogLevel.ERROR);
                         Logger.WriteLine(
@@ -145,19 +166,16 @@ namespace TE.FileWatcher.Configuration
                             LogLevel.ERROR);
                     }
                 }
-                catch (Exception ex)
-                    when (ex is NullReferenceException || ex is InvalidOperationException || ex is UriFormatException)
+
+                if (NotificationList.Count <= 0)
                 {
-                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                    Logger.WriteLine(
-                        $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
-                        LogLevel.ERROR);
+                    _timer.Stop();
                 }
             }
-
-            if (NotificationList.Count <= 0)
+            catch (Exception ex)
             {
-                _timer.Stop();
+                Logger.WriteLine($"Unhandled exception in notification processing: {ex.Message}", LogLevel.FATAL);
+                Logger.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}", LogLevel.FATAL);
             }
         }
 

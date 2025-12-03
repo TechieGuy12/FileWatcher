@@ -210,10 +210,34 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public bool Stop()
         {
-            _worker = null;
+            if (_disposed)
+            {
+                return !IsActive;
+            }
+
+            // Properly dispose resources before setting to null
+            if (_timer != null)
+            {
+                _timer.Stop();
+                _timer.Dispose();
+                _timer = null;
+            }
+
+            if (_worker != null)
+            {
+                _worker.Dispose();
+                _worker = null;
+            }
+
+            if (_fsWatcher != null)
+            {
+                _fsWatcher.EnableRaisingEvents = false;
+                _fsWatcher.Dispose();
+                _fsWatcher = null;
+            }
+
+            // Clear the queue
             _queue = null;
-            _timer = null;
-            _fsWatcher = null;
 
             return !IsActive;
         }

@@ -157,6 +157,10 @@ namespace TE.FileWatcher.FileSystem
         /// <param name="verify">
         /// Verify the file after the copy has completed.
         /// </param>
+        /// <param name="keepTimestamp">
+        /// Flag indicating the created and modified timestamps of the source
+        /// file will be applied to the destination file.
+        /// </param>
         /// <returns>
         /// <c>true</c> if the file was copied successfully, otherwise <c>false</c>.
         /// </returns>
@@ -208,6 +212,12 @@ namespace TE.FileWatcher.FileSystem
                     if (!fileCopied)
                     {
                         attempts++;
+                        if (attempts <= RETRIES)
+                        {
+                            // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+                            int delayMs = 100 * (1 << (attempts - 1));
+                            Thread.Sleep(delayMs);
+                        }
                     }
                 }
 
@@ -441,6 +451,12 @@ namespace TE.FileWatcher.FileSystem
                     if (!fileDeleted)
                     {
                         attempts++;
+                        if (attempts <= RETRIES)
+                        {
+                            // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+                            int delayMs = 100 * (1 << (attempts - 1));
+                            Thread.Sleep(delayMs);
+                        }
                     }
                 }
             }

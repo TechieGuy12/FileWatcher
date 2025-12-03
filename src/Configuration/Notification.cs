@@ -340,32 +340,34 @@ namespace TE.FileWatcher.Configuration
             
             try
             {
-                // This is a console app and for the step functionality to work,
-                // sending a notification will need to be sychronous so the next
-                // line will block execution and return when completed
-                Response? response = SendAsync().Result;
+                // Use GetAwaiter().GetResult() instead of .Result to avoid
+                // AggregateException wrapping and potential deadlocks
+                Response? response = SendAsync().GetAwaiter().GetResult();
                 if (response != null)
                 {
                     Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
                 }
-
             }
-            catch (AggregateException aex)
+            catch (Exception ex)
+                when (ex is AggregateException || ex is NullReferenceException || ex is InvalidOperationException || ex is UriFormatException)
             {
-                foreach (Exception ex in aex.Flatten().InnerExceptions)
+                if (ex is AggregateException aex)
+                {
+                    foreach (Exception innerEx in aex.Flatten().InnerExceptions)
+                    {
+                        Logger.WriteLine(innerEx.Message, LogLevel.ERROR);
+                        Logger.WriteLine(
+                            $"StackTrace:{Environment.NewLine}{innerEx.StackTrace}",
+                            LogLevel.ERROR);
+                    }
+                }
+                else
                 {
                     Logger.WriteLine(ex.Message, LogLevel.ERROR);
                     Logger.WriteLine(
                         $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
                         LogLevel.ERROR);
                 }
-            }
-            catch (NullReferenceException ex)
-            {
-                Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                Logger.WriteLine(
-                    $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
-                    LogLevel.ERROR);
             }
         }
     }

@@ -37,11 +37,15 @@ namespace TE.FileWatcher.Net
         // XML mime type
         private const string MIME_TYPE_XML = "application/xml";
 
-        // The collection of services - contains the HTTP clients
-        private static readonly ServiceCollection _services = new ServiceCollection();
-
-        // The provider of the service - the HTTP client
-        private static ServiceProvider? _serviceProvider;
+        // Thread-safe lazy initialization of service provider
+        private static readonly Lazy<ServiceProvider> _serviceProvider = new Lazy<ServiceProvider>(
+            () =>
+            {
+                var services = new ServiceCollection();
+                services.AddHttpClient();
+                return services.BuildServiceProvider();
+            },
+            LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>
         /// Sends a request to a remote system asychronously.
@@ -76,12 +80,6 @@ namespace TE.FileWatcher.Net
                 throw new ArgumentNullException(nameof(uri));
             }
 
-            if (_serviceProvider == null)
-            {
-                _services.AddHttpClient();
-                _serviceProvider = _services.BuildServiceProvider();
-            }
-
             using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
             {
                 headers?.Set(request);
@@ -93,7 +91,7 @@ namespace TE.FileWatcher.Net
 
                 try
                 {
-                    var client = _serviceProvider.GetService<HttpClient>();
+                    var client = _serviceProvider.Value.GetService<HttpClient>();
                     if (client != null)
                     {
                         using (HttpResponseMessage requestResponse =
@@ -118,7 +116,7 @@ namespace TE.FileWatcher.Net
                             System.Net.HttpStatusCode.InternalServerError,
                             "Request could not be sent. Reason: The HTTP client service could not be initialized.",
                             null,
-                            uri.OriginalString); ;
+                            uri.OriginalString);
                     }
                 }
                 catch (Exception ex)

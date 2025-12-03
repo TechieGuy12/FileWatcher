@@ -35,13 +35,22 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         Step = 16
     }
+    
     /// <summary>
     /// The triggers that will indicate a notification is to be sent.
     /// </summary>
     public class Triggers
     {
-        // The flags for the triggers
-        TriggerType _triggers = TriggerType.None;
+        // Thread-safe lazy initialization of combined triggers
+        private Lazy<TriggerType> _combinedTriggers;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Triggers"/> class.
+        /// </summary>
+        public Triggers()
+        {
+            _combinedTriggers = new Lazy<TriggerType>(CombineTriggers, LazyThreadSafetyMode.ExecutionAndPublication);
+        }
 
         /// <summary>
         /// Gets or sets a list of notification triggers.
@@ -58,23 +67,28 @@ namespace TE.FileWatcher.Configuration
         {
             get
             {
-                // Return the triggers if they have already been combined
-                // by checking if they are not equal to the default value
-                if (_triggers != TriggerType.None)
-                {
-                    return _triggers;
-                }
-
-                if (TriggerList != null && TriggerList.Count > 0)
-                {
-                    foreach (TriggerType trigger in TriggerList)
-                    {
-                        _triggers |= trigger;
-                    }
-                }
-
-                return _triggers;
+                return _combinedTriggers.Value;
             }
+        }
+
+        /// <summary>
+        /// Combines all triggers in the trigger list into a single flag value.
+        /// </summary>
+        /// <returns>The combined trigger flags.</returns>
+        private TriggerType CombineTriggers()
+        {
+            if (TriggerList == null || TriggerList.Count == 0)
+            {
+                return TriggerType.None;
+            }
+
+            TriggerType result = TriggerType.None;
+            foreach (TriggerType trigger in TriggerList)
+            {
+                result |= trigger;
+            }
+
+            return result;
         }
     }
 }
