@@ -15,6 +15,15 @@ namespace TE.FileWatcher.FileSystem
         // A megabyte
         private const int MEGABYTE = 1024 * 1024;
 
+        // Maximum number of checks when waiting for file to be accessible
+        private const int MAX_FILE_WAIT_CHECKS = 600;
+
+        // Delay in milliseconds between file accessibility checks
+        private const int FILE_WAIT_CHECK_DELAY_MS = 1000;
+
+        // Initial delay for exponential backoff in milliseconds
+        private const int RETRY_INITIAL_DELAY_MS = 100;
+
         /// <summary>
         /// Gets the hash of the file.
         /// </summary>
@@ -125,10 +134,9 @@ namespace TE.FileWatcher.FileSystem
                     $"The file '{path}' was not found.", path);
             }
 
-            int maxChecks = 600;
             bool isFileLocked = true;
             int checkCounter = 0;
-            while (isFileLocked && (checkCounter <= maxChecks))
+            while (isFileLocked && (checkCounter <= MAX_FILE_WAIT_CHECKS))
             {
                 try
                 {
@@ -140,7 +148,7 @@ namespace TE.FileWatcher.FileSystem
                 catch (IOException)
                 {
                     checkCounter++;
-                    Thread.Sleep(1000);
+                    Thread.Sleep(FILE_WAIT_CHECK_DELAY_MS);
                 }
             }
         }
@@ -214,8 +222,8 @@ namespace TE.FileWatcher.FileSystem
                         attempts++;
                         if (attempts <= RETRIES)
                         {
-                            // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
-                            int delayMs = 100 * (1 << (attempts - 1));
+                            // Exponential backoff
+                            int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
                             Thread.Sleep(delayMs);
                         }
                     }
@@ -453,8 +461,8 @@ namespace TE.FileWatcher.FileSystem
                         attempts++;
                         if (attempts <= RETRIES)
                         {
-                            // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
-                            int delayMs = 100 * (1 << (attempts - 1));
+                            // Exponential backoff
+                            int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
                             Thread.Sleep(delayMs);
                         }
                     }
@@ -493,10 +501,13 @@ namespace TE.FileWatcher.FileSystem
             {
                 DotNetIO.File.SetCreationTime(destination, (DateTime)sourceTime);
             }
-            catch
+            catch (Exception ex)
+                when (ex is UnauthorizedAccessException || ex is ArgumentException || ex is IOException)
             {
-                // Just swallow the exception as we are just setting the time
-                return;
+                // Log the exception but don't fail the operation as timestamp setting is non-critical
+                Log.Logger.WriteLine(
+                    $"Could not set creation time on '{destination}'. Reason: {ex.Message}",
+                    Log.LogLevel.WARNING);
             }
         }
 
@@ -527,10 +538,13 @@ namespace TE.FileWatcher.FileSystem
             {
                 DotNetIO.File.SetLastWriteTime(destination, (DateTime)sourceTime);
             }
-            catch
+            catch (Exception ex)
+                when (ex is UnauthorizedAccessException || ex is ArgumentException || ex is IOException)
             {
-                // Just swallow the exception as we are just setting the time
-                return;
+                // Log the exception but don't fail the operation as timestamp setting is non-critical
+                Log.Logger.WriteLine(
+                    $"Could not set modified time on '{destination}'. Reason: {ex.Message}",
+                    Log.LogLevel.WARNING);
             }
         }
     }

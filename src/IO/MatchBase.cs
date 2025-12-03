@@ -139,8 +139,15 @@ namespace TE.FileWatcher.IO
                     }
                 }
             }
-            catch
+            catch (Exception ex)
+                when (ex is UnauthorizedAccessException || ex is IOException || ex is ArgumentException)
             {
+                if (Log)
+                {
+                    Logger.WriteLine(
+                        $"{FilterTypeName}: Could not check attributes for '{path}'. Reason: {ex.Message}",
+                        LogLevel.WARNING);
+                }
                 hasAttribute = false;
             }
             return hasAttribute;

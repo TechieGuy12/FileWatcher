@@ -12,6 +12,21 @@ namespace TE.FileWatcher.Configuration
     /// </summary>
     public class Watch : HasNeedsBase, IDisposable
     {
+        // Timer interval for resetting FileSystemWatcher (10 minutes)
+        private const int FILESYSTEMWATCHER_RESET_INTERVAL_MS = 600000;
+
+        // Sleep time when queue is empty (milliseconds)
+        private const int EMPTY_QUEUE_SLEEP_MS = 100;
+
+        // Sleep time for path existence check (milliseconds)
+        private const int PATH_CHECK_SLEEP_MS = 500;
+
+        // Maximum retry attempts for FileSystemWatcher recovery
+        private const int WATCHER_RECOVERY_MAX_ATTEMPTS = 120;
+
+        // Timeout between FileSystemWatcher recovery attempts (30 seconds)
+        private const int WATCHER_RECOVERY_TIMEOUT_MS = 30000;
+
         // The file system watcher object
         private FileSystemWatcher? _fsWatcher;
 
@@ -339,7 +354,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void CreateTimer()
         {
-            _timer = new System.Timers.Timer(600000);
+            _timer = new System.Timers.Timer(FILESYSTEMWATCHER_RESET_INTERVAL_MS);
             _timer.Enabled = true;
             _timer.Elapsed += OnElapsed;
         }
@@ -370,7 +385,7 @@ namespace TE.FileWatcher.Configuration
             if (_queue.IsEmpty)
             {
                 Initialize();
-                Thread.Sleep(100);
+                Thread.Sleep(EMPTY_QUEUE_SLEEP_MS);
             }
 
             Logger.WriteLine(
@@ -569,8 +584,11 @@ namespace TE.FileWatcher.Configuration
                 // isn't valid
                 return isValid ? change : null;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.WriteLine(
+                    $"{IdLogString}: Error processing change for '{fullPath}'. Reason: {ex.Message} (Watch.GetChange)",
+                    LogLevel.WARNING);
                 return null;
             }
         }
@@ -588,23 +606,36 @@ namespace TE.FileWatcher.Configuration
         private static void NotAccessibleError(FileSystemWatcher source, ErrorEventArgs e)
         {
             source.EnableRaisingEvents = false;
-            int iMaxAttempts = 120;
-            int iTimeOut = 30000;
-            int i = 0;
-            while (source.EnableRaisingEvents == false && i < iMaxAttempts)
+            int attemptCount = 0;
+            while (source.EnableRaisingEvents == false && attemptCount < WATCHER_RECOVERY_MAX_ATTEMPTS)
             {
-                i += 1;
+                attemptCount++;
                 try
                 {
                     source.EnableRaisingEvents = true;
                 }
-                catch
+                catch (Exception ex)
                 {
                     source.EnableRaisingEvents = false;
-                    Thread.Sleep(iTimeOut);
+                    Logger.WriteLine(
+                        $"FileSystemWatcher recovery attempt {attemptCount}/{WATCHER_RECOVERY_MAX_ATTEMPTS} failed. Reason: {ex.Message}",
+                        LogLevel.WARNING);
+                    Thread.Sleep(WATCHER_RECOVERY_TIMEOUT_MS);
                 }
             }
 
+            if (!source.EnableRaisingEvents)
+            {
+                Logger.WriteLine(
+                    $"FileSystemWatcher recovery failed after {WATCHER_RECOVERY_MAX_ATTEMPTS} attempts.",
+                    LogLevel.ERROR);
+            }
+            else
+            {
+                Logger.WriteLine(
+                    $"FileSystemWatcher recovered successfully after {attemptCount} attempts.",
+                    LogLevel.INFO);
+            }
         }
 
         /// <summary>
@@ -763,20 +794,17 @@ namespace TE.FileWatcher.Configuration
         /// </returns>
         private bool PathExists()
         {
-            // The amount of time for the thread to sleep
-            const int SLEEP_TIME = 500;
-
             // Calculate the total number of times the thread will wait based
-            // on the timeout value and the SLEEP_TIME
-            int waitTime = (Timeout * 1000) / SLEEP_TIME;
+            // on the timeout value and the PATH_CHECK_SLEEP_MS
+            int waitTime = (Timeout * 1000) / PATH_CHECK_SLEEP_MS;
 
             // The number of times the thread has slept
-            int i = 0;
+            int checkCount = 0;
 
-            while (!Directory.Exists(Path) && waitTime > i)
+            while (!Directory.Exists(Path) && waitTime > checkCount)
             {
-                Thread.Sleep(SLEEP_TIME);
-                i++;
+                Thread.Sleep(PATH_CHECK_SLEEP_MS);
+                checkCount++;
             }
 
             return Directory.Exists(Path);

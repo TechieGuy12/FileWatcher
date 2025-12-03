@@ -13,11 +13,11 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("notifications")]
     public class Notifications : HasVariablesBase, IDisposable
     {
-        // The default wait time
-        private const int DEFAULT_WAIT_TIME = 30000;
+        // The default wait time (30 seconds)
+        private const int DEFAULT_WAIT_TIME_MS = 30000;
 
-        // The minimum wait time
-        private const int MIN_WAIT_TIME = 30000;
+        // The minimum wait time (30 seconds)
+        private const int MIN_WAIT_TIME_MS = 30000;
 
         // The timer
         private readonly System.Timers.Timer _timer;
@@ -44,7 +44,7 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public Notifications()
         {
-            currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME;
+            currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME_MS;
 
             _timer = new System.Timers.Timer(currentWaitTime);
             _timer.Elapsed += OnElapsed;            
@@ -209,10 +209,10 @@ namespace TE.FileWatcher.Configuration
 
             if (!_timer.Enabled)
             {
-                currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME;              
-                if (currentWaitTime < MIN_WAIT_TIME)
+                currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME_MS;              
+                if (currentWaitTime < MIN_WAIT_TIME_MS)
                 {
-                    currentWaitTime = MIN_WAIT_TIME;
+                    currentWaitTime = MIN_WAIT_TIME_MS;
                 }
 
                 _timer.Interval = currentWaitTime;
