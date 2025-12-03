@@ -11,6 +11,9 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("workflows")]
     public class Workflows : HasVariablesBase, IRunnable
     {
+        // Prevent subscribing multiple times
+        private bool _subscriptionsAdded = false;
+
         /// <summary>
         /// The event for the completion of the workflows.
         /// </summary>
@@ -62,6 +65,16 @@ namespace TE.FileWatcher.Configuration
                 AddVariables();
             }
 
+            // Subscribe to workflow completions once during initialization
+            if (WorkflowList != null && !_subscriptionsAdded)
+            {
+                foreach (Workflow workflow in WorkflowList)
+                {
+                    workflow.Completed += OnCompleted;
+                }
+                _subscriptionsAdded = true;
+            }
+
             HasCompleted = false;
             IsInitialized = true;
         }
@@ -84,11 +97,13 @@ namespace TE.FileWatcher.Configuration
                 Initialize();
             }
 
+            // Reset completion state for this run
+            HasCompleted = false;
+
             foreach (Workflow workflow in WorkflowList)
             {
-                workflow.Completed += OnCompleted;
+                // Do not subscribe/unsubscribe here; subscriptions are managed in Initialize()
                 workflow.Run(change, trigger);
-                workflow.Completed -= OnCompleted;
             }
         }
 
@@ -127,14 +142,12 @@ namespace TE.FileWatcher.Configuration
             {
                 Logger.WriteLine("All workflows completed. (Workflows.OnCompleted)", LogLevel.DEBUG);
 
-                // Once all steps have been completed, reset the steps for the
-                // next workflow run
+                // Reset workflows for the next run
                 foreach (Workflow workflow in WorkflowList)
                 {
                     workflow.Initialize();
                 }
 
-                Initialize();
                 Completed?.Invoke(this, e);
             }
         }

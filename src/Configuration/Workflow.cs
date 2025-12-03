@@ -15,6 +15,9 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("workflow")]
     public class Workflow : RunnableBase
     {
+        // Prevent subscribing multiple times
+        private bool _stepsSubscribed = false;
+
         /// <summary>
         /// Gets or sets all the steps for the workflow.
         /// </summary>
@@ -50,6 +53,13 @@ namespace TE.FileWatcher.Configuration
             if (!IsInitialized)
             {
                 AddVariables();
+            }
+
+            // Subscribe to Steps.Completed once during initialization
+            if (Steps != null && !_stepsSubscribed)
+            {
+                Steps.Completed += OnStepsCompleted;
+                _stepsSubscribed = true;
             }
 
             HasCompleted = false;
@@ -98,13 +108,12 @@ namespace TE.FileWatcher.Configuration
 
             Logger.WriteLine($"Running steps. (Workflow.Run)", LogLevel.DEBUG);
             Steps.Initialize();
-            Steps.Completed += OnStepsCompleted;
 
+            // Do not subscribe/unsubscribe here; subscription is managed in Initialize()
             // Call the steps, but change the trigger to "Step" as the trigger
             // validation takes place in this workflow and not in the subsequent
             // jobs as it does with the non-workflow configuration
             Steps.Run(change, TriggerType.Step);
-            Steps.Completed -= OnStepsCompleted;
         }
 
         /// <summary>
@@ -127,7 +136,7 @@ namespace TE.FileWatcher.Configuration
             HasCompleted = Steps.HasCompleted;
             if (HasCompleted)
             {
-                Steps.Initialize();
+                Logger.WriteLine("Workflow steps completed. (Workflow.OnStepsCompleted)", LogLevel.DEBUG);
                 base.OnCompleted(this, new TaskEventArgs(true, null, "All steps have completed."));
             }
         }

@@ -17,10 +17,6 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("steps")]
     public class Steps : HasVariablesBase, IRunnable
     {
-        private ChangeInfo? _change;
-
-        private TriggerType _trigger;
-
         /// <summary>
         /// The event for the completion of the steps.
         /// </summary>
@@ -48,6 +44,9 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         [XmlIgnore]
         public bool IsInitialized { get; private set; }
+
+        // Prevent subscribing multiple times across repeated Initialize/Run cycles
+        private bool _subscriptionsAdded = false;
 
         /// <summary>
         /// Add the variables list to the dependent objects.
@@ -92,8 +91,15 @@ namespace TE.FileWatcher.Configuration
                     // initialized
                     step.SetNeedSteps(StepList);
                 }
+
+                // Subscribe to step completion once for the lifetime of this Steps instance.
+                if (!_subscriptionsAdded)
+                {
+                    step.Completed += OnCompleted;
+                }
             }
 
+            _subscriptionsAdded = true;
             HasCompleted = false;
             IsInitialized = true;
         }
@@ -120,22 +126,18 @@ namespace TE.FileWatcher.Configuration
                 Initialize();
             }
 
-            _change = change;
-            _trigger = trigger;
-
             OnStarted(this, new TaskEventArgs(true, null, "Steps started."));
 
             Logger.WriteLine($"Starting to run {StepList.Count} step(s). (Steps.Run)", LogLevel.DEBUG);
             foreach (Step step in StepList)
-            {                                
+            {        
                 if (!step.IsInitialized)
                 {
                     step.Initialize();                    
                 }
 
-                step.Completed += OnCompleted;
-                step.Run(_change, _trigger);
-                step.Completed -= OnCompleted;
+                // Subscriptions are managed in Initialize() - just run the step
+                step.Run(change, trigger);
             }
         }
 
