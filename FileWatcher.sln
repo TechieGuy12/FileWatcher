@@ -1,3 +1,4 @@
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
@@ -10,6 +11,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{
 	EndProjectSection
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "FwInstaller", "FwInstaller\FwInstaller.wixproj", "{7ABA5E77-930C-490D-A73B-556589F70F6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileWatcher.Tests", "tests\FileWatcher.Tests.csproj", "{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{A1B2C3D4-E5F6-4A5B-8C7D-9E0F1A2B3C4D}"
+	ProjectSection(SolutionItems) = preProject
+		.github\WORKFLOWS.md = .github\WORKFLOWS.md
+		.github\workflows\ci-cd.yml = .github\workflows\ci-cd.yml
+		.github\workflows\tests.yml = .github\workflows\tests.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,9 +67,28 @@ Global
 		{7ABA5E77-930C-490D-A73B-556589F70F6E}.Release|x64.Build.0 = Release|x64
 		{7ABA5E77-930C-490D-A73B-556589F70F6E}.Release|x86.ActiveCfg = Release|x86
 		{7ABA5E77-930C-490D-A73B-556589F70F6E}.Release|x86.Build.0 = Release|x86
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Debug|x86.Build.0 = Debug|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|ARM64.Build.0 = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|x64.Build.0 = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|x86.ActiveCfg = Release|Any CPU
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EF3B8379-AA4E-45E3-95D6-6C44EA8C7BB0} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {75F729D8-AFCB-4AE3-8FEE-5B4A658ACE0D}
