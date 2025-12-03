@@ -8,7 +8,6 @@ on:
 
 env:
   DOTNET_VERSION: '6.0.x'
-  SOLUTION_PATH: './FileWatcher.sln'
   
 jobs:
   build-and-test:
@@ -35,13 +34,17 @@ jobs:
           ${{ runner.os }}-nuget-
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: |
+        dotnet restore src/FileWatcher.csproj
+        dotnet restore tests/FileWatcher.Tests.csproj
       
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: |
+        dotnet build src/FileWatcher.csproj --no-restore --configuration Release
+        dotnet build tests/FileWatcher.Tests.csproj --no-restore --configuration Release
       
     - name: Run Tests with Coverage
-      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test tests/FileWatcher.Tests.csproj --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=test-results.trx"
       
     - name: Upload test results
       if: always()
@@ -107,11 +110,15 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: |
+        dotnet restore src/FileWatcher.csproj
+        dotnet restore tests/FileWatcher.Tests.csproj
       
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: |
+        dotnet build src/FileWatcher.csproj --no-restore --configuration Release
+        dotnet build tests/FileWatcher.Tests.csproj --no-restore --configuration Release
       
     - name: Run Code Analysis
-      run: dotnet format --verify-no-changes --verbosity diagnostic
+      run: dotnet format src/FileWatcher.csproj --verify-no-changes --verbosity diagnostic
       continue-on-error: true
