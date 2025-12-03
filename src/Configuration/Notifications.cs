@@ -55,13 +55,15 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void AddVariables()
         {
-            if (NotificationList != null)
+            if (NotificationList == null)
             {
-                Parallel.ForEach(NotificationList, (notification) =>
-                {
-                    notification.Variables ??= new Variables();
-                    notification.Variables.Add(Variables?.AllVariables);
-                });
+                return;
+            }
+
+            foreach (Notification notification in NotificationList)
+            {
+                notification.Variables ??= new Variables();
+                notification.Variables.Add(Variables?.AllVariables);
             }
         }
 

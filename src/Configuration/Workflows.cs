@@ -45,13 +45,15 @@ namespace TE.FileWatcher.Configuration
         private void AddVariables()
         {
             Logger.WriteLine($"Workflows variable count: {Variables?.AllVariables?.Count}.");
-            if (WorkflowList != null)
+            if (WorkflowList == null)
             {
-                Parallel.ForEach(WorkflowList, (workflow) =>
-                {
-                    workflow.Variables ??= new Variables();
-                    workflow.Variables?.Add(Variables?.AllVariables);
-                });
+                return;
+            }
+
+            foreach (Workflow workflow in WorkflowList)
+            {
+                workflow.Variables ??= new Variables();
+                workflow.Variables?.Add(Variables?.AllVariables);
             }
         }
 

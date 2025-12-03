@@ -20,13 +20,15 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         private void AddVariables()
         {
-            if (ActionList != null)
+            if (ActionList == null)
             {
-                Parallel.ForEach(ActionList, (action) =>
-                {
-                    action.Variables ??= new Variables();
-                    action.Variables.Add(Variables?.AllVariables);
-                });
+                return;
+            }
+
+            foreach (Action action in ActionList)
+            {
+                action.Variables ??= new Variables();
+                action.Variables.Add(Variables?.AllVariables);
             }
         }
 
