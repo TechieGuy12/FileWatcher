@@ -1,6 +1,6 @@
-﻿<Project Sdk="WixToolset.Sdk/4.0.0">
+﻿<Project Sdk="WixToolset.Sdk/6.0.2">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\src\bin\Release\net6.0\publish\win-x64</OutputPath>
+    <OutputPath>..\src\bin\Release\net8.0\publish\win-x64</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <None Include="config.xml.sample" />
