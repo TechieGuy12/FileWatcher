@@ -144,15 +144,25 @@ namespace FileWatcher.Tests
         {
             // Arrange
             var testFile = CreateTestFile("test.txt");
-            var envVarName = "TEMP";
-            var expectedValue = Environment.GetEnvironmentVariable(envVarName);
-            var value = $"Temp: [env:{envVarName}]";
+            var envVarName = "FILEWATCHER_TEST_VAR";
+            var envVarValue = "TestEnvironmentValue";
+            Environment.SetEnvironmentVariable(envVarName, envVarValue);
+            
+            try
+            {
+                var value = $"Temp: [env:{envVarName}]";
 
-            // Act
-            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+                // Act
+                var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
 
-            // Assert
-            result.Should().Be($"Temp: {expectedValue}");
+                // Assert
+                result.Should().Be($"Temp: {envVarValue}");
+            }
+            finally
+            {
+                // Cleanup
+                Environment.SetEnvironmentVariable(envVarName, null);
+            }
         }
 
         [Fact]
