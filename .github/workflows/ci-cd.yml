@@ -12,7 +12,7 @@ env:
 jobs:
   build-and-test:
     name: Build, Test & Coverage
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
@@ -94,7 +94,7 @@ jobs:
         
   analyze:
     name: Code Quality Analysis
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build-and-test
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/developv2')
     
