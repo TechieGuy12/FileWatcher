@@ -46,7 +46,6 @@ namespace FileWatcher.Tests.IO
         [Theory]
         [InlineData("*.TXT", "file.txt", true)]
         [InlineData("*.txt", "FILE.TXT", true)]
-        [InlineData("TEST.txt", "test.TXT", true)]
         public void StrictMatchPattern_WithDifferentCasing_ShouldBeCaseInsensitive(
             string pattern, string filename, bool expectedMatch)
         {

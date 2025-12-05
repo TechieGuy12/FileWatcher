@@ -77,5 +77,28 @@ namespace TE.FileWatcher.IO
 
             return isMatch;
         }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+        public override bool Equals(object? obj)
+        {
+            if (obj is Name other)
+            {
+                return string.Equals(Pattern, other.Pattern, StringComparison.Ordinal);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        public override int GetHashCode()
+        {
+            return Pattern?.GetHashCode(StringComparison.Ordinal) ?? 0;
+        }
     }
 }

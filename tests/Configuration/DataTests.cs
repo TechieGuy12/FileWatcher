@@ -29,8 +29,8 @@ namespace FileWatcher.Tests.Configuration
         }
 
         [Theory]
-        [InlineData("json")]
-        [InlineData("xml")]
+        [InlineData("JSON")]
+        [InlineData("XML")]
         public void MimeTypeString_WithValidType_ShouldSetCorrectly(string mimeType)
         {
             // Arrange
