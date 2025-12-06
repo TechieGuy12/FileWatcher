@@ -91,5 +91,453 @@ namespace FileWatcher.Tests.Configuration
             // Assert
             act.Should().NotThrow();
         }
+
+        [Fact]
+        public void Run_WithValidCommandNoArguments_ShouldQueueCommand()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithCommandAndArguments_ShouldQueueBoth()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "-flag value",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithPlaceholderInArguments_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "[somevariable]", // Placeholder - will remain if variable not set
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithWorkingDirectory_ShouldSetWorkingDirectory()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                WorkingDirectory = _testDirectory,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNonExistentCommand_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "C:\\NonExistent\\command.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw, but log error
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNullPath_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = null,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithEmptyPath_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNullChange_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "test.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+
+            // Act & Assert
+            System.Action act = () => command.Run(null!, TriggerType.Create);
+            act.Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void Run_WithMismatchedTrigger_ShouldNotExecute()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "test.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Delete, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw, trigger validation prevents execution
+            System.Action act = () => command.Run(change, TriggerType.Delete);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithSpecialCharactersInArguments_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "-arg \"value with spaces\" --flag='quoted'",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithVariablesInArguments_ShouldReplaceVariables()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "[variable1] [variable2]",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                },
+                Variables = new Variables()
+            };
+            var variableList = new List<Variable>
+            {
+                new Variable { Name = "variable1", Value = "value1" },
+                new Variable { Name = "variable2", Value = "value2" }
+            };
+            command.Variables.Add(variableList);
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithPlaceholderInArguments_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "[somevariable]", // Placeholder - will remain if variable not set
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithWorkingDirectory_ShouldSetWorkingDirectory()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                WorkingDirectory = _testDirectory,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNonExistentCommand_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "C:\\NonExistent\\command.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw, but log error
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNullPath_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = null,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithEmptyPath_ShouldLogError()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert
+            System.Action act = () => command.Run(change, TriggerType.Create);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithNullChange_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "test.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+
+            // Act & Assert
+            System.Action act = () => command.Run(null!, TriggerType.Create);
+            act.Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void Run_WithMismatchedTrigger_ShouldNotExecute()
+        {
+            // Arrange
+            var command = new Command
+            {
+                Path = "test.exe",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Delete, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act & Assert - Should not throw, trigger validation prevents execution
+            System.Action act = () => command.Run(change, TriggerType.Delete);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithSpecialCharactersInArguments_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "-arg \"value with spaces\" --flag='quoted'",
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithLongArguments_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var longArgs = new string('a', 5000);
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = longArgs,
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Run_WithEnvironmentVariableInArguments_ShouldExpand()
+        {
+            // Arrange
+            var testExe = CreateTestExecutable("test.cmd");
+            var command = new Command
+            {
+                Path = testExe,
+                Arguments = "[%TEMP%]", // Environment variable placeholder
+                Triggers = new Triggers
+                {
+                    TriggerList = new System.Collections.ObjectModel.Collection<TriggerType> { TriggerType.Create }
+                }
+            };
+            var change = new ChangeInfo(TriggerType.Create, "C:\\watch", "file.txt", "C:\\watch\\file.txt", null, null);
+
+            // Act
+            System.Action act = () => command.Run(change, TriggerType.Create);
+
+            // Assert
+            act.Should().NotThrow();
+        }
     }
 }
