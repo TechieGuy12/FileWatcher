@@ -54,7 +54,7 @@ namespace FileWatcher.Tests.FileSystem
         public void Create_WithNestedPath_ShouldCreateAllDirectories()
         {
             // Arrange
-            var path = GetTestPath("level1\\level2\\level3\\file.txt");
+            var path = Path.Combine(_testDirectory, "level1", "level2", "level3", "file.txt");
 
             // Act
             TFDirectory.Create(path);
@@ -62,7 +62,7 @@ namespace FileWatcher.Tests.FileSystem
             // Assert
             IODirectory.Exists(Path.GetDirectoryName(path)).Should().BeTrue();
             IODirectory.Exists(Path.Combine(_testDirectory, "level1")).Should().BeTrue();
-            IODirectory.Exists(Path.Combine(_testDirectory, "level1\\level2")).Should().BeTrue();
+            IODirectory.Exists(Path.Combine(_testDirectory, "level1", "level2")).Should().BeTrue();
         }
 
         [Fact]
