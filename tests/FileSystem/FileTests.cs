@@ -161,10 +161,257 @@ namespace FileWatcher.Tests.FileSystem
         }
 
         [Fact]
+        public void Copy_ValidSourceAndDestination_ShouldCopyFile()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Copy(source, dest, verify: false, keepTimestamp: false);
+
+            // Assert
+            IOFile.Exists(dest).Should().BeTrue();
+        }
+
+        [Fact]
+        public void Copy_WithVerify_ShouldCopyAndVerify()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Copy(source, dest, verify: true, keepTimestamp: false);
+
+            // Assert
+            IOFile.Exists(dest).Should().BeTrue();
+            IOFile.ReadAllText(dest).Should().Be("test content");
+        }
+
+        [Fact]
+        public void Copy_WithKeepTimestamp_ShouldPreserveTimestamps()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var sourceCreated = IOFile.GetCreationTime(source);
+            var sourceModified = IOFile.GetLastWriteTime(source);
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Copy(source, dest, verify: false, keepTimestamp: true);
+
+            // Assert
+            var destCreated = IOFile.GetCreationTime(dest);
+            var destModified = IOFile.GetLastWriteTime(dest);
+            destCreated.Should().BeCloseTo(sourceCreated, TimeSpan.FromSeconds(1));
+            destModified.Should().BeCloseTo(sourceModified, TimeSpan.FromSeconds(1));
+        }
+
+        [Fact]
+        public void Copy_WithNullSource_ShouldThrowArgumentNullException()
+        {
+            // Act
+            System.Action act = () => TFFile.Copy(null!, "dest.txt", false, false);
+
+            // Assert
+            act.Should().Throw<ArgumentNullException>()
+                .WithParameterName("source");
+        }
+
+        [Fact]
+        public void Copy_WithNullDestination_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+
+            // Act
+            System.Action act = () => TFFile.Copy(source, null!, false, false);
+
+            // Assert
+            act.Should().Throw<ArgumentNullException>()
+                .WithParameterName("destination");
+        }
+
+        [Fact]
+        public void Copy_WithNonExistentSource_ShouldNotThrow()
+        {
+            // Arrange
+            var source = Path.Combine(_testDirectory, "nonexistent.txt");
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+
+            // Act
+            System.Action act = () => TFFile.Copy(source, dest, false, false);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Copy_ToNestedDirectory_ShouldCreateDirectoryStructure()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var dest = Path.Combine(_testDirectory, "nested", "folder", "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Copy(source, dest, verify: false, keepTimestamp: false);
+
+            // Assert
+            IOFile.Exists(dest).Should().BeTrue();
+        }
+
+        [Fact]
+        public void Move_ValidSourceAndDestination_ShouldMoveFile()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Move(source, dest, verify: false, keepTimestamp: false);
+
+            // Assert
+            IOFile.Exists(dest).Should().BeTrue();
+            IOFile.Exists(source).Should().BeFalse();
+        }
+
+        [Fact]
+        public void Move_WithVerify_ShouldMoveAndVerify()
+        {
+            // Arrange
+            var source = CreateTestFile("source.txt");
+            var dest = Path.Combine(_testDirectory, "dest.txt");
+            _testFiles.Add(dest);
+
+            // Act
+            TFFile.Move(source, dest, verify: true, keepTimestamp: false);
+
+            // Assert
+            IOFile.Exists(dest).Should().BeTrue();
+            IOFile.ReadAllText(dest).Should().Be("test content");
+        }
+
+        [Fact]
+        public void Delete_ExistingFile_ShouldDeleteFile()
+        {
+            // Arrange
+            var testFile = CreateTestFile("todelete.txt");
+
+            // Act
+            TFFile.Delete(testFile);
+
+            // Assert
+            IOFile.Exists(testFile).Should().BeFalse();
+        }
+
+        [Fact]
+        public void Delete_NonExistentFile_ShouldNotThrow()
+        {
+            // Arrange
+            var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
+
+            // Act
+            System.Action act = () => TFFile.Delete(nonExistentPath);
+
+            // Assert
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void Delete_WithNullPath_ShouldThrowArgumentNullException()
+        {
+            // Act
+            System.Action act = () => TFFile.Delete(null!);
+
+            // Assert
+            act.Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void GetCreatedDate_ValidFile_ShouldReturnCreationDate()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+
+            // Act
+            var result = TFFile.GetCreatedDate(testFile);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        }
+
+        [Fact]
+        public void GetCreatedDate_NonExistentFile_ShouldReturnNull()
+        {
+            // Arrange
+            var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
+
+            // Act
+            var result = TFFile.GetCreatedDate(nonExistentPath);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public void GetCreatedDate_NullPath_ShouldReturnNull()
+        {
+            // Act
+            var result = TFFile.GetCreatedDate(null!);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public void GetModifiedDate_ValidFile_ShouldReturnModifiedDate()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+
+            // Act
+            var result = TFFile.GetModifiedDate(testFile);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        }
+
+        [Fact]
+        public void GetModifiedDate_NonExistentFile_ShouldReturnNull()
+        {
+            // Arrange
+            var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
+
+            // Act
+            var result = TFFile.GetModifiedDate(nonExistentPath);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public void GetModifiedDate_NullPath_ShouldReturnNull()
+        {
+            // Act
+            var result = TFFile.GetModifiedDate(null!);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
         public void IsValid_ExistingFile_ShouldReturnTrue()
         {
             // Arrange
-            var testFile = CreateTestFile("valid.txt");
+            var testFile = CreateTestFile("test.txt");
 
             // Act
             var result = TFFile.IsValid(testFile);
@@ -197,61 +444,23 @@ namespace FileWatcher.Tests.FileSystem
         }
 
         [Fact]
-        public void Copy_ValidSourceAndDestination_ShouldCopyFile()
+        public void IsValid_EmptyPath_ShouldReturnFalse()
         {
-            // Arrange
-            var sourceFile = CreateTestFile("source.txt");
-            var destinationFile = Path.Combine(_testDirectory, "destination.txt");
-            _testFiles.Add(destinationFile);
-
             // Act
-            TFFile.Copy(sourceFile, destinationFile, verify: false, keepTimestamp: false);
+            var result = TFFile.IsValid(string.Empty);
 
             // Assert
-            IOFile.Exists(destinationFile).Should().BeTrue();
-            IOFile.ReadAllText(destinationFile).Should().Be("test content");
+            result.Should().BeFalse();
         }
 
         [Fact]
-        public void Delete_ExistingFile_ShouldDeleteFile()
+        public void IsValid_DirectoryPath_ShouldReturnFalse()
         {
-            // Arrange
-            var testFile = CreateTestFile("todelete.txt");
-
             // Act
-            TFFile.Delete(testFile);
+            var result = TFFile.IsValid(_testDirectory);
 
             // Assert
-            IOFile.Exists(testFile).Should().BeFalse();
-        }
-
-        [Fact]
-        public void Delete_NonExistentFile_ShouldNotThrow()
-        {
-            // Arrange
-            var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
-
-            // Act
-            System.Action act = () => TFFile.Delete(nonExistentPath);
-
-            // Assert
-            act.Should().NotThrow();
-        }
-
-        [Fact]
-        public void Move_ValidSourceAndDestination_ShouldMoveFile()
-        {
-            // Arrange
-            var sourceFile = CreateTestFile("tomove.txt");
-            var destinationFile = Path.Combine(_testDirectory, "moved.txt");
-            _testFiles.Add(destinationFile);
-
-            // Act
-            TFFile.Move(sourceFile, destinationFile, verify: false, keepTimestamp: false);
-
-            // Assert
-            IOFile.Exists(sourceFile).Should().BeFalse();
-            IOFile.Exists(destinationFile).Should().BeTrue();
+            result.Should().BeFalse();
         }
     }
 }

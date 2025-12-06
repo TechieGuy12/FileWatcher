@@ -234,5 +234,79 @@ namespace FileWatcher.Tests
             // Assert
             result.Should().Be("test.txt test.txt test.txt");
         }
+
+        [Fact]
+        public void ReplacePlaceholders_Path_ShouldReplaceWithDirectoryPath()
+        {
+            // Arrange
+            var subdirPath = Path.Combine(_testDirectory, "subdir");
+            IODirectory.CreateDirectory(subdirPath);
+            var testFile = Path.Combine(subdirPath, "file.txt");
+            File.WriteAllText(testFile, "content");
+            _testFiles.Add(testFile);
+            var value = "Path: [path]";
+
+            // Act
+            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+
+            // Assert
+            result.Should().Contain("subdir");
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_WatchPath_ShouldReplaceWithWatchPath()
+        {
+            // Arrange
+            var testFile = CreateTestFile("file.txt");
+            var value = "Watch: [watchpath]";
+
+            // Act
+            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+
+            // Assert
+            result.Should().Be($"Watch: {_watchPath}");
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_WithNullOldPath_ShouldNotReplaceOldPlaceholders()
+        {
+            // Arrange
+            var testFile = CreateTestFile("file.txt");
+            var value = "Old: [oldfile]";
+
+            // Act
+            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+
+            // Assert - oldfile placeholder remains when oldPath is null
+            result.Should().Be("Old: [oldfile]");
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_MixedPlaceholders_ShouldReplaceAll()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+            var value = "[filename]";
+
+            // Act
+            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+
+            // Assert
+            result.Should().Be("test.txt");
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_EmptyOldPath_ShouldHandleGracefully()
+        {
+            // Arrange
+            var testFile = CreateTestFile("file.txt");
+            var value = "[oldfile]";
+
+            // Act
+            var result = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, "", null);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
     }
 }

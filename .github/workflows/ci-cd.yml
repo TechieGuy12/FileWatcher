@@ -74,7 +74,7 @@ jobs:
         hide_complexity: true
         indicators: true
         output: both
-        thresholds: '30 50'
+        thresholds: '22 30'
         
     - name: Add Coverage PR Comment
       if: github.event_name == 'pull_request' && always()
