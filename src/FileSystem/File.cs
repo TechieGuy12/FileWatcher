@@ -208,39 +208,61 @@ namespace TE.FileWatcher.FileSystem
                 WaitForFile(source);
                 Directory.Create(destination);
 
-                int attempts = 0;
-                bool fileCopied = false;
-                while ((attempts <= RETRIES) && !fileCopied)
-                {
-                    DotNetIO.File.Copy(source, destination, true);
-                    WaitForFile(destination);
-
-                    fileCopied = verify != true || Verify(source, destination);                  
-
-                    if (!fileCopied)
-                    {
-                        attempts++;
-                        if (attempts <= RETRIES)
-                        {
-                            // Exponential backoff
-                            int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
-                            Thread.Sleep(delayMs);
-                        }
-                    }
-                }
+                CopyWithRetryAndVerification(source, destination, verify);
 
                 if (keepTimestamp)
                 {
-                    // Set the time of the destination file to match the source file
-                    // because the file was moved and not a new copy
-                    SetDestinationCreationTime(source, destination);
-                    SetDestinationModifiedTime(source, destination);
+                    PreserveTimestamps(source, destination);
                 }
             }
             catch (Exception ex)
             {
                 throw new FileWatcherException("The file could not be copied.", ex);
             }            
+        }
+
+        /// <summary>
+        /// Copies a file with retry logic and optional verification.
+        /// </summary>
+        /// <param name="source">The source file path.</param>
+        /// <param name="destination">The destination file path.</param>
+        /// <param name="verify">True to verify the copy with hash comparison.</param>
+        private static void CopyWithRetryAndVerification(string source, string destination, bool verify)
+        {
+            int attempts = 0;
+            bool fileCopied = false;
+            
+            while ((attempts <= RETRIES) && !fileCopied)
+            {
+                DotNetIO.File.Copy(source, destination, true);
+                WaitForFile(destination);
+
+                fileCopied = verify != true || Verify(source, destination);                  
+
+                if (!fileCopied)
+                {
+                    attempts++;
+                    if (attempts <= RETRIES)
+                    {
+                        // Exponential backoff
+                        int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
+                        Thread.Sleep(delayMs);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Preserves the creation and modification timestamps from source to destination file.
+        /// </summary>
+        /// <param name="source">The source file path.</param>
+        /// <param name="destination">The destination file path.</param>
+        private static void PreserveTimestamps(string source, string destination)
+        {
+            // Set the time of the destination file to match the source file
+            // because the file was moved and not a new copy
+            SetDestinationCreationTime(source, destination);
+            SetDestinationModifiedTime(source, destination);
         }
 
         /// <summary>
@@ -452,28 +474,38 @@ namespace TE.FileWatcher.FileSystem
 
             try
             {
-                int attempts = 0;
-                bool fileDeleted = false;
-                while ((attempts <= RETRIES) && !fileDeleted)
-                {
-                    DotNetIO.File.Delete(source);
-                    fileDeleted = !DotNetIO.File.Exists(source);
-
-                    if (!fileDeleted)
-                    {
-                        attempts++;
-                        if (attempts <= RETRIES)
-                        {
-                            // Exponential backoff
-                            int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
-                            Thread.Sleep(delayMs);
-                        }
-                    }
-                }
+                DeleteWithRetry(source);
             }
             catch (Exception ex)
             {
                 throw new FileWatcherException("The file could not be deleted.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Deletes a file with retry logic using exponential backoff.
+        /// </summary>
+        /// <param name="source">The file path to delete.</param>
+        private static void DeleteWithRetry(string source)
+        {
+            int attempts = 0;
+            bool fileDeleted = false;
+            
+            while ((attempts <= RETRIES) && !fileDeleted)
+            {
+                DotNetIO.File.Delete(source);
+                fileDeleted = !DotNetIO.File.Exists(source);
+
+                if (!fileDeleted)
+                {
+                    attempts++;
+                    if (attempts <= RETRIES)
+                    {
+                        // Exponential backoff
+                        int delayMs = RETRY_INITIAL_DELAY_MS * (1 << (attempts - 1));
+                        Thread.Sleep(delayMs);
+                    }
+                }
             }
         }
 

@@ -36,6 +36,9 @@ namespace TE.FileWatcher.Configuration
         // The write time for the last change
         private DateTime _lastWriteTime;
 
+        // Lock object for thread-safe access to _lastChange and _lastWriteTime
+        private readonly object _changeLock = new object();
+
         // The timer used to "reset" the FileSystemWatch object
         private System.Timers.Timer? _timer;
 
@@ -394,6 +397,7 @@ namespace TE.FileWatcher.Configuration
             Logger.WriteLine(
                 $"{IdLogString}: Needs: {_needs != null}, Needs completed: {_needs?.All(n => n.HasCompleted)}. (Watch.ProcessChange)",
                 LogLevel.DEBUG);
+            
             if (!CanRun || IsRunning)
             {
                 Logger.WriteLine(
@@ -415,42 +419,7 @@ namespace TE.FileWatcher.Configuration
                 {
                     if (change != null)
                     {
-                        Logger.WriteLine(
-                            $"{IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                            LogLevel.DEBUG);
-
-                        if (Filters != null && Filters.IsSpecified())
-                        {
-                            // If the file or folder is not a match, then don't take
-                            // any further actions
-                            if (!Filters.IsMatch(change))
-                            {
-                                continue;
-                            }
-                        }
-
-                        if (Exclusions != null && Exclusions.IsSpecified())
-                        {
-                            // If the file or folder is in the exclude list, then don't
-                            // take any further actions
-                            if (Exclusions.Exclude(change))
-                            {
-                                continue;
-                            }
-                        }
-
-                        Logger.WriteLine(
-                            $"{IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                            LogLevel.DEBUG);
-
-                        Workflows?.Run(change, change.Trigger);
-                        Notifications?.Send(change.Trigger, change);
-                        Actions?.Run(change.Trigger, change);
-                        Commands?.Run(change.Trigger, change);
-
-                        Logger.WriteLine(
-                            $"{IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                            LogLevel.DEBUG);
+                        ProcessSingleChange(change);
                     }
                     else
                     {
@@ -464,6 +433,81 @@ namespace TE.FileWatcher.Configuration
             }
 
             OnCompleted(this, new TaskEventArgs(true, IdLogString, $"{IdLogString}: Tasks completed for watch."));
+        }
+
+        /// <summary>
+        /// Processes a single change by checking filters, exclusions, and executing workflows.
+        /// </summary>
+        /// <param name="change">The change to process.</param>
+        private void ProcessSingleChange(ChangeInfo change)
+        {
+            Logger.WriteLine(
+                $"{IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                LogLevel.DEBUG);
+
+            if (!PassesFilters(change))
+            {
+                return;
+            }
+
+            if (!PassesExclusions(change))
+            {
+                return;
+            }
+
+            Logger.WriteLine(
+                $"{IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                LogLevel.DEBUG);
+
+            ExecuteWorkflows(change);
+
+            Logger.WriteLine(
+                $"{IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                LogLevel.DEBUG);
+        }
+
+        /// <summary>
+        /// Checks if the change passes the configured filters.
+        /// </summary>
+        /// <param name="change">The change to check.</param>
+        /// <returns>True if the change passes filters or no filters are configured; otherwise false.</returns>
+        private bool PassesFilters(ChangeInfo change)
+        {
+            if (Filters == null || !Filters.IsSpecified())
+            {
+                return true;
+            }
+
+            // If the file or folder is not a match, then don't take any further actions
+            return Filters.IsMatch(change);
+        }
+
+        /// <summary>
+        /// Checks if the change passes the configured exclusions.
+        /// </summary>
+        /// <param name="change">The change to check.</param>
+        /// <returns>True if the change is not excluded; otherwise false.</returns>
+        private bool PassesExclusions(ChangeInfo change)
+        {
+            if (Exclusions == null || !Exclusions.IsSpecified())
+            {
+                return true;
+            }
+
+            // If the file or folder is in the exclude list, then don't take any further actions
+            return !Exclusions.Exclude(change);
+        }
+
+        /// <summary>
+        /// Executes all configured workflows, notifications, actions, and commands for the change.
+        /// </summary>
+        /// <param name="change">The change to execute workflows for.</param>
+        private void ExecuteWorkflows(ChangeInfo change)
+        {
+            Workflows?.Run(change, change.Trigger);
+            Notifications?.Send(change.Trigger, change);
+            Actions?.Run(change.Trigger, change);
+            Commands?.Run(change.Trigger, change);
         }
 
         /// <summary>
@@ -548,37 +592,40 @@ namespace TE.FileWatcher.Configuration
 
                 // Check if the change is related to the same file as the last
                 // change that was captured
-                if (_lastChange != null && _lastChange.FullPath.Equals(change.FullPath, StringComparison.OrdinalIgnoreCase))
+                lock (_changeLock)
                 {
-                    // If the last change was a copy, then this change is
-                    // associated with that change as a copy raises multiple
-                    // change events for a file - a copy, and several change
-                    // events - so mark this change event as invalid
-                    if (_lastChange.Trigger == TriggerType.Create || _ignoreNextChange)
+                    if (_lastChange != null && _lastChange.FullPath.Equals(change.FullPath, StringComparison.OrdinalIgnoreCase))
                     {
-                        isValid = false;
+                        // If the last change was a copy, then this change is
+                        // associated with that change as a copy raises multiple
+                        // change events for a file - a copy, and several change
+                        // events - so mark this change event as invalid
+                        if (_lastChange.Trigger == TriggerType.Create || _ignoreNextChange)
+                        {
+                            isValid = false;
 
-                        // Set the flag to ignore a second Change Trigger only
-                        // if the previous change was a Create
-                        _ignoreNextChange = (_lastChange.Trigger == TriggerType.Create);
+                            // Set the flag to ignore a second Change Trigger only
+                            // if the previous change was a Create
+                            _ignoreNextChange = (_lastChange.Trigger == TriggerType.Create);
+                        }
+
+                        // Check if both the last change was a change, and the
+                        // current change is also a change, and the write times
+                        // are the same. If all conditions are met, then this indicates
+                        // the change being made was associated with another action,
+                        // such as a copy, and not an actual change made by the user,
+                        // so flag the change as not valid.
+                        if ((_lastChange.Trigger == TriggerType.Change && trigger == TriggerType.Change) &&
+                            _lastWriteTime.Equals(writeTime))
+                        {
+                            isValid = false;
+                        }
                     }
 
-                    // Check if both the last change was a change, and the
-                    // current change is also a change, and the write times
-                    // are the same. If all conditions are met, then this indicates
-                    // the change being made was associated with another action,
-                    // such as a copy, and not an actual change made by the user,
-                    // so flag the change as not valid.
-                    if ((_lastChange.Trigger == TriggerType.Change && trigger == TriggerType.Change) &&
-                        _lastWriteTime.Equals(writeTime))
-                    {
-                        isValid = false;
-                    }
+                    // Store the last change and write time for this change
+                    _lastChange = change;
+                    _lastWriteTime = writeTime;
                 }
-
-                // Store the last change and write time for this change
-                _lastChange = change;
-                _lastWriteTime = writeTime;
 
                 // Return the change if it is valid, or null if the change
                 // isn't valid
