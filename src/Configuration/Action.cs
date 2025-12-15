@@ -100,11 +100,13 @@ namespace TE.FileWatcher.Configuration
                 if (Change != null)
                 {
                     Logger.WriteLine(
-                        $"The source file could not be determined. Watch path: {Change.WatchPath}, changed: {Change.FullPath}.",
+                        $"[{Change.CorrelationId}] The source file could not be determined. Watch path: {Change.WatchPath}, changed: {Change.FullPath}.",
                         LogLevel.ERROR);
                 }
                 return;
             }
+
+            string correlationPrefix = Change != null ? $"[{Change.CorrelationId}] " : "";
 
             try
             {
@@ -114,31 +116,31 @@ namespace TE.FileWatcher.Configuration
                         if (string.IsNullOrWhiteSpace(destination))
                         {
                             Logger.WriteLine(
-                                $"The file '{source}' could not be copied because the destination file could not be determined. Destination in config file: {Destination}.",
+                                $"{correlationPrefix}The file '{source}' could not be copied because the destination file could not be determined. Destination in config file: {Destination}.",
                                 LogLevel.ERROR);
                             return;
                         }
 
                         TEFS.File.Copy(source, destination, Verify, KeepTimestamps);
-                        Logger.WriteLine($"Copied {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
+                        Logger.WriteLine($"{correlationPrefix}Copied {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
                         break;
 
                     case ActionType.Move:
                         if (string.IsNullOrWhiteSpace(destination))
                         {
                             Logger.WriteLine(
-                                $"The file '{source}' could not be moved because the destination file could not be determined. Destination in config file: {Destination}.",
+                                $"{correlationPrefix}The file '{source}' could not be moved because the destination file could not be determined. Destination in config file: {Destination}.",
                                 LogLevel.ERROR);
                             return;
                         }
 
                         TEFS.File.Move(source, destination, Verify, KeepTimestamps);
-                        Logger.WriteLine($"Moved {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
+                        Logger.WriteLine($"{correlationPrefix}Moved {source} to {destination}. Verify: {Verify}. Keep timestamps: {KeepTimestamps}.");
                         break;
 
                     case ActionType.Delete:
                         TEFS.File.Delete(source);
-                        Logger.WriteLine($"Deleted {source}.");
+                        Logger.WriteLine($"{correlationPrefix}Deleted {source}.");
                         break;
                 }
             }
@@ -147,7 +149,7 @@ namespace TE.FileWatcher.Configuration
             {
                 Exception exception = ex.InnerException ?? ex;
                 Logger.WriteLine(
-                    $"Could not {Type.ToString().ToLower(System.Globalization.CultureInfo.CurrentCulture)} file '{source}.' Reason: {exception.Message}",
+                    $"{correlationPrefix}Could not {Type.ToString().ToLower(System.Globalization.CultureInfo.CurrentCulture)} file '{source}.' Reason: {exception.Message}",
                     LogLevel.ERROR);
                 if (ex.StackTrace != null)
                 {

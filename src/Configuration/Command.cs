@@ -75,9 +75,11 @@ namespace TE.FileWatcher.Configuration
             string? arguments = GetArguments();
             string? workingDirectory = GetWorkingDirectory();
 
+            string correlationPrefix = Change != null ? $"[{Change.CorrelationId}] " : "";
+
             if (string.IsNullOrWhiteSpace(commandPath))
             {
-                Logger.WriteLine($"The command was not provided. Command was not run.",
+                Logger.WriteLine($"{correlationPrefix}The command was not provided. Command was not run.",
                     LogLevel.ERROR);
                 return;
             }
@@ -85,7 +87,7 @@ namespace TE.FileWatcher.Configuration
             if (!File.Exists(commandPath))
             {
                 Logger.WriteLine(
-                    $"The command '{commandPath}' was not found. Command was not run.",
+                    $"{correlationPrefix}The command '{commandPath}' was not found. Command was not run.",
                     LogLevel.ERROR);
                 return;
             }
@@ -111,11 +113,14 @@ namespace TE.FileWatcher.Configuration
             _processInfo.Enqueue(startInfo);
             
             Logger.WriteLine(
-                $"Queue command: {startInfo.FileName} {startInfo.Arguments}. Queue Length: {_processInfo.Count}. (Command.Run)",
+                $"{correlationPrefix}Queue command: {startInfo.FileName} {startInfo.Arguments}. Queue Length: {_processInfo.Count}. (Command.Run)",
                 LogLevel.DEBUG);
 
             // Execute the next process in the queue
-            Execute();
+            if (Change != null)
+            {
+                Execute(Change.CorrelationId);
+            }
         }
 
         /// <summary>
@@ -151,9 +156,10 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Executes the next command process from the queue.
         /// </summary>
-        private void Execute()
+        /// <param name="correlationId">The correlation ID for tracking this execution.</param>
+        private void Execute(Guid correlationId)
         {
-            // If the queue is null or empty, then no command is waiting to nbe
+            // If the queue is null or empty, then no command is waiting to be
             // executed
             if (_processInfo == null || _processInfo.IsEmpty)
             {
@@ -171,7 +177,7 @@ namespace TE.FileWatcher.Configuration
                             using (Process process = new Process())
                             {
                                 Logger.WriteLine(
-                                    $"START: Process {startInfo.FileName} {startInfo.Arguments}.");
+                                    $"[{correlationId}] START: Process {startInfo.FileName} {startInfo.Arguments}.");
 
                                 process.StartInfo = startInfo;
                                 process.StartInfo.CreateNoWindow = true;
@@ -180,20 +186,20 @@ namespace TE.FileWatcher.Configuration
                                 process.WaitForExit();
 
                                 Logger.WriteLine(
-                                    $"END: Process {process?.StartInfo.FileName} {process?.StartInfo.Arguments} has completed.");
+                                    $"[{correlationId}] END: Process {process?.StartInfo.FileName} {process?.StartInfo.Arguments} has completed.");
                             }
                         }
                         catch (Exception ex)
                         {
                             Logger.WriteLine(
-                                $"Could not run the command '{startInfo.FileName} {startInfo.Arguments}'. Reason: {ex.Message}",
+                                $"[{correlationId}] Could not run the command '{startInfo.FileName} {startInfo.Arguments}'. Reason: {ex.Message}",
                                 LogLevel.ERROR);
                         }
                     }
                     else
                     {
                         Logger.WriteLine(
-                            $"The command '{startInfo.FileName}' was not found. Command was not run.",
+                            $"[{correlationId}] The command '{startInfo.FileName}' was not found. Command was not run.",
                             LogLevel.ERROR);
                     }
                 }

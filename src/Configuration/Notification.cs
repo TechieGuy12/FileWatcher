@@ -184,7 +184,8 @@ namespace TE.FileWatcher.Configuration
                 }
             }
 
-            Logger.WriteLine($"Sending request: {Method} {uri}.");
+            string correlationIdLog = Change != null ? $"[{Change.CorrelationId}] " : "";
+            Logger.WriteLine($"{correlationIdLog}Sending request: {Method} {uri}.");
             Response response =
                 await Request.SendAsync(
                     Method,

@@ -6,6 +6,12 @@
     public class ChangeInfo
     {
         /// <summary>
+        /// Gets the unique correlation ID for this change event.
+        /// This ID can be used to trace all operations related to this change in logs.
+        /// </summary>
+        public Guid CorrelationId { get; private set; }
+
+        /// <summary>
         /// Gets the trigger for the change.
         /// </summary>
         public TriggerType Trigger { get; private set; }
@@ -38,17 +44,15 @@
         public string WatchPath { get; private set; }
 
         /// <summary>
-        /// Initializes an instance of the <see cref="ChangeInfo"/>.
-        /// </summary>
-        //public ChangeInfo() { }
-
-        /// <summary>
         /// Initializes an instance of the <see cref="ChangeInfo"/> class when
         /// provided with the trigger, the file/folder name, and the full path
         /// to the file/folder.
         /// </summary>
         /// <param name="trigger">
         /// The type of change.
+        /// </param>
+        /// <param name="watchPath">
+        /// The path being watched.
         /// </param>
         /// <param name="name">
         /// The name of the file or folder.
@@ -67,6 +71,7 @@
         /// </exception>
         public ChangeInfo(TriggerType trigger, string watchPath, string name, string fullPath, string? oldName, string? oldPath)
         {
+            CorrelationId = Guid.NewGuid();
             Trigger = trigger;
             WatchPath = watchPath ?? throw new ArgumentNullException(nameof(watchPath));
             Name = name ?? throw new ArgumentNullException(nameof(name));

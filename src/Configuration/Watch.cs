@@ -442,27 +442,33 @@ namespace TE.FileWatcher.Configuration
         private void ProcessSingleChange(ChangeInfo change)
         {
             Logger.WriteLine(
-                $"{IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                $"[{change.CorrelationId}] {IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
                 LogLevel.DEBUG);
 
             if (!PassesFilters(change))
             {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] {IdLogString}: Change filtered out: {change.FullPath}",
+                    LogLevel.DEBUG);
                 return;
             }
 
             if (!PassesExclusions(change))
             {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] {IdLogString}: Change excluded: {change.FullPath}",
+                    LogLevel.DEBUG);
                 return;
             }
 
             Logger.WriteLine(
-                $"{IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                $"[{change.CorrelationId}] {IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
                 LogLevel.DEBUG);
 
             ExecuteWorkflows(change);
 
             Logger.WriteLine(
-                $"{IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                $"[{change.CorrelationId}] {IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
                 LogLevel.DEBUG);
         }
 
