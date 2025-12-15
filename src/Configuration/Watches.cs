@@ -11,6 +11,13 @@ namespace TE.FileWatcher.Configuration
     public class Watches : HasVariablesBase
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="Watches"/> class.
+        /// </summary>
+        public Watches()
+        {
+        }
+
+        /// <summary>
         /// Gets or sets the logging information.
         /// </summary>
         [XmlElement("logging")]

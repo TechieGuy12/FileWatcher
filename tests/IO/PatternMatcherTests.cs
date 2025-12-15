@@ -34,7 +34,7 @@ namespace FileWatcher.Tests.IO
         [InlineData(null, "file.txt")]
         [InlineData("*.txt", null)]
         public void StrictMatchPattern_WithEmptyOrNullInputs_ShouldReturnFalse(
-            string pattern, string filename)
+            string? pattern, string? filename)
         {
             // Act
             var result = PatternMatcher.StrictMatchPattern(pattern, filename);

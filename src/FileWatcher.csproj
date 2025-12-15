@@ -12,12 +12,18 @@
     <!-- Self-contained deployment optimization -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     
     <!-- Trimming configuration for smaller size -->
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>link</TrimMode>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    
+    <!-- Suppress trim warnings from System.CommandLine beta package -->
+    <!-- IL2104: Assembly produces trim warnings -->
+    <NoWarn>$(NoWarn);IL2104</NoWarn>
+    
+    <!-- Preserve XML serialization members -->
+    <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     
     <!-- Optimize for size over speed -->
     <PublishReadyToRun>false</PublishReadyToRun>
@@ -38,6 +44,11 @@
     <PackageId>TE.FileWatcher</PackageId>
   </PropertyGroup>
   
+  <!-- Apply RuntimeIdentifier only during publish to avoid test project architecture mismatch -->
+  <PropertyGroup Condition="'$(IsPublishing)' == 'true'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
@@ -60,6 +71,13 @@
     <None Update="Templates\config-template.xml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Preserve XML Serialization types from trimming -->
+    <TrimmerRootAssembly Include="fw" />
+    <!-- Preserve System.CommandLine types from trimming -->
+    <TrimmerRootAssembly Include="System.CommandLine" />
   </ItemGroup>
 
 </Project>
