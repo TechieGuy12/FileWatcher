@@ -213,7 +213,7 @@ namespace TE.FileWatcher.Configuration
                 SetNeedWatch(watches);
                 Initialize();
 
-                Logger.WriteLine($"{IdLogString}: Number of needs: {_needs?.Count}. (Watch.Start)", LogLevel.DEBUG);
+                Logger.WriteLine($"{IdLogString}: Number of needs: {_needs?.Count ?? 0}. (Watch.Start)", LogLevel.DEBUG);
             }
             else
             {
