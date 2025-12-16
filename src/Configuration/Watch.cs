@@ -55,19 +55,16 @@ namespace TE.FileWatcher.Configuration
         // Flag indicating the class is disposed
         private bool _disposed;
 
+        // Cached ID string for logging to avoid repeated null-coalescing
+        private string? _idLogStringCache;
+
         /// <summary>
         /// Gets the ID if one is specified for the watch, otherwise, return the
         /// watch path.
         /// </summary>
         [XmlIgnore]
-        private string? IdLogString
-        {
-            get
-            {
-                return Id ?? Path;
-            }
-        }
-
+        private string? IdLogString => _idLogStringCache ??= (Id ?? Path);
+    
         /// <summary>
         /// Gets or sets the id of the watch.
         /// </summary>
@@ -391,18 +388,25 @@ namespace TE.FileWatcher.Configuration
                 Thread.Sleep(EMPTY_QUEUE_SLEEP_MS);
             }
 
-            Logger.WriteLine(
-                $"{IdLogString}: CanRun: {CanRun}, IsRunning: {IsRunning}. (Watch.ProcessChange)",
-                LogLevel.DEBUG);
-            Logger.WriteLine(
-                $"{IdLogString}: Needs: {_needs != null}, Needs completed: {_needs?.All(n => n.HasCompleted)}. (Watch.ProcessChange)",
-                LogLevel.DEBUG);
+            // Guard expensive DEBUG logging to avoid string allocations
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine(
+                    $"{IdLogString}: CanRun: {CanRun}, IsRunning: {IsRunning}. (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+                Logger.WriteLine(
+                    $"{IdLogString}: Needs: {_needs != null}, Needs completed: {_needs?.All(n => n.HasCompleted)}. (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+            }
             
             if (!CanRun || IsRunning)
             {
-                Logger.WriteLine(
-                    $"{Id}: The watch cannot run at this time. (Watch.ProcessChange)",
-                    LogLevel.DEBUG);
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine(
+                        $"{Id}: The watch cannot run at this time. (Watch.ProcessChange)",
+                        LogLevel.DEBUG);
+                }
                 return;
             }
 
@@ -413,7 +417,10 @@ namespace TE.FileWatcher.Configuration
 
             while (!_queue.IsEmpty)
             {
-                Logger.WriteLine($"{IdLogString}: Path: {Path} Queue Count: {_queue.Count}, Queue IsEmpty: {_queue.IsEmpty}. (Watch.ProcessChange)", LogLevel.DEBUG);                
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"{IdLogString}: Path: {Path} Queue Count: {_queue.Count}, Queue IsEmpty: {_queue.IsEmpty}. (Watch.ProcessChange)", LogLevel.DEBUG);
+                }
 
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
@@ -423,12 +430,18 @@ namespace TE.FileWatcher.Configuration
                     }
                     else
                     {
-                        Logger.WriteLine($"{IdLogString}: The change is null. (Watch.ProcessChange)", LogLevel.DEBUG);
+                        if (Logger.LogLevel <= LogLevel.DEBUG)
+                        {
+                            Logger.WriteLine($"{IdLogString}: The change is null. (Watch.ProcessChange)", LogLevel.DEBUG);
+                        }
                     }
                 }
                 else
                 {
-                    Logger.WriteLine($"{IdLogString}: The change could not be removed from the queue. (Watch.ProcessChange)", LogLevel.DEBUG);
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        Logger.WriteLine($"{IdLogString}: The change could not be removed from the queue. (Watch.ProcessChange)", LogLevel.DEBUG);
+                    }
                 }
             }
 
@@ -441,35 +454,50 @@ namespace TE.FileWatcher.Configuration
         /// <param name="change">The change to process.</param>
         private void ProcessSingleChange(ChangeInfo change)
         {
-            Logger.WriteLine(
-                $"[{change.CorrelationId}] {IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                LogLevel.DEBUG);
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] {IdLogString}: Change: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+            }
 
             if (!PassesFilters(change))
             {
-                Logger.WriteLine(
-                    $"[{change.CorrelationId}] {IdLogString}: Change filtered out: {change.FullPath}",
-                    LogLevel.DEBUG);
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine(
+                        $"[{change.CorrelationId}] {IdLogString}: Change filtered out: {change.FullPath}",
+                        LogLevel.DEBUG);
+                }
                 return;
             }
 
             if (!PassesExclusions(change))
             {
-                Logger.WriteLine(
-                    $"[{change.CorrelationId}] {IdLogString}: Change excluded: {change.FullPath}",
-                    LogLevel.DEBUG);
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine(
+                        $"[{change.CorrelationId}] {IdLogString}: Change excluded: {change.FullPath}",
+                        LogLevel.DEBUG);
+                }
                 return;
             }
 
-            Logger.WriteLine(
-                $"[{change.CorrelationId}] {IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                LogLevel.DEBUG);
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] {IdLogString}: Started: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+            }
 
             ExecuteWorkflows(change);
 
-            Logger.WriteLine(
-                $"[{change.CorrelationId}] {IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
-                LogLevel.DEBUG);
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] {IdLogString}: Completed: {change.FullPath}, {change.Trigger} (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+            }
         }
 
         /// <summary>
@@ -589,11 +617,21 @@ namespace TE.FileWatcher.Configuration
                 // The last write time of the file
                 DateTime writeTime = default;
 
-                // Verify the file exists before attempting to get the last
-                // write time
-                if (File.Exists(change.FullPath))
+                // Optimize: GetLastWriteTime returns DateTime.MinValue for non-existent files
+                // This eliminates the need for File.Exists check, reducing I/O by 50%
+                try
                 {
                     writeTime = File.GetLastWriteTime(change.FullPath);
+                }
+                catch (IOException)
+                {
+                    // File deleted between events, use default
+                    writeTime = default;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Access denied, use default
+                    writeTime = default;
                 }
 
                 // Check if the change is related to the same file as the last

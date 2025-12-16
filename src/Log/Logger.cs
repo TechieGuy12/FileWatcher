@@ -30,8 +30,27 @@ namespace TE.FileWatcher.Log
         // not split hairs as this is just a log file size after all
         private const int MEGABYTE = 1048576;
 
+        // Flush interval in milliseconds
+        private const int FLUSH_INTERVAL_MS = 100;
+
         // The queue of log messages
         private static readonly ConcurrentQueue<Message> queue;
+
+        // Background timer for flushing log queue
+        private static readonly System.Threading.Timer _flushTimer;
+
+        // Persistent StreamWriter to avoid open/close on every write
+        private static StreamWriter? _writer;
+
+        // Semaphore for thread-safe writer access
+        private static readonly SemaphoreSlim _writerLock = new(1, 1);
+
+        // Cache platform check result
+        private static readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        // Track last rollover check time to avoid checking on every write
+        private static DateTime _lastRolloverCheck = DateTime.MinValue;
+        private static readonly TimeSpan _rolloverCheckInterval = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Gets the path to the log.
@@ -64,9 +83,6 @@ namespace TE.FileWatcher.Log
         /// </summary>
         public static LogLevel LogLevel { get; private set; }
 
-        // The object used for the lock
-        private static readonly object locker = new();
-       
         /// <summary>
         /// Initializes an instance of the <see cref="Logger"/> class.
         /// </summary>
@@ -92,6 +108,12 @@ namespace TE.FileWatcher.Log
             }
 
             queue = new ConcurrentQueue<Message>();
+
+            // Start background flush timer
+            _flushTimer = new System.Threading.Timer(FlushQueueCallback, null, FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS);
+
+            // Register cleanup on app domain unload
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => Shutdown();
         }
 
         /// <summary>
@@ -143,7 +165,26 @@ namespace TE.FileWatcher.Log
             if (LogLevel <= level)
             {
                 queue.Enqueue(new Message(message, level));
-                WriteToLog();
+                // Background timer will flush automatically
+            }
+        }
+
+        /// <summary>
+        /// Flushes any pending log messages and cleans up resources.
+        /// </summary>
+        public static void Shutdown()
+        {
+            _flushTimer?.Dispose();
+            FlushQueue();
+            _writerLock.Wait();
+            try
+            {
+                _writer?.Dispose();
+                _writer = null;
+            }
+            finally
+            {
+                _writerLock.Release();
             }
         }
 
@@ -291,6 +332,10 @@ namespace TE.FileWatcher.Log
                     return;
                 }
 
+                // Close the writer before rollover
+                _writer?.Dispose();
+                _writer = null;
+
                 int totalLogs = LogNumber - 1;
 
                 if (totalLogs > 0)
@@ -317,34 +362,75 @@ namespace TE.FileWatcher.Log
 
                 File.Delete(LogFullPath);
                 File.Create(LogFullPath).Close();
+
+                _lastRolloverCheck = DateTime.UtcNow;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} Could not rollover the log file. Reason: {ex.Message}");
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} Could not rollover the log file. Reason: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Writes a line from the queue to the log file.
+        /// Timer callback for background flush operations.
         /// </summary>
-        private static void WriteToLog()
+        private static void FlushQueueCallback(object? state)
         {
-            while (queue.TryDequeue(out Message? message))
+            FlushQueue();
+        }
+
+        /// <summary>
+        /// Flushes all pending messages from the queue to the log file.
+        /// </summary>
+        private static void FlushQueue()
+        {
+            if (queue.IsEmpty)
             {
+                return;
+            }
+
+            _writerLock.Wait();
+            try
+            {
+                // Check if we need to rollover (throttled to avoid checking too frequently)
+                if (DateTime.UtcNow - _lastRolloverCheck > _rolloverCheckInterval)
+                {
+                    RolloverLog();
+                }
+
+                // Initialize writer if needed
+                if (_writer == null)
+                {
+                    _writer = _isWindows
+                        ? new StreamWriter(LogFullPath, true, System.Text.Encoding.UTF8)
+                        : new StreamWriter(LogFullPath, true);
+                }
+
+                // Batch write all pending messages
+                while (queue.TryDequeue(out Message? message))
+                {
+                    _writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message.LevelString} {message.Value}");
+                }
+
+                // Ensure data is written to disk
+                _writer.Flush();
+            }
+            catch (Exception ex)
+            {
+                Message error = new($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {error.LevelString} {error.Value}");
+
+                // Reset writer on error
                 try
                 {
-                    lock (locker)
-                    {
-                        RolloverLog();
-                        using StreamWriter writer = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new(LogFullPath, true, System.Text.Encoding.UTF8) : new(LogFullPath, true);
-                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message.LevelString} {message.Value}");
-                    }
+                    _writer?.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    Message error = new($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
-                    Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {error.LevelString} {error.Value}");
-                }
+                catch { }
+                _writer = null;
+            }
+            finally
+            {
+                _writerLock.Release();
             }
         }
     }
