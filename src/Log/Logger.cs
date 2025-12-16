@@ -406,10 +406,10 @@ namespace TE.FileWatcher.Log
                         : new StreamWriter(LogFullPath, true);
                 }
 
-                // Batch write all pending messages
+                // Batch write all pending messages with high-precision timestamps
                 while (queue.TryDequeue(out Message? message))
                 {
-                    _writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message.LevelString} {message.Value}");
+                    _writer.WriteLine($"{message.FormattedTimestamp} {message.LevelString} {message.Value}");
                 }
 
                 // Ensure data is written to disk
@@ -418,7 +418,7 @@ namespace TE.FileWatcher.Log
             catch (Exception ex)
             {
                 Message error = new($"Couldn't write to the log. Reason: {ex.Message}", LogLevel.WARNING);
-                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {error.LevelString} {error.Value}");
+                Console.WriteLine($"{error.FormattedTimestamp} {error.LevelString} {error.Value}");
 
                 // Reset writer on error
                 try

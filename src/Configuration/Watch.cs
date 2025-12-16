@@ -176,13 +176,34 @@ namespace TE.FileWatcher.Configuration
         {
             if (change == null || _queue == null || _worker == null)
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"{IdLogString}: Run called but prerequisites not met. change null: {change == null}, queue null: {_queue == null}, worker null: {_worker == null}. (Watch.Run)", LogLevel.DEBUG);
+                }
                 return;
             }
 
             _queue.Enqueue(change);
+            
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Enqueued {trigger} event for {change.FullPath}. Queue count: {_queue.Count}. (Watch.Run)", LogLevel.DEBUG);
+            }
+
             if (!_worker.IsBusy)
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"{IdLogString}: Starting background worker to process queue. (Watch.Run)", LogLevel.DEBUG);
+                }
                 _worker.RunWorkerAsync();
+            }
+            else
+            {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"{IdLogString}: Background worker already busy, event will be processed in current run. (Watch.Run)", LogLevel.DEBUG);
+                }
             }
         }
 
@@ -386,53 +407,88 @@ namespace TE.FileWatcher.Configuration
             {
                 Initialize();
                 Thread.Sleep(EMPTY_QUEUE_SLEEP_MS);
+                return;
             }
+
+            // Peek at the queue to get correlation IDs for logging
+            var queueSnapshot = _queue.ToArray();
+            var firstCorrelationId = queueSnapshot.Length > 0 ? (Guid?)queueSnapshot[0].CorrelationId : null;
+            var correlationPrefix = firstCorrelationId.HasValue ? $"[{firstCorrelationId.Value}] " : "";
 
             // Guard expensive DEBUG logging to avoid string allocations
             if (Logger.LogLevel <= LogLevel.DEBUG)
             {
+                // Include first correlation ID in watch-level logs for context
                 Logger.WriteLine(
-                    $"{IdLogString}: CanRun: {CanRun}, IsRunning: {IsRunning}. (Watch.ProcessChange)",
+                    $"{correlationPrefix}{IdLogString}: ProcessChange started. CanRun: {CanRun}, IsRunning: {IsRunning}, Queue count: {_queue.Count}. (Watch.ProcessChange)",
                     LogLevel.DEBUG);
-                Logger.WriteLine(
-                    $"{IdLogString}: Needs: {_needs != null}, Needs completed: {_needs?.All(n => n.HasCompleted)}. (Watch.ProcessChange)",
-                    LogLevel.DEBUG);
+                
+                // Detailed dependency information
+                if (_needs != null && _needs.Count > 0)
+                {
+                    var needsStatus = string.Join(", ", _needs.Select(n => 
+                        $"{(n is Watch w ? w.Id ?? w.Path : "unknown")}: {(n.HasCompleted ? "completed" : "pending")}"));
+                    Logger.WriteLine(
+                        $"{correlationPrefix}{IdLogString}: Dependency status - Count: {_needs.Count}, Details: [{needsStatus}]. (Watch.ProcessChange)",
+                        LogLevel.DEBUG);
+                }
+                else
+                {
+                    Logger.WriteLine(
+                        $"{correlationPrefix}{IdLogString}: No dependencies configured. (Watch.ProcessChange)",
+                        LogLevel.DEBUG);
+                }
             }
             
             if (!CanRun || IsRunning)
             {
                 if (Logger.LogLevel <= LogLevel.DEBUG)
                 {
+                    var reason = !CanRun ? "dependencies not met" : "already running";
                     Logger.WriteLine(
-                        $"{Id}: The watch cannot run at this time. (Watch.ProcessChange)",
+                        $"{correlationPrefix}{IdLogString}: Watch blocked from running. Reason: {reason}. Queue will be processed when watch becomes available. (Watch.ProcessChange)",
                         LogLevel.DEBUG);
                 }
                 return;
             }
 
+            var startTime = DateTime.Now;
+            int processedCount = 0;
+            var correlationIds = new List<Guid>();
+
             if (!_queue.IsEmpty)
             {
-                OnStarted(this, new TaskEventArgs(true, IdLogString, $"{IdLogString}: Starting tasks for watch. Path {Path}."));
+                // Include first correlation ID in the "Starting tasks" message
+                var message = firstCorrelationId.HasValue 
+                    ? $"[{firstCorrelationId.Value}] {IdLogString}: Starting tasks for watch. Path {Path}."
+                    : $"{IdLogString}: Starting tasks for watch. Path {Path}.";
+                OnStarted(this, new TaskEventArgs(true, IdLogString, message));
             }
 
             while (!_queue.IsEmpty)
             {
-                if (Logger.LogLevel <= LogLevel.DEBUG)
-                {
-                    Logger.WriteLine($"{IdLogString}: Path: {Path} Queue Count: {_queue.Count}, Queue IsEmpty: {_queue.IsEmpty}. (Watch.ProcessChange)", LogLevel.DEBUG);
-                }
-
                 if (_queue.TryDequeue(out ChangeInfo? change))
                 {
                     if (change != null)
                     {
+                        correlationIds.Add(change.CorrelationId);
+                        
+                        if (Logger.LogLevel <= LogLevel.DEBUG)
+                        {
+                            // Change-specific log WITH correlation ID
+                            Logger.WriteLine(
+                                $"[{change.CorrelationId}] {IdLogString}: Processing item {processedCount + 1} of current batch. Remaining in queue: {_queue.Count}. (Watch.ProcessChange)", 
+                                LogLevel.DEBUG);
+                        }
+                        
                         ProcessSingleChange(change);
+                        processedCount++;
                     }
                     else
                     {
                         if (Logger.LogLevel <= LogLevel.DEBUG)
                         {
-                            Logger.WriteLine($"{IdLogString}: The change is null. (Watch.ProcessChange)", LogLevel.DEBUG);
+                            Logger.WriteLine($"{IdLogString}: Dequeued null change object. (Watch.ProcessChange)", LogLevel.DEBUG);
                         }
                     }
                 }
@@ -440,12 +496,29 @@ namespace TE.FileWatcher.Configuration
                 {
                     if (Logger.LogLevel <= LogLevel.DEBUG)
                     {
-                        Logger.WriteLine($"{IdLogString}: The change could not be removed from the queue. (Watch.ProcessChange)", LogLevel.DEBUG);
+                        Logger.WriteLine($"{IdLogString}: Failed to dequeue change from queue. (Watch.ProcessChange)", LogLevel.DEBUG);
                     }
                 }
             }
 
-            OnCompleted(this, new TaskEventArgs(true, IdLogString, $"{IdLogString}: Tasks completed for watch."));
+            if (Logger.LogLevel <= LogLevel.DEBUG && processedCount > 0)
+            {
+                var duration = DateTime.Now - startTime;
+                var idsString = processedCount == 1 
+                    ? correlationIds[0].ToString() 
+                    : $"{correlationIds.Count} items: " + string.Join(", ", correlationIds.Select(id => id.ToString().Substring(0, 8)));
+                
+                // Include correlation context in completion log
+                Logger.WriteLine(
+                    $"[{correlationIds[0]}] {IdLogString}: ProcessChange completed in {duration.TotalMilliseconds:F2}ms. Processed: {idsString}. (Watch.ProcessChange)",
+                    LogLevel.DEBUG);
+            }
+
+            // Include first correlation ID in "Tasks completed" message
+            var completionMessage = firstCorrelationId.HasValue
+                ? $"[{firstCorrelationId.Value}] {IdLogString}: Tasks completed for watch."
+                : $"{IdLogString}: Tasks completed for watch.";
+            OnCompleted(this, new TaskEventArgs(true, IdLogString, completionMessage));
         }
 
         /// <summary>
@@ -595,6 +668,10 @@ namespace TE.FileWatcher.Configuration
         {
             if (string.IsNullOrWhiteSpace(Path) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(fullPath))
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"{IdLogString}: GetChange rejected - invalid parameters. Path null/empty: {string.IsNullOrWhiteSpace(Path)}, name null/empty: {string.IsNullOrWhiteSpace(name)}, fullPath null/empty: {string.IsNullOrWhiteSpace(fullPath)}. (Watch.GetChange)", LogLevel.DEBUG);
+                }
                 return null;
             }
 
@@ -604,12 +681,17 @@ namespace TE.FileWatcher.Configuration
                 // change events
                 if (Directory.Exists(fullPath) && trigger == TriggerType.Change)
                 {
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        Logger.WriteLine($"{IdLogString}: Ignoring folder Change event for: {fullPath}. (Watch.GetChange)", LogLevel.DEBUG);
+                    }
                     return null;
                 }
 
                 // The flag indicating the change is a valid change and not one
                 // derived from a previous change
                 bool isValid = true;
+                string? invalidReason = null;
 
                 // The current information on the change
                 ChangeInfo change = new(trigger, Path, name, fullPath, oldName, oldPath);
@@ -623,14 +705,20 @@ namespace TE.FileWatcher.Configuration
                 {
                     writeTime = File.GetLastWriteTime(change.FullPath);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
-                    // File deleted between events, use default
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: IOException getting last write time for {fullPath}: {ex.Message}. (Watch.GetChange)", LogLevel.DEBUG);
+                    }
                     writeTime = default;
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException ex)
                 {
-                    // Access denied, use default
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Access denied getting last write time for {fullPath}: {ex.Message}. (Watch.GetChange)", LogLevel.DEBUG);
+                    }
                     writeTime = default;
                 }
 
@@ -647,6 +735,7 @@ namespace TE.FileWatcher.Configuration
                         if (_lastChange.Trigger == TriggerType.Create || _ignoreNextChange)
                         {
                             isValid = false;
+                            invalidReason = $"Duplicate after Create event (last: {_lastChange.Trigger}, ignoreNext: {_ignoreNextChange})";
 
                             // Set the flag to ignore a second Change Trigger only
                             // if the previous change was a Create
@@ -663,6 +752,19 @@ namespace TE.FileWatcher.Configuration
                             _lastWriteTime.Equals(writeTime))
                         {
                             isValid = false;
+                            invalidReason = $"Duplicate Change with same timestamp ({writeTime:yyyy-MM-dd HH:mm:ss.fff})";
+                        }
+                    }
+
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        if (isValid)
+                        {
+                            Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Accepting {trigger} event for {name}. WriteTime: {writeTime:yyyy-MM-dd HH:mm:ss.fff}. (Watch.GetChange)", LogLevel.DEBUG);
+                        }
+                        else
+                        {
+                            Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Filtering out {trigger} event for {name}. Reason: {invalidReason}. (Watch.GetChange)", LogLevel.DEBUG);
                         }
                     }
 
