@@ -42,11 +42,17 @@ namespace TE.FileWatcher.Configuration
         // The timer used to "reset" the FileSystemWatch object
         private System.Timers.Timer? _timer;
 
-        // The background worker that processes the file/folder changes
-        private BackgroundWorker? _worker;
+        // The background processing task
+        private Task? _processingTask;
+
+        // Cancellation token source for processing task
+        private CancellationTokenSource? _cancellationTokenSource;
 
         // The queue that will contain the changes
         private ConcurrentQueue<ChangeInfo>? _queue;
+
+        // Flag to indicate processing is in progress (0 = not processing, 1 = processing)
+        private int _isProcessing = 0;
 
         // Flag to indicate to ignore the next change as a Create trigger will
         // generate two Change triggers
@@ -174,11 +180,11 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
-            if (change == null || _queue == null || _worker == null)
+            if (change == null || _queue == null)
             {
                 if (Logger.LogLevel <= LogLevel.DEBUG)
                 {
-                    Logger.WriteLine($"{IdLogString}: Run called but prerequisites not met. change null: {change == null}, queue null: {_queue == null}, worker null: {_worker == null}. (Watch.Run)", LogLevel.DEBUG);
+                    Logger.WriteLine($"{IdLogString}: Run called but prerequisites not met. change null: {change == null}, queue null: {_queue == null}. (Watch.Run)", LogLevel.DEBUG);
                 }
                 return;
             }
@@ -190,19 +196,32 @@ namespace TE.FileWatcher.Configuration
                 Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Enqueued {trigger} event for {change.FullPath}. Queue count: {_queue.Count}. (Watch.Run)", LogLevel.DEBUG);
             }
 
-            if (!_worker.IsBusy)
+            // Use Interlocked to ensure only one processing task runs at a time
+            if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
             {
                 if (Logger.LogLevel <= LogLevel.DEBUG)
                 {
-                    Logger.WriteLine($"{IdLogString}: Starting background worker to process queue. (Watch.Run)", LogLevel.DEBUG);
+                    Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Starting background processing task for queue. (Watch.Run)", LogLevel.DEBUG);
                 }
-                _worker.RunWorkerAsync();
+
+                // Start processing on thread pool
+                _processingTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        ProcessChange();
+                    }
+                    finally
+                    {
+                        Interlocked.Exchange(ref _isProcessing, 0);
+                    }
+                });
             }
             else
             {
                 if (Logger.LogLevel <= LogLevel.DEBUG)
                 {
-                    Logger.WriteLine($"{IdLogString}: Background worker already busy, event will be processed in current run. (Watch.Run)", LogLevel.DEBUG);
+                    Logger.WriteLine($"[{change.CorrelationId}] {IdLogString}: Processing task already running, event will be processed in current run. (Watch.Run)", LogLevel.DEBUG);
                 }
             }
         }
@@ -226,7 +245,7 @@ namespace TE.FileWatcher.Configuration
             {
                 CreateFileSystemWatcher();
                 CreateQueue();
-                CreateBackgroundWorker();
+                CreateCancellationTokenSource();
                 CreateTimer();                
                 SetNeedWatch(watches);
                 Initialize();
@@ -242,6 +261,14 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
+        /// Create the cancellation token source for async processing.
+        /// </summary>
+        private void CreateCancellationTokenSource()
+        {
+            _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        /// <summary>
         /// Stops the watch.
         /// </summary>
         public bool Stop()
@@ -249,6 +276,19 @@ namespace TE.FileWatcher.Configuration
             if (_disposed)
             {
                 return !IsActive;
+            }
+
+            // Cancel any ongoing processing
+            _cancellationTokenSource?.Cancel();
+
+            // Wait for processing task to complete (with timeout)
+            try
+            {
+                _processingTask?.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException)
+            {
+                // Task was cancelled or faulted, which is expected
             }
 
             // Properly dispose resources before setting to null
@@ -259,11 +299,9 @@ namespace TE.FileWatcher.Configuration
                 _timer = null;
             }
 
-            if (_worker != null)
-            {
-                _worker.Dispose();
-                _worker = null;
-            }
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _processingTask = null;
 
             if (_fsWatcher != null)
             {
@@ -303,25 +341,13 @@ namespace TE.FileWatcher.Configuration
             if (disposing)
             {
                 _timer?.Dispose();
-                _worker?.Dispose();
+                _cancellationTokenSource?.Dispose();
                 _fsWatcher?.Dispose();
             }
 
             _disposed = true;
         }
 
-
-        /// <summary>
-        /// Create the background worker to process the changes.
-        /// </summary>
-        private void CreateBackgroundWorker()
-        {
-            _worker = new BackgroundWorker
-            {
-                WorkerSupportsCancellation = false
-            };
-            _worker.DoWork += DoWork;
-        }
 
         /// <summary>
         /// Create the FileSystemWatcher object.
@@ -347,7 +373,11 @@ namespace TE.FileWatcher.Configuration
                     | NotifyFilters.FileName                    
                     | NotifyFilters.LastWrite
                     | NotifyFilters.Security
-                    | NotifyFilters.Size
+                    | NotifyFilters.Size,
+                
+                // Increase buffer size to handle high-volume file changes
+                // Default is 8KB, we increase to 64KB to prevent buffer overflow
+                InternalBufferSize = 65536  // 64KB (must be 4KB increments, max 64KB)
             };
 
             _fsWatcher.Changed += OnChanged;
@@ -359,7 +389,7 @@ namespace TE.FileWatcher.Configuration
             _fsWatcher.IncludeSubdirectories = true;
             _fsWatcher.EnableRaisingEvents = true;
 
-            Logger.WriteLine($"{IdLogString}: Watch created.");
+            Logger.WriteLine($"{IdLogString}: Watch created. Buffer size: 64KB.");
         }
 
         /// <summary>
@@ -381,19 +411,8 @@ namespace TE.FileWatcher.Configuration
         }
 
         /// <summary>
-        /// Process the changes in a background worker thread.
+        /// Process the changes in the queue.
         /// </summary>
-        /// <param name="sender">
-        /// The object associated with this event.
-        /// </param>
-        /// <param name="e">
-        /// Arguments associated with the background worker.
-        /// </param>
-        private void DoWork(object? sender, DoWorkEventArgs e)
-        {
-            ProcessChange();
-        }
-
         public void ProcessChange()
         {
             if (string.IsNullOrWhiteSpace(Path))
