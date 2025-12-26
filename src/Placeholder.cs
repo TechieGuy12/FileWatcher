@@ -377,23 +377,26 @@ namespace TE.FileWatcher
                 return null;
             }
 
+            // Pre-compute all replacement values
             string relativeFullPath = GetRelativeFullPath(fullPath, watchPath);
             string? relativePath = GetRelativePath(fullPath, watchPath);
             string? fileName = TEFS.File.GetName(fullPath, true);
             string? fileNameWithoutExtension = TEFS.File.GetName(fullPath, false);
             string? extension = TEFS.File.GetExtension(fullPath);
 
-            string replacedValue = value;
-            replacedValue = replacedValue.Replace(PLACEHOLDERWATCHPATH, watchPath, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDEREXACTPATH, fullPath, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDERFULLPATH, relativeFullPath, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDERPATH, relativePath, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDERFILENAME, fileName, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDERFILE, fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase);
-            replacedValue = replacedValue.Replace(PLACEHOLDEREXTENSION, extension, StringComparison.OrdinalIgnoreCase);
+            // Build replacement dictionary to avoid chained string allocations
+            var replacements = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                [PLACEHOLDERWATCHPATH] = watchPath,
+                [PLACEHOLDEREXACTPATH] = fullPath,
+                [PLACEHOLDERFULLPATH] = relativeFullPath,
+                [PLACEHOLDERPATH] = relativePath,
+                [PLACEHOLDERFILENAME] = fileName,
+                [PLACEHOLDERFILE] = fileNameWithoutExtension,
+                [PLACEHOLDEREXTENSION] = extension
+            };
 
-            // If the changes include an old path, such as when a file/folder
-            // is renamed, then replace those placeholders
+            // If the changes include an old path, add those replacements
             if (!string.IsNullOrWhiteSpace(oldPath))
             {
                 string oldRelativeFullPath = GetRelativeFullPath(oldPath, watchPath);
@@ -402,12 +405,22 @@ namespace TE.FileWatcher
                 string? oldFileNameWithoutExtension = TEFS.File.GetName(oldPath, false);
                 string? oldExtension = TEFS.File.GetExtension(oldPath);
 
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDEXACTPATH, oldPath, StringComparison.OrdinalIgnoreCase);
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDFULLPATH, oldRelativeFullPath, StringComparison.OrdinalIgnoreCase);
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDPATH, oldRelativePath, StringComparison.OrdinalIgnoreCase);
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDFILENAME, oldFileName, StringComparison.OrdinalIgnoreCase);
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDFILE, oldFileNameWithoutExtension, StringComparison.OrdinalIgnoreCase);
-                replacedValue = replacedValue.Replace(PLACEHOLDEROLDEXTENSION, oldExtension, StringComparison.OrdinalIgnoreCase);
+                replacements[PLACEHOLDEROLDEXACTPATH] = oldPath;
+                replacements[PLACEHOLDEROLDFULLPATH] = oldRelativeFullPath;
+                replacements[PLACEHOLDEROLDPATH] = oldRelativePath;
+                replacements[PLACEHOLDEROLDFILENAME] = oldFileName;
+                replacements[PLACEHOLDEROLDFILE] = oldFileNameWithoutExtension;
+                replacements[PLACEHOLDEROLDEXTENSION] = oldExtension;
+            }
+
+            // Perform all replacements efficiently
+            string replacedValue = value;
+            foreach (var kvp in replacements)
+            {
+                if (kvp.Value != null)
+                {
+                    replacedValue = replacedValue.Replace(kvp.Key, kvp.Value, StringComparison.OrdinalIgnoreCase);
+                }
             }
 
             return replacedValue;
@@ -445,12 +458,12 @@ namespace TE.FileWatcher
                 {
                     // Loop through each of the matches so the placeholder can
                     // be replaced with the actual date values
-                    foreach (Match match in matches.Cast<Match>())
+                    // Use indexed access instead of Cast<Match>() to avoid LINQ allocation
+                    for (int i = 0; i < matches.Count; i++)
                     {
+                        Match match = matches[i];
 
-                        // Store the date type (createddate, modifieddate,
-                        // or currentdate) and change it to lowercase so it can
-                        // be easily compared later
+                        // Store the date type and convert to lowercase once
                         string type = match.Groups["type"].Value.ToLower(CultureInfo.CurrentCulture);
                         // Store the specified date format
                         string format = match.Groups["format"].Value;

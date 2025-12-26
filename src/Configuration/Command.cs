@@ -84,7 +84,9 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            if (!File.Exists(commandPath))
+            // Check file existence once and cache result
+            bool commandExists = File.Exists(commandPath);
+            if (!commandExists)
             {
                 Logger.WriteLine(
                     $"{correlationPrefix}The command '{commandPath}' was not found. Command was not run.",
@@ -170,36 +172,28 @@ namespace TE.FileWatcher.Configuration
             {
                 if (_processInfo.TryDequeue(out ProcessStartInfo? startInfo))
                 {
-                    if (File.Exists(startInfo.FileName))
+                    // File existence was already verified in Run method
+                    try
                     {
-                        try
-                        {
-                            using (Process process = new Process())
-                            {
-                                Logger.WriteLine(
-                                    $"[{correlationId}] START: Process {startInfo.FileName} {startInfo.Arguments}.");
-
-                                process.StartInfo = startInfo;
-                                process.StartInfo.CreateNoWindow = true;
-                                process.StartInfo.UseShellExecute = false;
-                                process.Start();
-                                process.WaitForExit();
-
-                                Logger.WriteLine(
-                                    $"[{correlationId}] END: Process {process?.StartInfo.FileName} {process?.StartInfo.Arguments} has completed.");
-                            }
-                        }
-                        catch (Exception ex)
+                        using (Process process = new Process())
                         {
                             Logger.WriteLine(
-                                $"[{correlationId}] Could not run the command '{startInfo.FileName} {startInfo.Arguments}'. Reason: {ex.Message}",
-                                LogLevel.ERROR);
+                                $"[{correlationId}] START: Process {startInfo.FileName} {startInfo.Arguments}.");
+
+                            process.StartInfo = startInfo;
+                            process.StartInfo.CreateNoWindow = true;
+                            process.StartInfo.UseShellExecute = false;
+                            process.Start();
+                            process.WaitForExit();
+
+                            Logger.WriteLine(
+                                $"[{correlationId}] END: Process {process?.StartInfo.FileName} {process?.StartInfo.Arguments} has completed.");
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
                         Logger.WriteLine(
-                            $"[{correlationId}] The command '{startInfo.FileName}' was not found. Command was not run.",
+                            $"[{correlationId}] Could not run the command '{startInfo.FileName} {startInfo.Arguments}'. Reason: {ex.Message}",
                             LogLevel.ERROR);
                     }
                 }

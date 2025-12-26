@@ -65,11 +65,12 @@ namespace TE.FileWatcher.Configuration
 
             AllVariables ??= new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            if (VariableList != null)
+            if (VariableList != null && VariableList.Count > 0)
             {
-                // Add the variables for the current object
-                foreach (Variable variable in VariableList)
+                // Add the variables for the current object using for loop to avoid enumerator allocation
+                for (int i = 0; i < VariableList.Count; i++)
                 {
+                    Variable variable = VariableList[i];
                     if (variable.Name == null || variable.Value == null)
                     {
                         continue;
@@ -84,7 +85,7 @@ namespace TE.FileWatcher.Configuration
                 }
             }
 
-            if (variables != null)
+            if (variables != null && variables.Count > 0)
             {
                 // Add the variables passed into the method
                 foreach (KeyValuePair<string, string> variable in variables)

@@ -43,17 +43,21 @@ namespace TE.FileWatcher.Configuration
             {
                 // If there are no needs, then return true to indicate the task
                 // can be run
-                if (_needs == null)
+                if (_needs == null || _needs.Count == 0)
                 {
                     return true;
                 }
-                else
+                
+                // Check if all needs have been completed without LINQ allocation
+                for (int i = 0; i < _needs.Count; i++)
                 {
-                    // Return the value if all needs have been completed to
-                    // indicate the task can be run
-                    return _needs.All(n => n.HasCompleted);
+                    if (!_needs[i].HasCompleted)
+                    {
+                        return false;
+                    }
                 }
-
+                
+                return true;
             }
         }
 

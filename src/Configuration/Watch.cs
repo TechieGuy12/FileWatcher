@@ -429,17 +429,19 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            // Peek at the queue to get correlation IDs for logging
-            var queueSnapshot = _queue.ToArray();
-            var firstCorrelationId = queueSnapshot.Length > 0 ? (Guid?)queueSnapshot[0].CorrelationId : null;
+            // Peek at first item for correlation ID instead of copying entire queue
+            Guid? firstCorrelationId = _queue.TryPeek(out ChangeInfo? firstChange) ? (Guid?)firstChange.CorrelationId : null;
             var correlationPrefix = firstCorrelationId.HasValue ? $"[{firstCorrelationId.Value}] " : "";
 
             // Guard expensive DEBUG logging to avoid string allocations
             if (Logger.LogLevel <= LogLevel.DEBUG)
             {
+                // Cache queue count to avoid repeated property access
+                int queueCount = _queue.Count;
+                
                 // Include first correlation ID in watch-level logs for context
                 Logger.WriteLine(
-                    $"{correlationPrefix}{IdLogString}: ProcessChange started. CanRun: {CanRun}, IsRunning: {IsRunning}, Queue count: {_queue.Count}. (Watch.ProcessChange)",
+                    $"{correlationPrefix}{IdLogString}: ProcessChange started. CanRun: {CanRun}, IsRunning: {IsRunning}, Queue count: {queueCount}. (Watch.ProcessChange)",
                     LogLevel.DEBUG);
                 
                 // Detailed dependency information
@@ -494,9 +496,12 @@ namespace TE.FileWatcher.Configuration
                         
                         if (Logger.LogLevel <= LogLevel.DEBUG)
                         {
+                            // Cache remaining count
+                            int remainingCount = _queue.Count;
+                            
                             // Change-specific log WITH correlation ID
                             Logger.WriteLine(
-                                $"[{change.CorrelationId}] {IdLogString}: Processing item {processedCount + 1} of current batch. Remaining in queue: {_queue.Count}. (Watch.ProcessChange)", 
+                                $"[{change.CorrelationId}] {IdLogString}: Processing item {processedCount + 1} of current batch. Remaining in queue: {remainingCount}. (Watch.ProcessChange)", 
                                 LogLevel.DEBUG);
                         }
                         
