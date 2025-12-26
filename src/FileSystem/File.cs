@@ -44,7 +44,7 @@ namespace TE.FileWatcher.FileSystem
                             fullPath,
                             FileMode.Open,
                             FileAccess.Read,
-                            FileShare.None,
+                            FileShare.Read,  // Allow other processes to read the file while we compute the hash
                             MEGABYTE))
                     {
                         var hash = hashAlgorithm.ComputeHash(stream);
@@ -52,8 +52,7 @@ namespace TE.FileWatcher.FileSystem
                     }
                 }
             }
-            catch (Exception ex)
-                when (ex is ArgumentException || ex is ArgumentNullException || ex is ObjectDisposedException || ex is System.Reflection.TargetInvocationException)
+            catch
             {
                 return null;
             }
