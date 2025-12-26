@@ -14,6 +14,9 @@ namespace TE.FileWatcher.Configuration
         // Prevent subscribing multiple times
         private bool _subscriptionsAdded = false;
 
+        // Track completed workflow count for efficient completion checking
+        private int _completedCount = 0;
+
         /// <summary>
         /// The event for the completion of the workflows.
         /// </summary>
@@ -78,6 +81,7 @@ namespace TE.FileWatcher.Configuration
             }
 
             HasCompleted = false;
+            _completedCount = 0;
             IsInitialized = true;
         }
 
@@ -101,6 +105,7 @@ namespace TE.FileWatcher.Configuration
 
             // Reset completion state for this run
             HasCompleted = false;
+            _completedCount = 0;
 
             foreach (Workflow workflow in WorkflowList)
             {
@@ -139,17 +144,18 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            HasCompleted = WorkflowList.All(w => w.HasCompleted);
-            if (HasCompleted)
+            // Increment completed count and check if all workflows are complete
+            // This avoids LINQ .All() allocation
+            _completedCount++;
+            
+            if (_completedCount >= WorkflowList.Count)
             {
+                HasCompleted = true;
                 Logger.WriteLine("All workflows completed. (Workflows.OnCompleted)", LogLevel.DEBUG);
 
-                // Reset workflows for the next run
-                foreach (Workflow workflow in WorkflowList)
-                {
-                    workflow.Initialize();
-                }
-
+                // Do NOT reset workflows here as they may be in use by other concurrent file processing
+                // Workflows.Run() already handles initialization for each new file
+                
                 Completed?.Invoke(this, e);
             }
         }
