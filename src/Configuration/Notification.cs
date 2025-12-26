@@ -144,13 +144,16 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Send the notification request.
         /// </summary>
+        /// <param name="change">
+        /// Information about the file change to use for this notification. If null, uses the stored Change property.
+        /// </param>
         /// <exception cref="InvalidOperationException">
         /// Thrown when the URL is null or empty.
         /// </exception>
         /// <exception cref="UriFormatException">
         /// Thrown when the URL is not in a valid format.
         /// </exception>
-        internal async Task<Response?> SendAsync()
+        internal async Task<Response?> SendAsync(ChangeInfo? change = null)
         {
             // If there isn't a message to be sent, then just return
             if (_message == null || _message.Length <= 0)
@@ -158,14 +161,21 @@ namespace TE.FileWatcher.Configuration
                 return null;
             }
 
-            Uri uri = GetUri();
+            // Use provided change or fall back to stored Change property
+            ChangeInfo? changeToUse = change ?? Change;
+            if (changeToUse == null)
+            {
+                throw new InvalidOperationException("The change information cannot be null.");
+            }
+
+            Uri uri = GetUri(changeToUse);
             
             Data ??= new Data();
             if (Data.Headers != null)
             {
                 Data.Headers.Variables ??= new Variables();
                 Data.Headers.Variables.Add(Variables?.AllVariables);
-                Data.Headers.Change = Change;
+                Data.Headers.Change = changeToUse;
             }
 
             string? content = string.Empty;
@@ -173,18 +183,18 @@ namespace TE.FileWatcher.Configuration
             {
                 content = Data.Body.Replace("[message]", _message.ToString(), StringComparison.OrdinalIgnoreCase);
 
-                if (Change != null)
+                if (changeToUse != null)
                 {
                     content = Placeholder.ReplacePlaceholders(
                         content,
-                        Change.WatchPath,
-                        Change.FullPath,
-                        Change.OldPath,
+                        changeToUse.WatchPath,
+                        changeToUse.FullPath,
+                        changeToUse.OldPath,
                         Variables?.AllVariables);
                 }
             }
 
-            string correlationIdLog = Change != null ? $"[{Change.CorrelationId}] " : "";
+            string correlationIdLog = changeToUse != null ? $"[{changeToUse.CorrelationId}] " : "";
             Logger.WriteLine($"{correlationIdLog}Sending request: {Method} {uri}.");
             Response response =
                 await Request.SendAsync(
@@ -269,15 +279,18 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Gets the URI value of the string URL.
         /// </summary>
+        /// <param name="change">
+        /// Information about the file change to use for building the URI.
+        /// </param>
         /// <exception cref="InvalidOperationException">
         /// Thrown when either the watch path or the change information was not provided.
         /// </exception>
         /// <exception cref="UriFormatException">
         /// Thrown if the URL is not in a valid format.
         /// </exception>
-        private Uri GetUri()
+        private Uri GetUri(ChangeInfo change)
         {
-            if (Change == null)
+            if (change == null)
             {
                 throw new InvalidOperationException("The change information cannot be null.");
             }
@@ -289,9 +302,9 @@ namespace TE.FileWatcher.Configuration
 
             string? url = Placeholder.ReplacePlaceholders(
                 Url,
-                Change.WatchPath,
-                Change.FullPath,
-                Change.OldPath,
+                change.WatchPath,
+                change.FullPath,
+                change.OldPath,
                 Variables?.AllVariables);
 
             if (string.IsNullOrWhiteSpace(url))
@@ -336,39 +349,30 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
+            // Store change in the shared property for backwards compatibility with QueueRequest
             Change = change;
-            _message.Append(GetMessageString(Change));
+            _message.Append(GetMessageString(change));
             
             try
             {
+                // Pass change as parameter to avoid race conditions with concurrent executions
                 // Use GetAwaiter().GetResult() instead of .Result to avoid
                 // AggregateException wrapping and potential deadlocks
-                Response? response = SendAsync().GetAwaiter().GetResult();
+                Response? response = SendAsync(change).GetAwaiter().GetResult();
                 if (response != null)
                 {
                     Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
                 }
             }
-            catch (Exception ex)
-                when (ex is AggregateException || ex is NullReferenceException || ex is InvalidOperationException || ex is UriFormatException)
+            catch (UriFormatException e)
             {
-                if (ex is AggregateException aex)
-                {
-                    foreach (Exception innerEx in aex.Flatten().InnerExceptions)
-                    {
-                        Logger.WriteLine(innerEx.Message, LogLevel.ERROR);
-                        Logger.WriteLine(
-                            $"StackTrace:{Environment.NewLine}{innerEx.StackTrace}",
-                            LogLevel.ERROR);
-                    }
-                }
-                else
-                {
-                    Logger.WriteLine(ex.Message, LogLevel.ERROR);
-                    Logger.WriteLine(
-                        $"StackTrace:{Environment.NewLine}{ex.StackTrace}",
-                        LogLevel.ERROR);
-                }
+                Logger.WriteLine(e.Message);
+                return;
+            }
+            catch (InvalidOperationException e)
+            {
+                Logger.WriteLine(e.Message);
+                return;
             }
         }
     }
