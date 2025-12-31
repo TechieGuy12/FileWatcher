@@ -147,18 +147,27 @@ namespace TE.FileWatcher.Configuration
         /// <param name="change">
         /// Information about the file change to use for this notification. If null, uses the stored Change property.
         /// </param>
+        /// <param name="message">
+        /// Optional message to send. If null, uses the accumulated _message buffer.
+        /// </param>
         /// <exception cref="InvalidOperationException">
         /// Thrown when the URL is null or empty.
         /// </exception>
         /// <exception cref="UriFormatException">
         /// Thrown when the URL is not in a valid format.
         /// </exception>
-        internal async Task<Response?> SendAsync(ChangeInfo? change = null)
+        internal async Task<Response?> SendAsync(ChangeInfo? change = null, string? message = null)
         {
-            // If there isn't a message to be sent, then just return
-            if (_message == null || _message.Length <= 0)
+            // Determine which message to use
+            string? messageToSend = message;
+            if (string.IsNullOrEmpty(messageToSend))
             {
-                return null;
+                // Fall back to the accumulated _message buffer (for queued notifications)
+                if (_message == null || _message.Length <= 0)
+                {
+                    return null;
+                }
+                messageToSend = _message.ToString();
             }
 
             // Use provided change or fall back to stored Change property
@@ -181,7 +190,7 @@ namespace TE.FileWatcher.Configuration
             string? content = string.Empty;
             if (Data.Body != null)
             {
-                content = Data.Body.Replace("[message]", _message.ToString(), StringComparison.OrdinalIgnoreCase);
+                content = Data.Body.Replace("[message]", messageToSend, StringComparison.OrdinalIgnoreCase);
 
                 if (changeToUse != null)
                 {
@@ -204,7 +213,12 @@ namespace TE.FileWatcher.Configuration
                     content,
                     Data.MimeType).ConfigureAwait(false);
 
-            _message.Clear();
+            // Only clear the shared _message buffer if we used it (queued notification path)
+            if (string.IsNullOrEmpty(message))
+            {
+                _message.Clear();
+            }
+            
             return response;
         }
 
@@ -351,14 +365,16 @@ namespace TE.FileWatcher.Configuration
 
             // Store change in the shared property for backwards compatibility with QueueRequest
             Change = change;
-            _message.Append(GetMessageString(change));
+            
+            // Build message locally to avoid race conditions with concurrent executions
+            string message = GetMessageString(change);
             
             try
             {
-                // Pass change as parameter to avoid race conditions with concurrent executions
+                // Pass both change and message as parameters to avoid race conditions
                 // Use GetAwaiter().GetResult() instead of .Result to avoid
                 // AggregateException wrapping and potential deadlocks
-                Response? response = SendAsync(change).GetAwaiter().GetResult();
+                Response? response = SendAsync(change, message).GetAwaiter().GetResult();
                 if (response != null)
                 {
                     Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
