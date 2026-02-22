@@ -90,17 +90,20 @@ namespace TE.FileWatcher.FileSystem
         }
 
         /// <summary>
-        /// Waits for a file to be accessible.
+        /// Waits for the file to be accessible.
         /// </summary>
         /// <param name="path">
-        /// Path to the file.
+        /// The path of the file to wait for.
         /// </param>
+        /// <returns>
+        /// <c>true</c> if the file is accessible, otherwise <c>false</c> if the file does not exist.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// <c>path</c> is null.
+        /// </exception>
         /// <exception cref="ArgumentException">
         /// <c>path</c> is a zero-length string, contains only white space, or
         /// contains one or more invalid characters.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <c>path</c> is null.
         /// </exception>
         /// <exception cref="PathTooLongException">
         /// The specified path, file name, or both exceed the system-defined
@@ -114,13 +117,10 @@ namespace TE.FileWatcher.FileSystem
         /// <c>path</c> specified a directory, or, the caller does not have the
         /// required permission.
         /// </exception>
-        /// <exception cref="FileNotFoundException">
-        /// The file specified in <c>path</c> was not found.
-        /// </exception>
         /// <exception cref="NotSupportedException">
         /// <c>path</c> is an invalid format.
         /// </exception>
-        private static void WaitForFile(string path)
+        private static bool WaitForFile(string path)
         {            
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -129,8 +129,7 @@ namespace TE.FileWatcher.FileSystem
             
             if (!DotNetIO.File.Exists(path))
             {
-                throw new FileNotFoundException(
-                    $"The file '{path}' was not found.", path);
+                return false;
             }
 
             bool isFileLocked = true;
@@ -150,6 +149,8 @@ namespace TE.FileWatcher.FileSystem
                     Thread.Sleep(FILE_WAIT_CHECK_DELAY_MS);
                 }
             }
+            
+            return true;
         }
 
         /// <summary>
@@ -201,10 +202,16 @@ namespace TE.FileWatcher.FileSystem
             {
                 return;
             }
-          
+  
             try
             {
-                WaitForFile(source);
+                // Check if file still exists and is accessible before attempting copy
+                if (!WaitForFile(source))
+                {
+                    // File no longer exists (may have been renamed/moved), skip silently
+                    return;
+                }
+                
                 Directory.Create(destination);
 
                 CopyWithRetryAndVerification(source, destination, verify);
@@ -234,7 +241,12 @@ namespace TE.FileWatcher.FileSystem
             while ((attempts <= RETRIES) && !fileCopied)
             {
                 DotNetIO.File.Copy(source, destination, true);
-                WaitForFile(destination);
+                
+                // Wait for destination file to be accessible
+                if (!WaitForFile(destination))
+                {
+                    throw new FileWatcherException($"Destination file '{destination}' could not be accessed after copy.");
+                }
 
                 fileCopied = verify != true || Verify(source, destination);                  
 
@@ -386,8 +398,7 @@ namespace TE.FileWatcher.FileSystem
             {
                 try
                 {
-                    WaitForFile(path);
-                    return true;
+                    return WaitForFile(path);
                 }
                 catch (Exception ex)
                 {

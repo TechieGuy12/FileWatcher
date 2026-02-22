@@ -131,6 +131,10 @@ namespace TE.FileWatcher.Configuration
         {
             if (Triggers == null || Triggers.TriggerList == null || Triggers.TriggerList.Count <= 0)
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"[{change.CorrelationId}] Notification.QueueRequest: No triggers configured, skipping.", LogLevel.DEBUG);
+                }
                 return;
             }
 
@@ -138,7 +142,19 @@ namespace TE.FileWatcher.Configuration
             {                
                 Change = change;
                 _message.Append(GetMessageString(Change));
-            }            
+                
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"[{change.CorrelationId}] Notification.QueueRequest: Queued message for trigger {trigger}. Message length: {_message.Length}.", LogLevel.DEBUG);
+                }
+            }
+            else
+            {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"[{change.CorrelationId}] Notification.QueueRequest: Trigger {trigger} not in configured triggers ({Triggers.Current}), skipping.", LogLevel.DEBUG);
+                }
+            }
         }
 
         /// <summary>
@@ -177,6 +193,17 @@ namespace TE.FileWatcher.Configuration
                 throw new InvalidOperationException("The change information cannot be null.");
             }
 
+            // CRITICAL: Validate correlation ID matches if both are provided
+            if (change != null && Change != null && change.CorrelationId != Change.CorrelationId)
+            {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] CRITICAL: Correlation ID mismatch detected! " +
+                    $"Parameter: [{change.CorrelationId}] ({change.FullPath}), " +
+                    $"Stored: [{Change.CorrelationId}] ({Change.FullPath}). " +
+                    $"This indicates instance reuse issue! (Notification.SendAsync)",
+                    LogLevel.ERROR);
+            }
+
             Uri uri = GetUri(changeToUse);
             
             Data ??= new Data();
@@ -205,6 +232,8 @@ namespace TE.FileWatcher.Configuration
 
             string correlationIdLog = changeToUse != null ? $"[{changeToUse.CorrelationId}] " : "";
             Logger.WriteLine($"{correlationIdLog}Sending request: {Method} {uri}.");
+            Logger.WriteLine($"{correlationIdLog}Message content: {content}", LogLevel.DEBUG);
+            
             Response response =
                 await Request.SendAsync(
                     Method,
@@ -344,18 +373,23 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
+            // Log entry with correlation ID for traceability
+            Logger.WriteLine(
+                $"[{change.CorrelationId}] Notification.Run() called for file: {change.FullPath} (Notification.Run)",
+                LogLevel.DEBUG);
+            
             try
             {
                 base.Run(change, trigger);
             }
             catch (ArgumentNullException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
             catch (InvalidOperationException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
             catch (FileWatcherTriggerNotMatchException)
@@ -369,6 +403,10 @@ namespace TE.FileWatcher.Configuration
             // Build message locally to avoid race conditions with concurrent executions
             string message = GetMessageString(change);
             
+            Logger.WriteLine(
+                $"[{change.CorrelationId}] Notification prepared. About to send HTTP request. (Notification.Run)",
+                LogLevel.DEBUG);
+            
             try
             {
                 // Pass both change and message as parameters to avoid race conditions
@@ -377,19 +415,24 @@ namespace TE.FileWatcher.Configuration
                 Response? response = SendAsync(change, message).GetAwaiter().GetResult();
                 if (response != null)
                 {
-                    Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
+                    Logger.WriteLine($"[{change.CorrelationId}] Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
                 }
             }
             catch (UriFormatException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
             catch (InvalidOperationException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
+
+            // Log exit with correlation ID for traceability
+            Logger.WriteLine(
+                $"[{change.CorrelationId}] Notification.Run() completed for file: {change.FullPath} (Notification.Run)",
+                LogLevel.DEBUG);
         }
     }
 }

@@ -12,6 +12,9 @@ namespace TE.FileWatcher.Configuration
         private ChangeInfo? _change;
 
         private TriggerType _trigger = default;
+        
+        // Track the correlation ID being processed to detect state pollution
+        private Guid? _processingCorrelationId = null;
 
         /// <summary>
         /// Gets or sets the id of the step.
@@ -126,11 +129,20 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
+            // Detect if this step is being reused while still processing another file
+            if (_processingCorrelationId.HasValue && _processingCorrelationId.Value != change.CorrelationId)
+            {
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] WARNING: Step '{Id}' is being reused while still processing [{_processingCorrelationId.Value}]. This may cause state pollution!",
+                    LogLevel.WARNING);
+            }
+            
             _change = change;
             _trigger = trigger;
+            _processingCorrelationId = change.CorrelationId;
 
             Logger.WriteLine(
-                $"{Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger} (Step.Run)",
+                $"[{change.CorrelationId}] {Id}: CanRun: {CanRun}, Running: {IsRunning}, Trigger: {trigger} (Step.Run)",
                 LogLevel.DEBUG);
 
             // If the step can't be run or is running currently, then don't
@@ -138,7 +150,7 @@ namespace TE.FileWatcher.Configuration
             if (!CanRun || IsRunning)
             {
                 Logger.WriteLine(
-                    $"{Id}: The step cannot run at this time. (Step.Run)",
+                    $"[{change.CorrelationId}] {Id}: The step cannot run at this time. (Step.Run)",
                     LogLevel.DEBUG);
                 return;
             }
@@ -146,14 +158,15 @@ namespace TE.FileWatcher.Configuration
             OnStarted(this, new TaskEventArgs(true, Id, $"{Id}: Step started."));
             IsRunning = true;
 
-            Logger.WriteLine($"{Id}: Running the action (if any). (Step.Run)", LogLevel.DEBUG);
+            Logger.WriteLine($"[{change.CorrelationId}] {Id}: Running the action (if any). (Step.Run)", LogLevel.DEBUG);
             Action?.Run(change, trigger);
-            Logger.WriteLine($"{Id}: Running the command (if any). (Step.Run)", LogLevel.DEBUG);
+            Logger.WriteLine($"[{change.CorrelationId}] {Id}: Running the command (if any). (Step.Run)", LogLevel.DEBUG);
             Command?.Run(change, trigger);
-            Logger.WriteLine($"{Id}: Sending the notification (if any). (Step.Run)", LogLevel.DEBUG);
+            Logger.WriteLine($"[{change.CorrelationId}] {Id}: Sending the notification (if any). (Step.Run)", LogLevel.DEBUG);
             Notification?.Run(change, trigger);
 
             IsRunning = false;
+            _processingCorrelationId = null; // Clear after completion
             OnCompleted(this, new TaskEventArgs(true, Id, $"{Id}: Step completed."));            
         }
 
@@ -167,6 +180,10 @@ namespace TE.FileWatcher.Configuration
 
             if (_change != null)
             {
+                // Log correlation ID when running from dependency completion
+                Logger.WriteLine(
+                    $"[{_change.CorrelationId}] {Id}: Running after dependency completed. (Step.OnNeedsCompleted)",
+                    LogLevel.DEBUG);
                 Run(_change, _trigger);
             }
         }

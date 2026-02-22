@@ -117,7 +117,9 @@ namespace TE.FileWatcher.Configuration
         {
             if (StepList == null || StepList.Count <= 0)
             {
-                Logger.WriteLine("There are no steps to run. (Steps.Run)", LogLevel.DEBUG);
+                Logger.WriteLine(
+                    $"[{change.CorrelationId}] There are no steps to run. (Steps.Run)",
+                    LogLevel.DEBUG);
                 return;
             }
 
@@ -126,9 +128,12 @@ namespace TE.FileWatcher.Configuration
                 Initialize();
             }
 
-            OnStarted(this, new TaskEventArgs(true, null, "Steps started."));
+            OnStarted(this, new TaskEventArgs(true, null, $"[{change.CorrelationId}] Steps started."));
 
-            Logger.WriteLine($"Starting to run {StepList.Count} step(s). (Steps.Run)", LogLevel.DEBUG);
+            Logger.WriteLine(
+                $"[{change.CorrelationId}] Starting to run {StepList.Count} step(s). (Steps.Run)",
+                LogLevel.DEBUG);
+            
             foreach (Step step in StepList)
             {        
                 if (!step.IsInitialized)

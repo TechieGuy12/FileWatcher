@@ -77,6 +77,10 @@ namespace TE.FileWatcher.Configuration
         /// </param>
         public override void Run(ChangeInfo change, TriggerType trigger)
         {
+            Logger.WriteLine(
+                $"[{change.CorrelationId}] Workflow.Run() started for file: {change.FullPath} (Workflow.Run)",
+                LogLevel.DEBUG);
+            
             try
             {
                 base.Run(change, trigger);
@@ -88,12 +92,12 @@ namespace TE.FileWatcher.Configuration
             }
             catch (ArgumentNullException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
             catch (InvalidOperationException e)
             {
-                Logger.WriteLine(e.Message);
+                Logger.WriteLine($"[{change.CorrelationId}] {e.Message}", LogLevel.ERROR);
                 return;
             }
             catch (FileWatcherTriggerNotMatchException)
@@ -106,7 +110,7 @@ namespace TE.FileWatcher.Configuration
                 return;
             }
 
-            Logger.WriteLine($"Running steps. (Workflow.Run)", LogLevel.DEBUG);
+            Logger.WriteLine($"[{change.CorrelationId}] Running steps. (Workflow.Run)", LogLevel.DEBUG);
             Steps.Initialize();
 
             // Do not subscribe/unsubscribe here; subscription is managed in Initialize()

@@ -13,11 +13,11 @@ namespace TE.FileWatcher.Configuration
     [XmlRoot("notifications")]
     public class Notifications : HasVariablesBase, IDisposable
     {
-        // The default wait time (30 seconds)
-        private const int DEFAULT_WAIT_TIME_MS = 30000;
+        // The default wait time (1 second)
+        private const int DEFAULT_WAIT_TIME_MS = 1000;
 
-        // The minimum wait time (30 seconds)
-        private const int MIN_WAIT_TIME_MS = 30000;
+        // The minimum wait time (1 second)
+        private const int MIN_WAIT_TIME_MS = 1000;
 
         // The timer
         private readonly System.Timers.Timer _timer;
@@ -44,9 +44,10 @@ namespace TE.FileWatcher.Configuration
         /// </summary>
         public Notifications()
         {
-            currentWaitTime = WaitTime ?? DEFAULT_WAIT_TIME_MS;
+            // Initialize with default wait time - actual wait time will be set when timer starts
+            currentWaitTime = DEFAULT_WAIT_TIME_MS;
 
-            _timer = new System.Timers.Timer(currentWaitTime);
+            _timer = new System.Timers.Timer(DEFAULT_WAIT_TIME_MS);
             _timer.Elapsed += OnElapsed;            
         }
 
@@ -120,12 +121,24 @@ namespace TE.FileWatcher.Configuration
         {
             try
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine("Notifications.ProcessNotificationsAsync: Timer elapsed, processing notifications.", LogLevel.DEBUG);
+                }
+
                 // If there are no notifications, then stop the timer
                 if (NotificationList == null || NotificationList.Count <= 0)
                 {
                     _timer.Stop();
+                    if (Logger.LogLevel <= LogLevel.DEBUG)
+                    {
+                        Logger.WriteLine("Notifications.ProcessNotificationsAsync: No notifications configured, stopping timer.", LogLevel.DEBUG);
+                    }
                     return;
                 }
+
+                int processedCount = 0;
+                int skippedCount = 0;
 
                 foreach (Notification notification in NotificationList)
                 {
@@ -133,11 +146,17 @@ namespace TE.FileWatcher.Configuration
                     // continue to the next notification
                     if (!notification.HasMessage)
                     {
+                        skippedCount++;
                         continue;
                     }
 
                     try
                     {
+                        if (Logger.LogLevel <= LogLevel.DEBUG)
+                        {
+                            Logger.WriteLine($"Notifications.ProcessNotificationsAsync: Sending notification {processedCount + 1}.", LogLevel.DEBUG);
+                        }
+
                         Response? response =
                             await notification.SendAsync().ConfigureAwait(false);
                         
@@ -147,6 +166,7 @@ namespace TE.FileWatcher.Configuration
                         }
 
                         Logger.WriteLine($"Response: {response.StatusCode}. URL: {response.Url}. Content: {response.Content}");
+                        processedCount++;
                         
                     }
                     catch (AggregateException aex)
@@ -169,9 +189,16 @@ namespace TE.FileWatcher.Configuration
                     }
                 }
 
-                if (NotificationList.Count <= 0)
+                // Stop the timer when there are no more messages pending across all notifications
+                bool hasPendingMessages = NotificationList.Any(n => n.HasMessage);
+                if (!hasPendingMessages)
                 {
                     _timer.Stop();
+                }
+
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"Notifications.ProcessNotificationsAsync: Processed {processedCount} notification(s), skipped {skippedCount}. Timer stopped: {!_timer.Enabled}.", LogLevel.DEBUG);
                 }
             }
             catch (Exception ex)
@@ -194,19 +221,45 @@ namespace TE.FileWatcher.Configuration
         {
             if (change == null)
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine("Notifications.Send: Change is null, skipping.", LogLevel.DEBUG);
+                }
                 return;
             }
 
             if (NotificationList == null || NotificationList.Count <= 0)
             {
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"[{change.CorrelationId}] Notifications.Send: No notifications configured, skipping.", LogLevel.DEBUG);
+                }
                 return;
+            }
+
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine($"[{change.CorrelationId}] Notifications.Send: Processing {NotificationList.Count} notification(s) for trigger {trigger}.", LogLevel.DEBUG);
             }
 
             AddVariables();
 
+            int queuedCount = 0;
             foreach (Notification notification in NotificationList)
             {
+                bool hadMessageBefore = notification.HasMessage;
                 notification.QueueRequest(trigger, change);
+                bool hadMessageAfter = notification.HasMessage;
+                
+                if (!hadMessageBefore && hadMessageAfter)
+                {
+                    queuedCount++;
+                }
+            }
+
+            if (Logger.LogLevel <= LogLevel.DEBUG)
+            {
+                Logger.WriteLine($"[{change.CorrelationId}] Notifications.Send: Queued {queuedCount} notification(s). Timer enabled: {_timer.Enabled}.", LogLevel.DEBUG);
             }
 
             if (!_timer.Enabled)
@@ -219,6 +272,11 @@ namespace TE.FileWatcher.Configuration
 
                 _timer.Interval = currentWaitTime;
                 _timer.Start();
+                
+                if (Logger.LogLevel <= LogLevel.DEBUG)
+                {
+                    Logger.WriteLine($"[{change.CorrelationId}] Notifications.Send: Started timer with interval {currentWaitTime}ms.", LogLevel.DEBUG);
+                }
             }
         }
     }

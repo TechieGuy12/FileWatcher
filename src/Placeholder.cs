@@ -74,7 +74,43 @@ namespace TE.FileWatcher
         // The regular expression
         private static readonly Regex _regex = new Regex(PATTERN, RegexOptions.Compiled);
 
+        // Cache for static placeholder replacements (env vars, variables, URL encoding)
+        // Key: original placeholder pattern, Value: resolved value
+        private static readonly ConcurrentDictionary<string, string> _placeholderCache = 
+            new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Maximum cache size before clearing to prevent unbounded memory growth
+        private const int MAX_CACHE_SIZE = 1000;
+
+        // Cache statistics for monitoring
+        private static long _cacheHits = 0;
+        private static long _cacheMisses = 0;
+
         private ConcurrentDictionary<string, string>? _variables;
+
+        /// <summary>
+        /// Gets the cache hit rate for monitoring performance optimization effectiveness.
+        /// </summary>
+        internal static double CacheHitRate
+        {
+            get
+            {
+                long hits = Interlocked.Read(ref _cacheHits);
+                long misses = Interlocked.Read(ref _cacheMisses);
+                long total = hits + misses;
+                return total == 0 ? 0 : (double)hits / total;
+            }
+        }
+
+        /// <summary>
+        /// Clears the placeholder cache. Useful for testing or when cache needs to be refreshed.
+        /// </summary>
+        internal static void ClearCache()
+        {
+            _placeholderCache.Clear();
+            Interlocked.Exchange(ref _cacheHits, 0);
+            Interlocked.Exchange(ref _cacheMisses, 0);
+        }
 
         /// <summary>
         /// Replaces the placeholders in a string with the actual values.
@@ -476,16 +512,17 @@ namespace TE.FileWatcher
                                 case PLACEHOLDERCREATEDDATE:
                                 case PLACEHOLDERMODIFIEDDATE:
                                 case PLACEHOLDERCURRENTDATE:
+                                    // Dynamic date values cannot be cached
                                     value = GetDateValue(match.Value, value, type, format, fullPath);
                                     break;
                                 case PLACEHOLDERENVVAR:
-                                    value = GetEnvironmentVariableValue(match.Value, value, format);
+                                    value = GetCachedEnvironmentVariableValue(match.Value, value, format);
                                     break;
                                 case PLACEHOLDERVAR:
-                                    value = GetVariableValue(match.Value, value, format);
+                                    value = GetCachedVariableValue(match.Value, value, format);
                                     break;
                                 case PLACEHOLDERURLENCODE:
-                                    value = GetUrlEncodedValue(match.Value, value, format);
+                                    value = GetCachedUrlEncodedValue(match.Value, value, format);
                                     break;
                             };
 
@@ -497,6 +534,156 @@ namespace TE.FileWatcher
                         }
                     }
                 }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Gets the environment variable value with caching and replaces the environment
+        /// variable placeholder with the environment variable value.
+        /// </summary>
+        /// <param name="placeholder">
+        /// The placeholder in the value.
+        /// </param>
+        /// <param name="value">
+        /// The string value containing the placeholder.
+        /// </param>
+        /// <param name="envName">
+        /// The name of the environment variable.
+        /// </param>
+        /// <returns>
+        /// The value of the environment variable.
+        /// </returns>
+        private string GetCachedEnvironmentVariableValue(string placeholder, string value, string envName)
+        {
+            // Try to get from cache first
+            if (_placeholderCache.TryGetValue(placeholder, out string? cachedValue))
+            {
+                Interlocked.Increment(ref _cacheHits);
+                return value.Replace(placeholder, cachedValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            Interlocked.Increment(ref _cacheMisses);
+            
+            string? envValue = Environment.GetEnvironmentVariable(envName);
+            if (envValue != null)
+            {
+                // Check cache size and clear if needed
+                if (_placeholderCache.Count >= MAX_CACHE_SIZE)
+                {
+                    Logger.WriteLine(
+                        $"Placeholder cache size limit reached ({MAX_CACHE_SIZE}), clearing cache.",
+                        LogLevel.DEBUG);
+                    _placeholderCache.Clear();
+                }
+
+                // Cache the resolved value
+                _placeholderCache.TryAdd(placeholder, envValue);
+                return value.Replace(placeholder, envValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Gets the variable value with caching and replaces the variable
+        /// placeholder with the variable value.
+        /// </summary>
+        /// <param name="placeholder">
+        /// The placeholder in the value.
+        /// </param>
+        /// <param name="value">
+        /// The string value containing the placeholder.
+        /// </param>
+        /// <param name="name">
+        /// The name of the variable.
+        /// </param>
+        /// <returns>
+        /// The value of the variable.
+        /// </returns>
+        private string GetCachedVariableValue(string placeholder, string value, string name)
+        {
+            if (_variables == null)
+            {
+                return value;
+            }
+
+            // Create cache key that includes variable name for uniqueness
+            string cacheKey = $"{placeholder}:{name}";
+
+            // Try to get from cache first
+            if (_placeholderCache.TryGetValue(cacheKey, out string? cachedValue))
+            {
+                Interlocked.Increment(ref _cacheHits);
+                return value.Replace(placeholder, cachedValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            Interlocked.Increment(ref _cacheMisses);
+
+            if (_variables.ContainsKey(name))
+            {
+                string varValue = _variables[name];
+                
+                // Check cache size and clear if needed
+                if (_placeholderCache.Count >= MAX_CACHE_SIZE)
+                {
+                    Logger.WriteLine(
+                        $"Placeholder cache size limit reached ({MAX_CACHE_SIZE}), clearing cache.",
+                        LogLevel.DEBUG);
+                    _placeholderCache.Clear();
+                }
+
+                // Cache the resolved value
+                _placeholderCache.TryAdd(cacheKey, varValue);
+                return value.Replace(placeholder, varValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Gets the URL encoded value with caching and replaces the URL encode 
+        /// placeholder with the URL encoded value.
+        /// </summary>
+        /// <param name="placeholder">
+        /// The placeholder in the value.
+        /// </param>
+        /// <param name="value">
+        /// The string value containing the placeholder.
+        /// </param>
+        /// <param name="url">
+        /// The URL string.
+        /// </param>
+        /// <returns>
+        /// The URL encoded value.
+        /// </returns>
+        private string GetCachedUrlEncodedValue(string placeholder, string value, string url)
+        {
+            // Try to get from cache first
+            if (_placeholderCache.TryGetValue(placeholder, out string? cachedValue))
+            {
+                Interlocked.Increment(ref _cacheHits);
+                return value.Replace(placeholder, cachedValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            Interlocked.Increment(ref _cacheMisses);
+
+            string? encodedValue = HttpUtility.UrlEncode(url);
+            if (encodedValue != null)
+            {
+                // Check cache size and clear if needed
+                if (_placeholderCache.Count >= MAX_CACHE_SIZE)
+                {
+                    Logger.WriteLine(
+                        $"Placeholder cache size limit reached ({MAX_CACHE_SIZE}), clearing cache.",
+                        LogLevel.DEBUG);
+                    _placeholderCache.Clear();
+                }
+
+                // Cache the resolved value
+                _placeholderCache.TryAdd(placeholder, encodedValue);
+                return value.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
             }
 
             return value;

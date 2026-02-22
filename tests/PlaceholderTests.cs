@@ -308,5 +308,133 @@ namespace FileWatcher.Tests
             // Assert
             result.Should().NotBeNull();
         }
+
+        [Fact]
+        public void ReplacePlaceholders_EnvironmentVariable_ShouldCache()
+        {
+            // Arrange
+            var testEnvVar = "TEST_PLACEHOLDER_ENV";
+            var testEnvValue = "TestValue123";
+            Environment.SetEnvironmentVariable(testEnvVar, testEnvValue);
+            
+            try
+            {
+                var testFile = CreateTestFile("test.txt");
+                var value = $"Value: [env:{testEnvVar}]";
+                
+                // Clear cache before test
+                Placeholder.ClearCache();
+                
+                // Act - First call (cache miss)
+                var result1 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+                var hitRateAfterFirst = Placeholder.CacheHitRate;
+                
+                // Act - Second call (cache hit)
+                var result2 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+                var hitRateAfterSecond = Placeholder.CacheHitRate;
+
+                // Assert
+                result1.Should().Be($"Value: {testEnvValue}");
+                result2.Should().Be($"Value: {testEnvValue}");
+                hitRateAfterFirst.Should().Be(0.0); // First call is a miss
+                hitRateAfterSecond.Should().BeGreaterThan(0.0); // Second call should have hits
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(testEnvVar, null);
+                Placeholder.ClearCache();
+            }
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_Variable_ShouldCache()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+            var variables = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            variables.TryAdd("myvar", "myvalue");
+            var value = "Var: [var:myvar]";
+            
+            // Clear cache before test
+            Placeholder.ClearCache();
+            
+            // Act - First call (cache miss)
+            var result1 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, variables);
+            var hitRateAfterFirst = Placeholder.CacheHitRate;
+            
+            // Act - Second call (cache hit)
+            var result2 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, variables);
+            var hitRateAfterSecond = Placeholder.CacheHitRate;
+
+            // Assert
+            result1.Should().Be("Var: myvalue");
+            result2.Should().Be("Var: myvalue");
+            hitRateAfterFirst.Should().Be(0.0); // First call is a miss
+            hitRateAfterSecond.Should().BeGreaterThan(0.0); // Second call should have hits
+            
+            Placeholder.ClearCache();
+        }
+
+        [Fact]
+        public void ReplacePlaceholders_UrlEncode_ShouldCache()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+            var urlToEncode = "hello world & special chars!";
+            var value = $"URL: [urlenc:{urlToEncode}]";
+            
+            // Clear cache before test
+            Placeholder.ClearCache();
+            
+            // Act - First call (cache miss)
+            var result1 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+            var hitRateAfterFirst = Placeholder.CacheHitRate;
+            
+            // Act - Second call (cache hit)
+            var result2 = _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+            var hitRateAfterSecond = Placeholder.CacheHitRate;
+
+            // Assert
+            result1.Should().Contain("hello+world");
+            result2.Should().Be(result1); // Same result
+            hitRateAfterFirst.Should().Be(0.0); // First call is a miss
+            hitRateAfterSecond.Should().BeGreaterThan(0.0); // Second call should have hits
+            
+            Placeholder.ClearCache();
+        }
+
+        [Fact]
+        public void ClearCache_ShouldResetCacheStatistics()
+        {
+            // Arrange
+            var testFile = CreateTestFile("test.txt");
+            var testEnvVar = "TEST_CACHE_CLEAR";
+            Environment.SetEnvironmentVariable(testEnvVar, "value");
+            
+            try
+            {
+                var value = $"[env:{testEnvVar}]";
+                
+                // Act - Build up cache
+                _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+                _placeholder.ReplacePlaceholders(value, _watchPath, testFile, null, null);
+                
+                var hitRateBeforeClear = Placeholder.CacheHitRate;
+                
+                // Clear cache
+                Placeholder.ClearCache();
+                
+                var hitRateAfterClear = Placeholder.CacheHitRate;
+
+                // Assert
+                hitRateBeforeClear.Should().BeGreaterThan(0.0);
+                hitRateAfterClear.Should().Be(0.0);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(testEnvVar, null);
+                Placeholder.ClearCache();
+            }
+        }
     }
 }
