@@ -83,6 +83,11 @@ namespace TE.FileWatcher.Configuration
                 AddVariables();
             }
 
+            // Clear stale change state so OnNeedsCompleted doesn't use a previous run's change
+            _change = null;
+            _trigger = default;
+            _processingCorrelationId = null;
+
             base.Initialize();
         }
 

@@ -1057,6 +1057,17 @@ namespace TE.FileWatcher.Configuration
             base.OnCompleted(sender, e);
         }
 
+        public override void Initialize()
+        {
+            lock (_changeLock)
+            {
+                _lastChange = null;
+                _lastWriteTime = default;
+                _ignoreNextChange = false;
+            }
+            base.Initialize();
+        }
+
         public override void OnNeedsCompleted(object? sender, TaskEventArgs e)
         {
             Logger.WriteLine(
