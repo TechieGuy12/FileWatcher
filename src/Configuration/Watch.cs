@@ -207,13 +207,17 @@ namespace TE.FileWatcher.Configuration
                 // Start processing on thread pool
                 _processingTask = Task.Run(() =>
                 {
+                    bool releaseProcessing = true;
                     try
                     {
-                        ProcessChange();
+                        releaseProcessing = ProcessChange();
                     }
                     finally
                     {
-                        Interlocked.Exchange(ref _isProcessing, 0);
+                        if (releaseProcessing)
+                        {
+                            Interlocked.Exchange(ref _isProcessing, 0);
+                        }
                     }
                 });
             }
@@ -413,20 +417,24 @@ namespace TE.FileWatcher.Configuration
         /// <summary>
         /// Process the changes in the queue.
         /// </summary>
-        public void ProcessChange()
+        /// <returns>
+        /// <c>true</c> if the <see cref="_isProcessing"/> flag should be released
+        /// by the caller; <c>false</c> if the flag must remain held because
+        /// processing is pending a dependency completing.
+        /// </returns>
+        public bool ProcessChange()
         {
             if (string.IsNullOrWhiteSpace(Path))
             {
-                return;
+                return true;
             }
 
             _queue ??= new ConcurrentQueue<ChangeInfo>();            
 
             if (_queue.IsEmpty)
             {
-                Initialize();
                 Thread.Sleep(EMPTY_QUEUE_SLEEP_MS);
-                return;
+                return true;
             }
 
             // Peek at first item for correlation ID instead of copying entire queue
@@ -470,7 +478,10 @@ namespace TE.FileWatcher.Configuration
                         $"{correlationPrefix}{IdLogString}: Watch blocked from running. Reason: {reason}. Queue will be processed when watch becomes available. (Watch.ProcessChange)",
                         LogLevel.DEBUG);
                 }
-                return;
+                // Return false to keep _isProcessing held. OnNeedsCompleted will call
+                // ProcessChange() directly once the dependency completes, at which point
+                // it will release _isProcessing itself.
+                return false;
             }
 
             var startTime = DateTime.Now;
@@ -543,6 +554,7 @@ namespace TE.FileWatcher.Configuration
                 ? $"[{firstCorrelationId.Value}] {IdLogString}: Tasks completed for watch."
                 : $"{IdLogString}: Tasks completed for watch.";
             OnCompleted(this, new TaskEventArgs(true, IdLogString, completionMessage));
+            return true;
         }
 
         /// <summary>
@@ -1076,7 +1088,17 @@ namespace TE.FileWatcher.Configuration
 
             base.OnNeedsCompleted(sender, e);
 
-            ProcessChange();
+            // _isProcessing is still held from the blocked Task.Run (ProcessChange
+            // returned false). Process the queued items now that the dependency has
+            // completed, then release the flag.
+            try
+            {
+                ProcessChange();
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isProcessing, 0);
+            }
         }   
 
     }
